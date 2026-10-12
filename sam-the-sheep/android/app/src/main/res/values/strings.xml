@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sam the Sheep</string>
+    <string name="title_activity_main">Sam the Sheep</string>
+    <string name="package_name">au.mason.orlando.samthesheep</string>
+    <string name="custom_url_scheme">au.mason.orlando.samthesheep</string>
+</resources>

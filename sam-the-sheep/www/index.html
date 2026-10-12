@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Sam the Sheep</title>
+<style>
+  :root { --glow: #ff2a1a; --bg: #120202; --ink: #ff6a5a; }
+  body.day { --glow: #3ddc5a; --bg: #06240e; --ink: #b9ffc6; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none;
+    transition: background 3s, color 3s;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  body.night { filter: brightness(var(--dim, 0.55)); }
+  #glow {
+    position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(circle at 50% 45%, var(--glow) 0%, transparent 60%);
+    opacity: .55; transition: background 3s;
+  }
+  body.day #glow { opacity: .7; }
+  #stage { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2vmin; }
+  #sheep { width: min(62vmin, 520px); height: auto; filter: drop-shadow(0 0 4vmin var(--glow)); transition: filter 3s; }
+  #sheep .wool { fill: var(--glow); transition: fill 3s; }
+  #sheep .eye-open { display: none; }
+  body.day #sheep .eye-open { display: inline; }
+  body.day #sheep .eye-closed, body.day #zzz { display: none; }
+  #zzz text { fill: var(--ink); font-weight: 800; animation: zz 4s infinite ease-in-out; opacity: 0; }
+  #zzz text:nth-child(2) { animation-delay: 1.3s; }
+  #zzz text:nth-child(3) { animation-delay: 2.6s; }
+  @keyframes zz { 0% { opacity: 0; transform: translate(0,0); } 30% { opacity: .9; } 100% { opacity: 0; transform: translate(18px,-40px); } }
+  #breathe { animation: breathe 5s infinite ease-in-out; transform-origin: 200px 300px; }
+  @keyframes breathe { 50% { transform: scale(1.025); } }
+  body.day #breathe { animation: bounce 2.4s infinite ease-in-out; }
+  @keyframes bounce { 50% { transform: translateY(-8px); } }
+  body.ringing #breathe { animation: wiggle .4s infinite ease-in-out; }
+  @keyframes wiggle { 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
+
+  #clock { font-size: min(16vmin, 150px); font-weight: 300; letter-spacing: .02em; font-variant-numeric: tabular-nums; line-height: 1; }
+  #ampm { font-size: .35em; margin-left: .15em; }
+  #msg { font-size: min(5vmin, 40px); opacity: .85; min-height: 1.3em; text-align: center; }
+  #alarmBadge { font-size: min(3.4vmin, 26px); opacity: .6; min-height: 1.2em; }
+  #power { position: fixed; bottom: 2vmin; left: 0; right: 0; text-align: center; font-size: 14px; opacity: .5; }
+
+  @media (orientation: landscape) {
+    #stage { flex-direction: row; gap: 6vmin; }
+    #info { text-align: left; }
+  }
+  #info { display: flex; flex-direction: column; align-items: center; gap: 1.5vmin; }
+  @media (orientation: landscape) { #info { align-items: flex-start; } #msg { text-align: left; } }
+
+  /* parent settings */
+  #hold { position: fixed; top: 0; right: 0; width: 110px; height: 110px; }
+  #holdRing { position: fixed; top: 20px; right: 20px; width: 70px; height: 70px; border-radius: 50%;
+    border: 4px solid var(--ink); opacity: 0; transform: scale(.4); transition: opacity .2s, transform 2.5s linear; pointer-events: none; }
+  #holdRing.on { opacity: .6; transform: scale(1); }
+  #settings { position: fixed; inset: 0; background: rgba(0,0,0,.92); color: #eee; display: none;
+    align-items: center; justify-content: center; filter: none; z-index: 10; }
+  #settings.open { display: flex; }
+  #settings .card { background: #1b1b1f; border-radius: 18px; padding: 24px 28px; width: min(92vw, 460px); max-height: 92vh; overflow: auto; touch-action: pan-y; }
+  #settings h2 { margin: 0 0 12px; font-weight: 600; }
+  #settings label { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #2c2c33; font-size: 18px; }
+  #settings input[type=time], #settings select { font-size: 18px; padding: 6px 8px; background: #2a2a30; color: #eee; border: 1px solid #444; border-radius: 8px; }
+  #settings input[type=checkbox] { width: 26px; height: 26px; }
+  #settings input[type=range] { width: 160px; }
+  #settings .row { display: flex; gap: 10px; margin-top: 18px; }
+  #settings button { flex: 1; font-size: 18px; padding: 12px; border-radius: 10px; border: 0; background: #3a3a44; color: #fff; }
+  #settings button.primary { background: #2f8f46; }
+  #settings .hint { font-size: 13px; opacity: .6; margin-top: 10px; }
+</style>
+</head>
+<body class="night">
+<div id="glow"></div>
+
+<div id="stage">
+  <svg id="sheep" viewBox="0 0 400 400" aria-label="Sam the Sheep">
+    <g id="breathe">
+      <!-- legs -->
+      <g fill="#2a2a2a">
+        <rect x="120" y="290" width="26" height="60" rx="12"/>
+        <rect x="170" y="300" width="26" height="54" rx="12"/>
+        <rect x="216" y="300" width="26" height="54" rx="12"/>
+        <rect x="262" y="290" width="26" height="60" rx="12"/>
+      </g>
+      <!-- fluffy body -->
+      <g class="wool">
+        <circle cx="140" cy="230" r="58"/><circle cx="205" cy="200" r="66"/><circle cx="268" cy="230" r="58"/>
+        <circle cx="175" cy="275" r="52"/><circle cx="240" cy="275" r="52"/><circle cx="300" cy="190" r="40"/>
+        <circle cx="110" cy="190" r="40"/><circle cx="205" cy="250" r="70"/>
+      </g>
+      <!-- head -->
+      <ellipse cx="205" cy="168" rx="58" ry="64" fill="#2b2b2b"/>
+      <ellipse cx="140" cy="150" rx="30" ry="14" fill="#2b2b2b" transform="rotate(-25 140 150)"/>
+      <ellipse cx="270" cy="150" rx="30" ry="14" fill="#2b2b2b" transform="rotate(25 270 150)"/>
+      <g class="wool"><circle cx="180" cy="110" r="22"/><circle cx="205" cy="100" r="25"/><circle cx="230" cy="110" r="22"/></g>
+      <!-- eyes -->
+      <g class="eye-closed" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M172 165 q12 12 24 0"/><path d="M214 165 q12 12 24 0"/>
+      </g>
+      <g class="eye-open">
+        <circle cx="184" cy="162" r="13" fill="#fff"/><circle cx="226" cy="162" r="13" fill="#fff"/>
+        <circle cx="187" cy="164" r="6" fill="#111"/><circle cx="229" cy="164" r="6" fill="#111"/>
+      </g>
+      <!-- cheeks + mouth -->
+      <circle cx="170" cy="192" r="8" fill="#ff8fa0" opacity=".6"/><circle cx="240" cy="192" r="8" fill="#ff8fa0" opacity=".6"/>
+      <path class="eye-closed" d="M196 202 q9 6 18 0" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path class="eye-open" d="M190 198 q15 18 30 0" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>
+    </g>
+    <g id="zzz"><text x="280" y="100" font-size="34">z</text><text x="305" y="70" font-size="42">z</text><text x="335" y="40" font-size="50">Z</text></g>
+  </svg>
+
+  <div id="info">
+    <div id="clock">--:--<span id="ampm"></span></div>
+    <div id="msg"></div>
+    <div id="alarmBadge"></div>
+  </div>
+</div>
+<div id="power"></div>
+
+<div id="hold"></div><div id="holdRing"></div>
+
+<div id="settings">
+  <div class="card">
+    <h2>🐑 Grown-up settings</h2>
+    <label>Sleep (red) from <input type="time" id="sNight"></label>
+    <label>Wake (green) at <input type="time" id="sDay"></label>
+    <label>Alarm on <input type="checkbox" id="sAlarmOn"></label>
+    <label>Alarm time <input type="time" id="sAlarm"></label>
+    <label>Alarm sound
+      <select id="sSound"><option value="baa">Baa-baa tune</option><option value="chime">Gentle chime</option></select>
+    </label>
+    <label>Night brightness <input type="range" id="sDim" min="15" max="100" step="5"></label>
+    <label>24-hour clock <input type="checkbox" id="s24"></label>
+    <label>Show clock at night <input type="checkbox" id="sNightClock"></label>
+    <div class="row"><button id="bTest">🔔 Test alarm</button><button id="bPreview">Preview day/night</button></div>
+    <div class="row"><button id="bClose" class="primary">Done</button></div>
+    <div class="hint">Open this screen by holding the top-right corner for 3 seconds. Tap Sam to stop a ringing alarm.</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const DEF = { night: '19:00', day: '07:00', alarmOn: false, alarm: '07:00', sound: 'baa', dim: 55, h24: false, nightClock: true };
+  let cfg = { ...DEF };
+  try { cfg = { ...DEF, ...JSON.parse(localStorage.getItem('sam-settings') || '{}') }; } catch (e) {}
+  const save = () => { try { localStorage.setItem('sam-settings', JSON.stringify(cfg)); } catch (e) {} };
+
+  const $ = id => document.getElementById(id);
+  const mins = hhmm => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
+  let preview = null, lastAlarmKey = null, ringing = false;
+
+  function isNight(now) {
+    const t = now.getHours() * 60 + now.getMinutes(), n = mins(cfg.night), d = mins(cfg.day);
+    return n > d ? (t >= n || t < d) : (t >= n && t < d);
+  }
+  function fmt(hhmm) {
+    let [h, m] = hhmm.split(':').map(Number);
+    if (cfg.h24) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    const ap = h < 12 ? 'am' : 'pm'; h = h % 12 || 12;
+    return `${h}:${String(m).padStart(2, '0')}${ap}`;
+  }
+
+  function tick() {
+    const now = new Date();
+    const night = preview ? preview === 'night' : isNight(now);
+    document.body.classList.toggle('night', night);
+    document.body.classList.toggle('day', !night);
+    document.body.style.setProperty('--dim', cfg.dim / 100);
+
+    let h = now.getHours(), m = String(now.getMinutes()).padStart(2, '0'), ap = '';
+    if (!cfg.h24) { ap = h < 12 ? 'am' : 'pm'; h = h % 12 || 12; } else h = String(h).padStart(2, '0');
+    $('clock').innerHTML = `${h}:${m}<span id="ampm">${ap}</span>`;
+    $('clock').style.visibility = night && !cfg.nightClock ? 'hidden' : 'visible';
+
+    $('msg').textContent = ringing ? 'Good morning! Tap Sam 🐑'
+      : night ? 'Shhh… Sam is sleeping. Stay in bed!' : 'Sam is awake! You can get up! ☀️';
+    $('alarmBadge').textContent = cfg.alarmOn ? `⏰ ${fmt(cfg.alarm)}` : '';
+
+    const key = now.toDateString() + cfg.alarm;
+    const hhmm = `${String(now.getHours()).padStart(2, '0')}:${m}`;
+    if (cfg.alarmOn && hhmm === cfg.alarm && lastAlarmKey !== key) { lastAlarmKey = key; startAlarm(); }
+  }
+
+  // ---- sound (Web Audio, no files) ----
+  let ac, alarmTimer, alarmStop;
+  const audio = () => (ac ||= new (window.AudioContext || window.webkitAudioContext)());
+  function note(freq, start, dur, type = 'sine', vol = .25) {
+    const a = audio(), o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, start); g.gain.linearRampToValueAtTime(vol, start + .03);
+    g.gain.exponentialRampToValueAtTime(.001, start + dur);
+    o.connect(g).connect(a.destination); o.start(start); o.stop(start + dur + .05);
+  }
+  function baa(t) { // wobbly "baa"
+    const a = audio(), o = a.createOscillator(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(420, t); o.frequency.linearRampToValueAtTime(360, t + .6);
+    lfo.frequency.value = 22; lg.gain.value = 18; lfo.connect(lg).connect(o.frequency);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.12, t + .05); g.gain.exponentialRampToValueAtTime(.001, t + .7);
+    o.connect(g).connect(a.destination); o.start(t); lfo.start(t); o.stop(t + .75); lfo.stop(t + .75);
+  }
+  function playOnce(vol) {
+    const t = audio().currentTime + .05;
+    if (cfg.sound === 'chime') [523, 659, 784, 1047].forEach((f, i) => note(f, t + i * .35, 1.4, 'sine', .2 * vol));
+    else {
+      [392, 392, 587, 587, 659, 659, 587].forEach((f, i) => note(f, t + i * .3, .35, 'triangle', .22 * vol));
+      baa(t + 2.3); baa(t + 3.1);
+    }
+  }
+  function startAlarm(test) {
+    stopAlarm(); ringing = true; document.body.classList.add('ringing');
+    let vol = test ? 1 : .35;
+    const loop = () => { playOnce(vol); vol = Math.min(1, vol + .15); };
+    loop(); alarmTimer = setInterval(loop, 5000);
+    alarmStop = setTimeout(stopAlarm, test ? 6000 : 5 * 60 * 1000); // auto-stop after 5 min
+    tick();
+  }
+  function stopAlarm() {
+    clearInterval(alarmTimer); clearTimeout(alarmStop);
+    ringing = false; document.body.classList.remove('ringing');
+  }
+  $('sheep').addEventListener('pointerdown', () => {
+    audio().resume();
+    if (ringing) { stopAlarm(); tick(); return; }
+    if (document.body.classList.contains('day')) baa(audio().currentTime + .02);
+  });
+
+  // ---- keep screen on while plugged in ----
+  let lock = null, charging = true;
+  async function updateWake() {
+    try {
+      if (charging && document.visibilityState === 'visible') {
+        if (!lock && navigator.wakeLock) { lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', () => lock = null); }
+      } else if (lock) { await lock.release(); lock = null; }
+    } catch (e) {}
+    $('power').textContent = charging ? '' : '🔌 Plug in to keep Sam on all night';
+  }
+  document.addEventListener('visibilitychange', updateWake);
+  if (navigator.getBattery) navigator.getBattery().then(b => {
+    const upd = () => { charging = b.charging; updateWake(); };
+    b.addEventListener('chargingchange', upd); upd();
+  }).catch(updateWake); else updateWake();
+
+  // ---- hidden parent settings: hold top-right corner 3s ----
+  let holdT;
+  const ring = $('holdRing');
+  $('hold').addEventListener('pointerdown', () => { ring.classList.add('on'); holdT = setTimeout(openSettings, 3000); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => $('hold').addEventListener(ev, () => { clearTimeout(holdT); ring.classList.remove('on'); }));
+
+  const fields = { sNight: 'night', sDay: 'day', sAlarm: 'alarm', sSound: 'sound', sDim: 'dim' };
+  const checks = { sAlarmOn: 'alarmOn', s24: 'h24', sNightClock: 'nightClock' };
+  function openSettings() {
+    ring.classList.remove('on'); audio().resume();
+    for (const [id, k] of Object.entries(fields)) $(id).value = cfg[k];
+    for (const [id, k] of Object.entries(checks)) $(id).checked = cfg[k];
+    $('settings').classList.add('open');
+  }
+  function readSettings() {
+    for (const [id, k] of Object.entries(fields)) if ($(id).value !== '') cfg[k] = k === 'dim' ? +$(id).value : $(id).value;
+    for (const [id, k] of Object.entries(checks)) cfg[k] = $(id).checked;
+    save(); tick();
+  }
+  $('settings').addEventListener('input', readSettings);
+  $('bClose').onclick = () => { readSettings(); preview = null; $('settings').classList.remove('open'); tick(); };
+  $('bTest').onclick = () => { readSettings(); startAlarm(true); };
+  $('bPreview').onclick = () => { preview = document.body.classList.contains('night') ? 'day' : 'night'; tick(); };
+
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  tick(); setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>

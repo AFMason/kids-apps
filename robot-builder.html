@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Robot Builder</title>
+<style>
+:root{--panel:#f6f3ff;--ink:#2b2b3a;--accent:#ffcf3f;--pick:#6a5cff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%;overflow:hidden;font-family:"Trebuchet MS","Comic Sans MS",system-ui,sans-serif;color:var(--ink);background:radial-gradient(circle at 30% 20%,#3a46a0,#1d2350 70%)}
+button{font:inherit;color:inherit;padding:0;cursor:pointer}
+#app{display:flex;height:100%;gap:16px;padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom))}
+#stageWrap{flex:1.15;display:flex;flex-direction:column;align-items:center;min-width:0;min-height:0}
+#name{font-size:clamp(24px,4vw,40px);color:#fff;font-weight:bold;text-shadow:0 3px 0 #0006;padding:6px 22px;border:none;border-radius:999px;background:#ffffff1c;margin:4px 0}
+#stage{flex:1;width:100%;min-height:0;display:flex;align-items:center;justify-content:center}
+#stage svg{width:100%;height:100%}
+#actions{display:flex;gap:14px;margin-top:8px}
+.btn{font-size:40px;width:84px;height:84px;border-radius:24px;border:none;background:var(--accent);box-shadow:0 6px 0 #c99a10;display:flex;align-items:center;justify-content:center}
+.btn:active{transform:translateY(5px);box-shadow:0 1px 0 #c99a10}
+#panel{flex:1;background:var(--panel);border-radius:28px;display:flex;flex-direction:column;padding:14px;min-width:0;min-height:0;box-shadow:0 10px 0 #0003}
+#tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.tab{height:76px;border-radius:18px;border:4px solid transparent;background:#e3ddff;font-size:34px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.tab small{font-size:13px;font-weight:bold}
+.tab.on{background:#fff;border-color:var(--pick)}
+#parts{flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;padding:14px 2px;overflow-y:auto;align-content:start;scrollbar-width:none}
+.part{aspect-ratio:1;border-radius:20px;background:#fff;border:5px solid #ddd6ff;display:flex;align-items:center;justify-content:center;padding:6px}
+.part.on{border-color:var(--pick);background:#efeaff}
+.part svg{width:100%;height:100%}
+.empty{font-size:44px}
+#colors{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding-top:6px}
+.sw{width:58px;height:58px;border-radius:50%;border:5px solid #fff;box-shadow:0 0 0 3px #0002}
+.sw.on{box-shadow:0 0 0 6px var(--pick);transform:scale(1.08)}
+@media (orientation:portrait){#app{flex-direction:column}#stageWrap,#panel{flex:1}}
+#gallery{position:fixed;inset:0;background:#1d2350f5;display:none;flex-direction:column;padding:20px}
+#gallery.show{display:flex}
+#gallery h2{color:#fff;margin:0 0 14px;font-size:34px;display:flex;justify-content:space-between;align-items:center}
+#gGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px;overflow-y:auto}
+.gItem{background:#fff;border-radius:20px;padding:8px;position:relative;text-align:center;font-weight:bold;font-size:18px}
+.gItem svg{width:100%;height:180px}
+.del{position:absolute;top:6px;right:6px;width:44px;height:44px;border-radius:50%;border:none;background:#ff6b6b;color:#fff;font-size:22px}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none}
+#flash.go{animation:fl .5s}
+@keyframes fl{from{opacity:.9}to{opacity:0}}
+/* robot animations */
+.blink{animation:blink 4s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.spin{animation:spin 1.2s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+.glow{animation:glow 1.4s ease-in-out infinite}
+@keyframes glow{50%{opacity:.45}}
+.flame{animation:flame .2s infinite alternate;transform-box:fill-box;transform-origin:top center}
+@keyframes flame{to{transform:scaleY(.65)}}
+.wheel{transform-box:fill-box;transform-origin:center}
+.arm{transform-box:fill-box;transform-origin:90% 8%}
+.bot{transform-box:fill-box;transform-origin:50% 100%}
+.dancing .arm{animation:wave .5s ease-in-out infinite alternate}
+.dancing .armR{animation-delay:-.25s}
+.dancing .bot{animation:bounce .5s ease-in-out infinite alternate}
+.dancing .wheel{animation:spin .6s linear infinite}
+@keyframes wave{from{transform:rotate(-15deg)}to{transform:rotate(55deg)}}
+@keyframes bounce{from{transform:translateY(0) rotate(-3deg)}to{transform:translateY(-18px) rotate(3deg)}}
+.pop{animation:pop .35s}
+@keyframes pop{40%{transform:scale(1.06)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stageWrap">
+    <button id="name"></button>
+    <div id="stage"></div>
+    <div id="actions">
+      <button class="btn" id="bRandom" aria-label="Surprise me">🎲</button>
+      <button class="btn" id="bDance" aria-label="Dance">💃</button>
+      <button class="btn" id="bSave" aria-label="Save">📸</button>
+      <button class="btn" id="bGallery" aria-label="My robots">🖼️</button>
+    </div>
+  </div>
+  <div id="panel">
+    <div id="tabs"></div>
+    <div id="parts"></div>
+    <div id="colors"></div>
+  </div>
+</div>
+<div id="gallery"><h2>My Robots <button class="btn" id="bClose">✖️</button></h2><div id="gGrid"></div></div>
+<div id="flash"></div>
+<script>
+const OUT='#2b2b3a', GREY='#9aa3b5';
+const COLORS=['#ff5c5c','#ff9f2e','#ffd93d','#6bd968','#2ec4b6','#4d8cff','#9b6bff','#ff7bc8','#c9ced8','#8a5a3b'];
+const S=`stroke="${OUT}" stroke-width="5" stroke-linejoin="round"`;
+function shade(h,p){h=h||'#999999';const n=parseInt(h.slice(1),16);const f=v=>Math.max(0,Math.min(255,Math.round(v+(p<0?v*p:(255-v)*p))));return '#'+((1<<24)|(f(n>>16)<<16)|(f(n>>8&255)<<8)|f(n&255)).toString(16).slice(1)}
+const L=(d,c,w=12)=>`<path d="${d}" fill="none" stroke="${OUT}" stroke-width="${w+10}" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+const heart=(x,y,s,c)=>`<path d="M${x} ${y+s*.9} C${x-s*1.6} ${y-s*.2} ${x-s*.6} ${y-s*1.3} ${x} ${y-s*.35} C${x+s*.6} ${y-s*1.3} ${x+s*1.6} ${y-s*.2} ${x} ${y+s*.9}Z" fill="${c}" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>`;
+const neck=`<rect x="184" y="194" width="32" height="18" fill="${GREY}" ${S}/>`;
+const shoulder=c=>`<circle cx="122" cy="230" r="14" fill="${shade(c,-.25)}" ${S}/>`;
+const wheel=(x,y,c,r=40)=>`<g class="wheel"><circle cx="${x}" cy="${y}" r="${r}" fill="${OUT}"/><circle cx="${x}" cy="${y}" r="${r*.65}" fill="${c}" ${S}/><path d="M${x-r*.65} ${y}H${x+r*.65}M${x} ${y-r*.65}V${y+r*.65}" stroke="${OUT}" stroke-width="4"/><circle cx="${x}" cy="${y}" r="${r*.15}" fill="${OUT}"/></g>`;
+
+const P={
+top:[
+ {id:'none',d:c=>''},
+ {id:'antenna',d:c=>`<line x1="200" y1="120" x2="200" y2="74" stroke="${OUT}" stroke-width="7" stroke-linecap="round"/><circle class="glow" cx="200" cy="64" r="14" fill="${c}" ${S}/>`},
+ {id:'propeller',d:c=>`<line x1="200" y1="120" x2="200" y2="82" stroke="${OUT}" stroke-width="7"/><g class="spin"><ellipse cx="168" cy="78" rx="32" ry="9" fill="${c}" ${S}/><ellipse cx="232" cy="78" rx="32" ry="9" fill="${c}" ${S}/></g><circle cx="200" cy="78" r="8" fill="${OUT}"/>`},
+ {id:'bulb',d:c=>`<rect x="186" y="94" width="28" height="22" rx="4" fill="${GREY}" ${S}/><circle class="glow" cx="200" cy="74" r="26" fill="${shade(c,.45)}" ${S}/><path d="M190 86 L196 72 L204 80 L210 66" fill="none" stroke="${OUT}" stroke-width="3"/>`},
+ {id:'crown',d:c=>`<polygon points="158,120 158,80 179,100 200,66 221,100 242,80 242,120" fill="${c}" ${S}/><circle cx="200" cy="104" r="7" fill="#fff"/>`},
+ {id:'ears',d:c=>`<polygon points="140,128 128,72 182,112" fill="${c}" ${S}/><polygon points="260,128 272,72 218,112" fill="${c}" ${S}/>`},
+],
+head:[
+ {id:'box',d:c=>`<rect x="138" y="110" width="124" height="94" rx="18" fill="${c}" ${S}/><circle cx="138" cy="158" r="10" fill="${shade(c,-.35)}" ${S}/><circle cx="262" cy="158" r="10" fill="${shade(c,-.35)}" ${S}/>`},
+ {id:'round',d:c=>`<circle cx="200" cy="158" r="54" fill="${c}" ${S}/><ellipse cx="176" cy="124" rx="14" ry="7" fill="#ffffff88" transform="rotate(-25 176 124)"/>`},
+ {id:'tv',d:c=>`<rect x="130" y="108" width="140" height="98" rx="14" fill="${c}" ${S}/><rect x="144" y="120" width="112" height="76" rx="12" fill="#dff6ff" ${S}/>`},
+ {id:'dome',d:c=>`<path d="M136 206 V164 A64 64 0 0 1 264 164 V206 Z" fill="${c}" ${S}/><path d="M154 152 A46 46 0 0 1 192 118" fill="none" stroke="#ffffff99" stroke-width="7" stroke-linecap="round"/>`},
+ {id:'bucket',d:c=>`<polygon points="148,110 252,110 270,206 130,206" fill="${c}" ${S}/><rect x="140" y="100" width="120" height="14" rx="7" fill="${shade(c,-.3)}" ${S}/>`},
+],
+face:[
+ {id:'classic',d:c=>`<g class="blink"><circle cx="178" cy="150" r="14" fill="#fff" ${S}/><circle cx="222" cy="150" r="14" fill="#fff" ${S}/><circle cx="180" cy="152" r="8" fill="${c}"/><circle cx="224" cy="152" r="8" fill="${c}"/><circle cx="180" cy="152" r="4" fill="${OUT}"/><circle cx="224" cy="152" r="4" fill="${OUT}"/></g><path d="M180 178 Q200 194 220 178" fill="none" stroke="${OUT}" stroke-width="5" stroke-linecap="round"/>`},
+ {id:'visor',d:c=>`<rect class="glow" x="156" y="138" width="88" height="26" rx="13" fill="${c}" ${S}/><rect x="178" y="176" width="44" height="14" rx="4" fill="${OUT}"/><path d="M189 176v14M200 176v14M211 176v14" stroke="#fff" stroke-width="3"/>`},
+ {id:'cyclops',d:c=>`<g class="blink"><circle cx="200" cy="150" r="22" fill="#fff" ${S}/><circle cx="200" cy="152" r="11" fill="${c}"/><circle cx="200" cy="152" r="5" fill="${OUT}"/></g><path d="M186 184 Q200 190 214 184" fill="none" stroke="${OUT}" stroke-width="5" stroke-linecap="round"/>`},
+ {id:'hearts',d:c=>heart(178,150,12,c)+heart(222,150,12,c)+`<path d="M184 178 Q200 190 216 178" fill="none" stroke="${OUT}" stroke-width="5" stroke-linecap="round"/>`},
+ {id:'happy',d:c=>`<path d="M166 156 Q178 138 190 156M210 156 Q222 138 234 156" fill="none" stroke="${OUT}" stroke-width="6" stroke-linecap="round"/><circle cx="164" cy="172" r="7" fill="#ff8fb3aa"/><circle cx="236" cy="172" r="7" fill="#ff8fb3aa"/><path d="M182 172 Q200 198 218 172 Z" fill="${c}" ${S}/>`},
+ {id:'teeth',d:c=>`<circle cx="178" cy="148" r="7" fill="${OUT}"/><circle cx="222" cy="148" r="7" fill="${OUT}"/><rect x="172" y="168" width="56" height="20" rx="6" fill="#fff" ${S}/><path d="M186 168v20M200 168v20M214 168v20" stroke="${OUT}" stroke-width="3"/><path d="M166 134 L186 140M234 134 L214 140" stroke="${c}" stroke-width="6" stroke-linecap="round"/>`},
+],
+body:[
+ {id:'box',d:c=>neck+`<rect x="124" y="206" width="152" height="124" rx="18" fill="${c}" ${S}/><rect x="158" y="230" width="84" height="58" rx="10" fill="${shade(c,-.3)}" ${S}/><circle cx="178" cy="250" r="7" fill="#ff5c5c"/><circle class="glow" cx="200" cy="250" r="7" fill="#ffd93d"/><circle cx="222" cy="250" r="7" fill="#6bd968"/><rect x="172" y="268" width="56" height="8" rx="4" fill="#ffffff88"/>`},
+ {id:'barrel',d:c=>neck+`<rect x="128" y="206" width="144" height="124" rx="56" fill="${c}" ${S}/><path d="M134 246 H266 M134 290 H266" stroke="${shade(c,-.3)}" stroke-width="8"/>`},
+ {id:'egg',d:c=>neck+`<ellipse cx="200" cy="268" rx="80" ry="64" fill="${c}" ${S}/><g class="glow">${heart(200,268,18,'#ff5c8a')}</g>`},
+ {id:'trap',d:c=>neck+`<polygon points="138,206 262,206 286,330 114,330" fill="${c}" ${S}/><circle cx="200" cy="264" r="24" fill="#fff" ${S}/><circle class="glow" cx="200" cy="264" r="12" fill="${shade(c,-.3)}"/>`},
+],
+arms:[
+ {id:'none',d:c=>''},
+ {id:'claw',d:c=>L('M122 232 L92 262 L84 302',c)+`<path d="M70 318 Q66 302 82 300 M98 318 Q102 302 86 300" fill="none" stroke="${OUT}" stroke-width="7" stroke-linecap="round"/>`+shoulder(c)},
+ {id:'spring',d:c=>L('M122 232 L104 242 L120 254 L100 264 L116 276 L96 286 L110 296',c,7)+`<circle cx="106" cy="310" r="15" fill="${c}" ${S}/>`+shoulder(c)},
+ {id:'rocket',d:c=>L('M122 232 L94 262 L92 286',c,14)+`<rect x="70" y="282" width="44" height="38" rx="14" fill="${c}" ${S}/><path d="M80 296 H104 M80 306 H104" stroke="${OUT}" stroke-width="3"/>`+shoulder(c)},
+ {id:'tentacle',d:c=>L('M122 232 C 70 236, 116 284, 74 296 S 60 330, 84 330',c)+shoulder(c)},
+],
+legs:[
+ {id:'legs',d:c=>`<rect x="160" y="324" width="26" height="80" fill="${shade(c,-.2)}" ${S}/><rect x="214" y="324" width="26" height="80" fill="${shade(c,-.2)}" ${S}/><rect x="136" y="398" width="60" height="30" rx="15" fill="${c}" ${S}/><rect x="204" y="398" width="60" height="30" rx="15" fill="${c}" ${S}/>`},
+ {id:'wheels',d:c=>`<rect x="190" y="320" width="20" height="70" fill="${GREY}" ${S}/><rect x="130" y="384" width="140" height="16" rx="8" fill="${GREY}" ${S}/>`+wheel(140,404,c)+wheel(260,404,c)},
+ {id:'treads',d:c=>`<rect x="190" y="320" width="20" height="30" fill="${GREY}" ${S}/><rect x="112" y="344" width="176" height="90" rx="45" fill="${OUT}"/><rect x="122" y="354" width="156" height="70" rx="35" fill="${c}"/>`+wheel(158,389,GREY,22)+wheel(200,389,GREY,22)+wheel(242,389,GREY,22)},
+ {id:'pogo',d:c=>`<rect x="190" y="322" width="20" height="44" fill="${GREY}" ${S}/><polyline points="200,366 178,376 222,388 178,400 222,412 200,422" fill="none" stroke="${OUT}" stroke-width="7" stroke-linejoin="round"/><ellipse cx="200" cy="432" rx="46" ry="14" fill="${c}" ${S}/>`},
+ {id:'hover',d:c=>`<polygon points="160,324 240,324 224,372 176,372" fill="${c}" ${S}/><g class="flame"><path d="M178 374 Q200 452 222 374 Z" fill="#ff9f2e"/><path d="M188 374 Q200 422 212 374 Z" fill="#ffd93d"/></g>`},
+],
+};
+const CATS=[['head','🤖','Head'],['face','👀','Face'],['body','🔋','Body'],['arms','💪','Arms'],['legs','🦿','Legs'],['top','📡','Top']];
+const VB={top:'120 40 160 100',head:'120 92 160 124',face:'145 118 110 88',body:'105 185 190 155',arms:'50 205 100 135',legs:'95 315 210 140'};
+const find=(k,id)=>P[k].find(p=>p.id===id)||P[k][0];
+const pick=a=>a[Math.random()*a.length|0];
+const N1=['Captain','Sir','Professor','Little','Mega','Turbo','Doctor','Super','Baby','King'];
+const N2=['Bolt','Beep','Sprocket','Zappy','Gizmo','Clank','Widget','Boop','Rusty','Sparky','Noodle','Wobble'];
+const N3=['',' 3000',' Jr.',' the Great',' X',' Max'];
+const randName=()=>`${pick(N1)} ${pick(N2)}${pick(N3)}`;
+
+function robotSVG(s){
+  const g=k=>find(k,s[k]).d(s.col[k]);
+  const arm=g('arms');
+  return `<svg viewBox="0 0 400 480" xmlns="http://www.w3.org/2000/svg"><ellipse cx="200" cy="462" rx="120" ry="12" fill="#00000033"/><g class="bot">${g('legs')}<g class="arm">${arm}</g><g transform="translate(400 0) scale(-1 1)"><g class="arm armR">${arm}</g></g>${g('body')}${g('top')}${g('head')}${g('face')}</g></svg>`;
+}
+const thumb=(k,p)=>`<svg viewBox="${VB[k]}">${k==='face'?'<rect x="145" y="118" width="110" height="88" rx="20" fill="#e9e4ff"/>':''}${p.d(state.col[k])}</svg>`;
+
+/* storage (safe if unavailable) */
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch(e){return d}}
+
+/* sound */
+let ac;
+function tone(f,d=.12,t=0,type='square'){try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const now=ac.currentTime+t,o=ac.createOscillator(),gn=ac.createGain();o.type=type;o.frequency.value=f;gn.gain.setValueAtTime(.0001,now);gn.gain.exponentialRampToValueAtTime(.12,now+.01);gn.gain.exponentialRampToValueAtTime(.0001,now+d);o.connect(gn).connect(ac.destination);o.start(now);o.stop(now+d+.02)}catch(e){}}
+const beepBoop=()=>{tone(620,.1);tone(380,.16,.12)};
+
+/* state */
+const DEF={head:'box',face:'classic',body:'box',arms:'claw',legs:'legs',top:'antenna',col:{head:'#c9ced8',face:'#4d8cff',body:'#4d8cff',arms:'#c9ced8',legs:'#ff9f2e',top:'#ff5c5c'}};
+let state=load('robot-current',null)||{...DEF,name:randName()};
+state.col={...DEF.col,...(state.col||{})};
+let cur='head';
+const $=id=>document.getElementById(id);
+const stage=$('stage'),nameEl=$('name'),tabs=$('tabs'),parts=$('parts'),colors=$('colors');
+
+function pop(el){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}
+function drawStage(){stage.innerHTML=robotSVG(state);nameEl.textContent=state.name;store('robot-current',state)}
+function drawTabs(){tabs.innerHTML=CATS.map(([k,i,l])=>`<button class="tab ${k===cur?'on':''}" data-k="${k}">${i}<small>${l}</small></button>`).join('')}
+function drawParts(){parts.innerHTML=P[cur].map((p,i)=>`<button class="part ${state[cur]===p.id?'on':''}" data-i="${i}">${p.id==='none'?'<span class="empty">🚫</span>':thumb(cur,p)}</button>`).join('')}
+function drawColors(){colors.innerHTML=COLORS.map(c=>`<button class="sw ${state.col[cur]===c?'on':''}" data-c="${c}" style="background:${c}"></button>`).join('')}
+function drawAll(){drawStage();drawTabs();drawParts();drawColors()}
+
+tabs.onclick=e=>{const b=e.target.closest('.tab');if(!b)return;cur=b.dataset.k;tone(440,.06);drawTabs();drawParts();drawColors()};
+parts.onclick=e=>{const b=e.target.closest('.part');if(!b)return;const i=+b.dataset.i;state[cur]=P[cur][i].id;tone(330+i*90,.1);drawParts();drawStage();pop(stage.firstChild)};
+colors.onclick=e=>{const b=e.target.closest('.sw');if(!b)return;state.col[cur]=b.dataset.c;tone(500+COLORS.indexOf(b.dataset.c)*40,.08,0,'triangle');drawColors();drawParts();drawStage()};
+stage.onclick=()=>{beepBoop();pop(stage.firstChild)};
+nameEl.onclick=()=>{state.name=randName();tone(700,.08);tone(900,.08,.09);drawStage()};
+
+let danceT;
+$('bDance').onclick=()=>{stage.classList.add('dancing');const m=[523,659,784,659,523,784,1047,784];m.forEach((f,i)=>tone(f,.14,i*.18));m.forEach((f,i)=>tone(f/2,.14,1.5+i*.18,'triangle'));clearTimeout(danceT);danceT=setTimeout(()=>stage.classList.remove('dancing'),3000)};
+$('bRandom').onclick=()=>{for(const[k]of CATS){const a=P[k].filter(p=>p.id!=='none');state[k]=pick(a).id;state.col[k]=pick(COLORS)}state.name=randName();for(let i=0;i<6;i++)tone(300+Math.random()*700,.07,i*.06);drawAll();pop(stage.firstChild)};
+$('bSave').onclick=()=>{const g=load('robot-gallery',[]);g.unshift(JSON.parse(JSON.stringify(state)));store('robot-gallery',g.slice(0,40));const f=$('flash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go');tone(1200,.05);tone(800,.12,.06,'triangle');pop($('bGallery'))};
+
+const gal=$('gallery'),gGrid=$('gGrid');
+function openGallery(){const g=load('robot-gallery',[]);gGrid.innerHTML=g.length?g.map((s,i)=>{s.col={...DEF.col,...(s.col||{})};return `<div class="gItem" data-i="${i}">${robotSVG(s)}<div>${s.name}</div><button class="del" data-d="${i}">✕</button></div>`}).join(''):'<p style="color:#fff;font-size:26px">No robots yet. Tap 📸 to save one!</p>';gal.classList.add('show')}
+$('bGallery').onclick=()=>{tone(600,.08);openGallery()};
+$('bClose').onclick=()=>gal.classList.remove('show');
+gGrid.onclick=e=>{const g=load('robot-gallery',[]);const d=e.target.closest('.del');
+  if(d){e.stopPropagation();if(d.dataset.sure){g.splice(+d.dataset.d,1);store('robot-gallery',g);tone(200,.2);openGallery()}else{d.dataset.sure='1';d.textContent='🗑️'}return}
+  const it=e.target.closest('.gItem');if(!it)return;state=JSON.parse(JSON.stringify(g[+it.dataset.i]));state.col={...DEF.col,...state.col};gal.classList.remove('show');beepBoop();drawAll()};
+document.addEventListener('contextmenu',e=>e.preventDefault());
+drawAll();
+</script>
+</body>
+</html>

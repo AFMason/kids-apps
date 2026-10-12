@@ -1,0 +1,11 @@
+﻿.claude/
+node_modules/
+build/
+.gradle/
+.idea/
+local.properties
+*.apk
+*.aab
+*.jks
+*.keystore
+.env*

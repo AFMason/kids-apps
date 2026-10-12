@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Snake Maths</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+  body {
+    font-family: "Comic Sans MS", "Chalkboard SE", "Trebuchet MS", sans-serif;
+    background: #2e7d32; color: #fff;
+    display: flex; flex-direction: column;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 18px; background: #1b5e20; gap: 12px; flex: 0 0 auto;
+  }
+  .badge { font-size: 26px; font-weight: bold; background: #ffeb3b; color: #1b5e20; border-radius: 30px; padding: 6px 20px; }
+  .meter { display: flex; gap: 8px; }
+  .meter span { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.2); border: 3px solid rgba(255,255,255,.5); transition: all .3s; }
+  .meter span.on { background: #ffeb3b; border-color: #fff; transform: scale(1.15); }
+  .stat { font-size: 24px; font-weight: bold; }
+  #garden { position: relative; flex: 1 1 auto; min-height: 0; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #card {
+    position: absolute; left: 50%; top: 14px; transform: translateX(-50%);
+    background: rgba(255,255,255,.95); color: #1b5e20; border-radius: 28px;
+    padding: 12px 34px; text-align: center; box-shadow: 0 6px 0 rgba(0,0,0,.25);
+    max-width: 92%;
+  }
+  #q { font-size: 64px; font-weight: bold; letter-spacing: 2px; white-space: nowrap; }
+  #q.small { font-size: 34px; white-space: normal; letter-spacing: 0; }
+  #dots svg { display: block; margin: 4px auto 0; }
+  #dots { font-size: 30px; line-height: 1.1; min-height: 0; }
+  #dots .plus { color: #888; margin: 0 8px; }
+  #speak { position: absolute; right: -14px; top: -14px; width: 54px; height: 54px; border-radius: 50%; border: none; background: #ff9800; font-size: 26px; box-shadow: 0 4px 0 #b26a00; }
+  #answers {
+    flex: 0 0 auto; display: flex; justify-content: center; gap: 22px;
+    padding: 14px 14px 22px; background: #33691e;
+  }
+  .apple {
+    position: relative; width: 140px; height: 130px; border: none; border-radius: 50% 50% 46% 46%;
+    background: radial-gradient(circle at 35% 30%, #ff8a80, #e53935 55%, #b71c1c);
+    color: #fff; font-family: inherit; font-size: 58px; font-weight: bold;
+    text-shadow: 0 3px 0 rgba(0,0,0,.3); box-shadow: 0 7px 0 #7f0000;
+    transition: transform .1s;
+  }
+  .apple::before { content: ""; position: absolute; top: -16px; left: 50%; width: 8px; height: 22px; background: #5d4037; border-radius: 4px; transform: translateX(-50%) rotate(8deg); }
+  .apple::after { content: ""; position: absolute; top: -14px; left: 54%; width: 30px; height: 16px; background: #66bb6a; border-radius: 0 100% 0 100%; }
+  .apple:active { transform: translateY(5px); box-shadow: 0 2px 0 #7f0000; }
+  .apple.wrong { filter: grayscale(1) brightness(.7); animation: shake .4s; pointer-events: none; }
+  .apple.right { animation: gulp .5s forwards; }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-12px); } 75% { transform: translateX(12px); } }
+  @keyframes gulp { 50% { transform: scale(1.25); } 100% { transform: scale(0); opacity: 0; } }
+  #overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none;
+    align-items: center; justify-content: center; z-index: 10;
+  }
+  #overlay.show { display: flex; }
+  .pop { background: #fff; color: #1b5e20; border-radius: 34px; padding: 30px 46px; text-align: center; animation: popin .4s; max-width: 90%; }
+  .pop h1 { font-size: 54px; }
+  .pop p { font-size: 28px; margin: 10px 0 22px; }
+  .pop button, #parent button { font-family: inherit; font-size: 30px; font-weight: bold; border: none; border-radius: 22px; padding: 14px 40px; background: #43a047; color: #fff; box-shadow: 0 6px 0 #1b5e20; }
+  @keyframes popin { from { transform: scale(.3); } to { transform: scale(1); } }
+  #corner { position: fixed; top: 0; right: 0; width: 70px; height: 70px; z-index: 5; }
+  #parent { position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 20; display: none; align-items: center; justify-content: center; }
+  #parent.show { display: flex; }
+  #parent .pop { font-size: 22px; }
+  #parent .row { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 14px 0; }
+  #parent .row button { padding: 8px 22px; font-size: 26px; }
+  #parent .small { background: #e53935; box-shadow: 0 6px 0 #7f0000; font-size: 20px; padding: 10px 20px; }
+  @media (max-height: 560px) {
+    #q { font-size: 46px; } .apple { width: 110px; height: 100px; font-size: 44px; } #dots { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="badge" id="lvl">Level 1</div>
+  <div class="meter" id="meter"></div>
+  <div class="stat">🍎 <span id="eaten">0</span></div>
+</header>
+<div id="garden">
+  <canvas id="cv"></canvas>
+  <div id="card">
+    <button id="speak" aria-label="Read question">🔊</button>
+    <div id="q"></div>
+    <div id="dots"></div>
+  </div>
+</div>
+<div id="answers"></div>
+
+<div id="overlay"><div class="pop"><h1 id="ovT"></h1><p id="ovP"></p><button id="ovB">Let's go! 🐍</button></div></div>
+<div id="corner"></div>
+<div id="parent"><div class="pop">
+  <h1 style="font-size:34px">Grown-up settings</h1>
+  <div class="row">Level: <button id="pDown">−</button><b id="pLvl">1</b><button id="pUp">+</button></div>
+  <p id="pInfo" style="font-size:18px"></p>
+  <div class="row"><button class="small" id="pReset">Reset snake</button><button id="pClose">Done</button></div>
+</div></div>
+
+<script>
+// ---------- Levels ----------
+const R = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const any = (...fs) => fs[R(0, fs.length - 1)]();
+const LEVELS = [
+  { name: 'Baby snake',     skin: ['#8bc34a', '#c5e1a5'], make: () => add(1, 10, true) },
+  { name: 'Little snake',   skin: ['#4caf50', '#ffeb3b'], make: () => sub(10, true) },
+  { name: 'Garden snake',   skin: ['#ff9800', '#ffe0b2'], make: () => any(() => add(0, 20), () => sub(20)) },
+  { name: 'Grass snake',    skin: ['#009688', '#b2dfdb'], make: () => any(() => missing(20), shapes2d) },
+  { name: 'Tree snake',     skin: ['#2196f3', '#bbdefb'], make: () => any(add2, sub2) },
+  { name: 'River snake',    skin: ['#3f51b5', '#c5cae9'], make: () => any(() => times([2, 5, 10]), gridArea) },
+  { name: 'Jungle snake',   skin: ['#9c27b0', '#e1bee7'], make: () => any(() => add2(true), () => sub2(true)) },
+  { name: 'Python',         skin: ['#795548', '#ffcc80'], make: () => any(perimeter, () => times([3, 4])) },
+  { name: 'Anaconda',       skin: ['#607d8b', '#cfd8dc'], make: () => any(shapes3d, share) },
+  { name: 'Viper',          skin: ['#cddc39', '#33691e'], make: () => any(areaLW, () => gridArea(true)) },
+  { name: 'Cobra',          skin: ['#f44336', '#ffcdd2'], make: () => any(() => cubes(false), () => times([3, 4, 6])) },
+  { name: 'King cobra',     skin: ['#212121', '#ffd600'], make: () => any(volumeLWH, () => cubes(true), () => missing(100)) },
+  { name: 'Rattlesnake',    skin: ['#a1887f', '#3e2723'], make: () => any(() => times([6, 7, 8, 9]), lArea, divide) },
+  { name: 'Mega snake',     skin: ['#e91e63', '#00e5ff'], make: () => any(add3, perimeter, lArea, volumeLWH, () => cubes(true), divide, shapes3d) },
+  { name: 'Dragon snake',   skin: ['#ffd600', '#d50000'], make: () => any(twoStep, perimMissing, areaToSide, volumeLWH, () => times([6, 7, 8, 9, 11, 12])) },
+];
+
+// ---- harder number questions ----
+function add2(carry) {
+  let a, b;
+  do { a = R(11, 79); b = R(11, 99 - a); } while (b < 1 || ((a % 10 + b % 10 >= 10) !== !!carry));
+  return { text: `${a} + ${b}`, say: `${a} plus ${b}`, ans: a + b };
+}
+function sub2(borrow) {
+  let a, b;
+  do { a = R(20, 99); b = R(10, a - 1); } while ((a % 10 < b % 10) !== !!borrow);
+  return { text: `${a} − ${b}`, say: `${a} take away ${b}`, ans: a - b };
+}
+function add3() { const a = R(100, 600), b = R(10, 300); return { text: `${a} + ${b}`, say: `${a} plus ${b}`, ans: a + b }; }
+function share() {
+  const k = R(2, 5), each = R(2, 6), n = k * each;
+  return { text: `${n} 🍎 shared by ${k} snakes`, ask: 'How many each?', say: `${n} apples shared between ${k} snakes. How many does each snake get?`, ans: each };
+}
+function divide() { const b = R(2, 10), q = R(2, 10); return { text: `${b * q} ÷ ${b}`, say: `${b * q} divided by ${b}`, ans: q }; }
+function twoStep() {
+  const a = R(2, 9), b = R(2, 9), c = R(1, 20);
+  return Math.random() < .5
+    ? { text: `${a} × ${b} + ${c}`, say: `${a} times ${b}, plus ${c}`, ans: a * b + c }
+    : { text: `${a * b + c} − ${a} × ${b}`, say: `${a * b + c} take away ${a} times ${b}`, ans: c };
+}
+
+// ---- geometry (pictures drawn as SVG) ----
+const SV = (w, h, body) => `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="max-width:100%;max-height:30vh">${body}</svg>`;
+const NAMES2D = { 3: 'triangle', 4: 'square', 5: 'pentagon', 6: 'hexagon', 7: 'heptagon', 8: 'octagon' };
+function shapes2d() {
+  const n = R(3, 8), pts = [];
+  for (let i = 0; i < n; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / n + (n === 4 ? Math.PI / 4 : 0); pts.push(`${90 + 70 * Math.cos(a)},${85 + 70 * Math.sin(a)}`); }
+  const what = Math.random() < .5 ? 'sides' : 'corners';
+  return { svg: SV(180, 170, `<polygon points="${pts.join(' ')}" fill="#ffb300" stroke="#e65100" stroke-width="5" stroke-linejoin="round"/>`),
+    ask: `How many ${what}?`, say: `How many ${what} does this ${NAMES2D[n]} have?`, ans: n };
+}
+function grid(w, h, cell, skip) {
+  let s = '';
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (!skip || !skip(x, y))
+    s += `<rect x="${4 + x * cell}" y="${4 + y * cell}" width="${cell}" height="${cell}" fill="#4fc3f7" stroke="#01579b" stroke-width="2"/>`;
+  return s;
+}
+function gridArea(lshape) {
+  const w = R(3, 6), h = R(2, 4), cell = 34;
+  if (lshape) {
+    const cw = R(1, w - 2), ch = R(1, h - 1);
+    return { svg: SV(w * cell + 8, h * cell + 8, grid(w, h, cell, (x, y) => x >= w - cw && y < ch)),
+      ask: 'Area = how many squares?', say: 'What is the area? How many squares?', ans: w * h - cw * ch };
+  }
+  return { svg: SV(w * cell + 8, h * cell + 8, grid(w, h, cell)), ask: 'Area = how many squares?', say: 'What is the area? How many squares?', ans: w * h };
+}
+function rectLabel(w, h, lw, lh, scale = 22) {
+  const W2 = Math.min(w * scale, 240), H2 = Math.min(h * scale, 140);
+  return SV(W2 + 90, H2 + 60, `<rect x="45" y="12" width="${W2}" height="${H2}" fill="#aed581" stroke="#33691e" stroke-width="4"/>
+    <text x="${45 + W2 / 2}" y="${H2 + 46}" font-size="26" text-anchor="middle" fill="#1b5e20" font-weight="bold">${lw}</text>
+    <text x="${W2 + 52}" y="${12 + H2 / 2 + 9}" font-size="26" fill="#1b5e20" font-weight="bold">${lh}</text>`);
+}
+function perimeter() {
+  const w = R(2, 10), h = R(2, 7);
+  return { svg: rectLabel(w, h, `${w} cm`, `${h} cm`), ask: 'Perimeter? (all the way round)', say: `This rectangle is ${w} by ${h}. How far is it all the way round?`, ans: 2 * (w + h) };
+}
+function areaLW() {
+  const w = R(2, 9), h = R(2, 6);
+  return { svg: rectLabel(w, h, `${w} cm`, `${h} cm`), ask: 'Area? (square cm)', say: `This rectangle is ${w} by ${h}. What is its area?`, ans: w * h };
+}
+function lArea() {
+  // L shape split into two rectangles, sides labelled
+  const W = R(5, 9), H = R(4, 7), cw = R(2, W - 2), ch = R(2, H - 2), s = 22;
+  const pts = [[0, 0], [W - cw, 0], [W - cw, ch], [W, ch], [W, H], [0, H]].map(([x, y]) => `${40 + x * s},${12 + y * s}`).join(' ');
+  const t = (x, y, v, a = 'middle') => `<text x="${x}" y="${y}" font-size="20" text-anchor="${a}" fill="#1b5e20" font-weight="bold">${v}</text>`;
+  return { svg: SV(W * s + 90, H * s + 50, `<polygon points="${pts}" fill="#aed581" stroke="#33691e" stroke-width="4"/>` +
+      t(40 + W * s / 2, 12 + H * s + 26, W) + t(34, 12 + H * s / 2, H, 'end') + t(40 + (W - cw) * s / 2, 8, W - cw) + t(46 + W * s, 12 + (ch + H) * s / 2, H - ch, 'start')),
+    ask: 'Area of the L shape?', say: 'What is the area of this L shape?', ans: W * H - cw * ch };
+}
+function perimMissing() {
+  const w = R(3, 12), h = R(2, 8);
+  return { svg: rectLabel(w, h, `${w} cm`, '? cm'), ask: `Perimeter is ${2 * (w + h)} cm. What is ?`, say: `The perimeter is ${2 * (w + h)}. What is the missing side?`, ans: h };
+}
+function areaToSide() {
+  const w = R(2, 9), h = R(2, 9);
+  return { svg: rectLabel(w, h, `${w} cm`, '? cm'), ask: `Area is ${w * h} square cm. What is ?`, say: `The area is ${w * h}. What is the missing side?`, ans: h };
+}
+// 3D: oblique-projection line drawings
+const SOLIDS = [
+  { name: 'cube', f: 6, e: 12, v: 8, draw: () => box(70, 70, 70) },
+  { name: 'cuboid', f: 6, e: 12, v: 8, draw: () => box(120, 60, 50) },
+  { name: 'square pyramid', f: 5, e: 8, v: 5, draw: () => `<polygon points="30,140 130,140 160,110 60,110" fill="#ffe082" stroke="#e65100" stroke-width="3"/><path d="M95,20 L30,140 M95,20 L130,140 M95,20 L160,110 M95,20 L60,110" stroke="#e65100" stroke-width="3" fill="none"/>` },
+  { name: 'triangular prism', f: 5, e: 9, v: 6, draw: () => `<polygon points="20,140 80,40 140,140" fill="#ffe082" stroke="#e65100" stroke-width="3"/><path d="M80,40 L160,10 L220,110 L140,140 M220,110 L190,110" stroke="#e65100" stroke-width="3" fill="none"/><path d="M20,140 L100,110 L190,110 M100,110 L160,10" stroke="#e65100" stroke-width="2" stroke-dasharray="6 5" fill="none"/>` },
+];
+function box(w, h, d) {
+  const o = d * .55, x = 20, y = 20 + o;
+  return `<polygon points="${x},${y} ${x + w},${y} ${x + w},${y + h} ${x},${y + h}" fill="#ffe082" stroke="#e65100" stroke-width="3"/>
+    <polygon points="${x},${y} ${x + o},${y - o} ${x + w + o},${y - o} ${x + w},${y}" fill="#ffca28" stroke="#e65100" stroke-width="3"/>
+    <polygon points="${x + w},${y} ${x + w + o},${y - o} ${x + w + o},${y + h - o} ${x + w},${y + h}" fill="#ffb300" stroke="#e65100" stroke-width="3"/>
+    <path d="M${x},${y + h} L${x + o},${y + h - o} L${x + w + o},${y + h - o} M${x + o},${y + h - o} L${x + o},${y - o}" stroke="#e65100" stroke-width="2" stroke-dasharray="6 5" fill="none"/>`;
+}
+function shapes3d() {
+  const s = SOLIDS[R(0, SOLIDS.length - 1)], k = ['f', 'e', 'v'][R(0, 2)];
+  const word = { f: 'faces (flat sides)', e: 'edges', v: 'corners' }[k];
+  return { svg: SV(230, 160, s.draw()), ask: `How many ${word}?`, say: `How many ${word.split(' ')[0]} does a ${s.name} have?`, ans: s[k] };
+}
+// Volume: isometric stack of unit cubes, a cuboid with no gaps
+function cubes(bigger) {
+  const a = R(2, bigger ? 4 : 3), b = R(1, bigger ? 3 : 2), c = R(bigger ? 2 : 1, 3), u = 30;
+  const iso = (x, y, z) => [(x - y) * u * .87, (x + y) * u * .5 - z * u];
+  let s = '';
+  // painter's order: further-back cubes (small x+y+z) first
+  const order = [];
+  for (let z = 0; z < c; z++) for (let x = 0; x < a; x++) for (let y = 0; y < b; y++) order.push([x, y, z]);
+  order.sort((p, q) => (p[0] + p[1] + p[2]) - (q[0] + q[1] + q[2]) || p[2] - q[2]);
+  for (const [x, y, z] of order) {
+    const P = (dx, dy, dz) => iso(x + dx, y + dy, z + dz).map(n => n.toFixed(1)).join(',');
+    s += `<polygon points="${P(0, 0, 1)} ${P(1, 0, 1)} ${P(1, 1, 1)} ${P(0, 1, 1)}" fill="#81d4fa" stroke="#01579b" stroke-width="2"/>
+      <polygon points="${P(1, 0, 0)} ${P(1, 1, 0)} ${P(1, 1, 1)} ${P(1, 0, 1)}" fill="#4fc3f7" stroke="#01579b" stroke-width="2"/>
+      <polygon points="${P(0, 1, 0)} ${P(1, 1, 0)} ${P(1, 1, 1)} ${P(0, 1, 1)}" fill="#0288d1" stroke="#01579b" stroke-width="2"/>`;
+  }
+  const x0 = -b * u * .87 - 4, x1 = a * u * .87 + 4, y0 = -c * u - 4, y1 = (a + b) * u * .5 + 4;
+  const svg = `<svg viewBox="${x0} ${y0} ${x1 - x0} ${y1 - y0}" width="${x1 - x0}" height="${y1 - y0}" style="max-width:100%;max-height:30vh">${s}</svg>`;
+  return { svg, ask: 'Volume = how many cubes?', say: 'This box is made of cubes with no gaps. How many cubes?', ans: a * b * c };
+}
+function volumeLWH() {
+  const l = R(2, 6), w = R(2, 4), h = R(2, 4);
+  const t = (x, y, v) => `<text x="${x}" y="${y}" font-size="22" text-anchor="middle" fill="#1b5e20" font-weight="bold">${v}</text>`;
+  return { svg: SV(290, 160, `<g transform="translate(50,0)">${box(130, 70, 60)}</g>` + t(135, 150, `${l} cm`) + t(250, 105, `${w} cm`) + t(32, 96, `${h} cm`)),
+    ask: 'Volume? (cubic cm)', say: `This box is ${l} long, ${w} wide and ${h} high. What is its volume?`, ans: l * w * h };
+}
+function add(lo, max, dots) {
+  const a = R(lo, max), b = R(0, max - a);
+  return { text: `${a} + ${b}`, say: `${a} plus ${b}`, ans: a + b, dots: dots ? [a, b, '+'] : null };
+}
+function sub(max, dots) {
+  const a = R(1, max), b = R(0, a);
+  return { text: `${a} − ${b}`, say: `${a} take away ${b}`, ans: a - b, dots: dots ? [a, b, '−'] : null };
+}
+function missing(max) {
+  const a = R(0, max - 1), c = R(a + 1, max);
+  return { text: `${a} + ? = ${c}`, say: `${a} plus what makes ${c}`, ans: c - a };
+}
+function tens() {
+  const a = R(1, 8) * 10, b = R(1, 9);
+  return Math.random() < .5
+    ? { text: `${a} + ${b}`, say: `${a} plus ${b}`, ans: a + b }
+    : { text: `${a} + 10`, say: `${a} plus 10`, ans: a + 10 };
+}
+function times(tables) {
+  const a = tables[R(0, tables.length - 1)], b = R(2, 12);
+  return { text: `${b} × ${a}`, say: `${b} lots of ${a}`, ans: a * b };
+}
+
+// ---------- State ----------
+const NEED = 6;         // correct answers in a row to level up
+const KEY = 'snake-maths';
+let S = { level: 0, eaten: 0, length: 4 };
+try { Object.assign(S, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+let streak = 0, recent = [], cur = null, firstTry = true, busy = false;
+
+const $ = id => document.getElementById(id);
+function renderHud() {
+  $('lvl').textContent = `Level ${S.level + 1} · ${LEVELS[S.level].name}`;
+  $('eaten').textContent = S.eaten;
+  $('meter').innerHTML = Array.from({ length: NEED }, (_, i) => `<span class="${i < streak ? 'on' : ''}"></span>`).join('');
+}
+
+function next() {
+  let q;
+  do { q = LEVELS[S.level].make(); } while (cur && q.text && q.text === cur.text);
+  cur = q; firstTry = true; busy = false;
+  const qEl = $('q');
+  qEl.className = q.svg || q.ask ? 'small' : '';
+  qEl.textContent = q.ask ? (q.text ? q.text + ' — ' : '') + q.ask : q.text.includes('?') ? q.text : q.text + ' = ?';
+  $('dots').innerHTML = q.svg ? q.svg : q.dots
+    ? `${'🟢'.repeat(q.dots[0])}<span class="plus">${q.dots[2]}</span>${q.dots[2] === '+' ? '🔵'.repeat(q.dots[1]) : '❌'.repeat(q.dots[1])}`
+    : '';
+  const n = S.level < 2 ? 3 : 4, opts = new Set([q.ans]);
+  let tries = 0;
+  while (opts.size < n && tries++ < 50) {
+    const spread = Math.max(2, Math.ceil(q.ans * 0.2));
+    const d = q.ans + R(-spread, spread);
+    if (d >= 0 && d !== q.ans) opts.add(d);
+  }
+  while (opts.size < n) opts.add(q.ans + opts.size);
+  $('answers').innerHTML = '';
+  [...opts].sort(() => Math.random() - .5).forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'apple'; b.textContent = v;
+    b.onclick = () => pick(b, v);
+    $('answers').appendChild(b);
+  });
+}
+
+function pick(btn, v) {
+  if (busy) return;
+  if (v === cur.ans) {
+    busy = true;
+    btn.classList.add('right');
+    sfx.yum();
+    S.eaten++; S.length = Math.min(S.length + 1, 60);
+    recent.push(firstTry); if (recent.length > 4) recent.shift();
+    streak = firstTry ? streak + 1 : 0;
+    feed();
+    save(); renderHud();
+    if (streak >= NEED && S.level < LEVELS.length - 1) {
+      setTimeout(levelUp, 700);
+    } else setTimeout(next, 900);
+  } else {
+    btn.classList.add('wrong');
+    sfx.oops();
+    if (firstTry) {
+      firstTry = false;
+      recent.push(false); if (recent.length > 4) recent.shift();
+      streak = 0; renderHud();
+      // Too hard? Gently step back a level.
+      if (S.level > 0 && recent.filter(x => !x).length >= 3) {
+        S.level--; recent = []; save(); renderHud();
+      }
+    }
+  }
+}
+
+function levelUp() {
+  S.level++; streak = 0; recent = []; save(); renderHud();
+  sfx.fanfare();
+  confetti();
+  showOverlay(`Level ${S.level + 1}! 🎉`, `You're a ${LEVELS[S.level].name} now! Look at your new colours!`);
+}
+function showOverlay(t, p) {
+  $('ovT').textContent = t; $('ovP').textContent = p; $('overlay').classList.add('show');
+}
+$('ovB').onclick = () => { $('overlay').classList.remove('show'); sfx.yum(); next(); };
+
+// ---------- Speech ----------
+$('speak').onclick = () => {
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(cur.say.endsWith('?') ? cur.say : cur.say + '?');
+    u.rate = .85; u.pitch = 1.2; speechSynthesis.speak(u);
+  } catch (e) {}
+};
+
+// ---------- Sounds (Web Audio) ----------
+let ac;
+function tone(f, t0, dur, type = 'sine', vol = .2) {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain(), s = ac.currentTime + t0;
+    o.type = type; o.frequency.setValueAtTime(f, s);
+    g.gain.setValueAtTime(vol, s); g.gain.exponentialRampToValueAtTime(.001, s + dur);
+    o.connect(g).connect(ac.destination); o.start(s); o.stop(s + dur);
+  } catch (e) {}
+}
+const sfx = {
+  yum() { tone(523, 0, .12, 'triangle'); tone(784, .1, .2, 'triangle'); },
+  oops() { tone(220, 0, .25, 'sawtooth', .08); tone(180, .15, .3, 'sawtooth', .08); },
+  fanfare() { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .14, .3, 'triangle')); tone(1047, .6, .6, 'triangle'); },
+  hiss() { tone(3000, 0, .3, 'sawtooth', .02); },
+};
+
+// ---------- Snake canvas ----------
+const cv = $('cv'), cx = cv.getContext('2d');
+let W = 0, H = 0, t = 0, trail = [], particles = [], boost = 0;
+function resize() {
+  const r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  W = r.width; H = r.height; cv.width = W * d; cv.height = H * d; cx.setTransform(d, 0, 0, d, 0, 0);
+}
+addEventListener('resize', resize);
+
+const SEG = 18;                     // pixels between body segments
+function headPos(tt) {
+  // keep the snake below the question card when there's room, otherwise let it slither behind
+  const cardBottom = $('card').offsetTop + $('card').offsetHeight + 20;
+  const top = cardBottom < H - 120 ? cardBottom : Math.min(H * .45, 190);
+  const midY = top + (H - top) / 2, ry = Math.max(30, (H - top) / 2 - 34);
+  return { x: W / 2 + Math.sin(tt) * (W / 2 - 50), y: midY + Math.sin(tt * 2) * ry };
+}
+function feed() {
+  boost = 1;
+  const h = trail[0] || { x: W / 2, y: H / 2 };
+  for (let i = 0; i < 18; i++) particles.push({ x: h.x, y: h.y, vx: R(-6, 6), vy: R(-8, 2), life: 40, c: ['#ffeb3b', '#ff5252', '#fff'][i % 3] });
+  particles.push({ x: h.x, y: h.y - 30, vx: 0, vy: -1.2, life: 50, text: '+1' });
+}
+function confetti() {
+  for (let i = 0; i < 80; i++) particles.push({ x: R(0, W), y: -10, vx: R(-2, 2), vy: R(2, 6), life: 120, c: `hsl(${R(0, 360)},90%,60%)` });
+}
+function drawGrass() {
+  cx.fillStyle = '#2e7d32'; cx.fillRect(0, 0, W, H);
+  cx.fillStyle = '#388e3c';
+  for (let i = 0; i < 40; i++) {
+    const x = (i * 137) % W, y = (i * 89) % H;
+    cx.beginPath(); cx.ellipse(x, y, 30, 12, 0, 0, 7); cx.fill();
+  }
+}
+function frame() {
+  if (!W) resize();
+  const speed = .006 + boost * .02; boost *= .96;
+  // advance head in small steps so the trail stays smooth
+  let p = headPos(t), moved = 0;
+  while (moved < 3 + boost * 6) { t += speed * .25; const n = headPos(t); moved += Math.hypot(n.x - p.x, n.y - p.y); p = n; }
+  trail.unshift(p);
+  // keep trail long enough for the body
+  let need = S.length * SEG + 50, total = 0, keep = 1;
+  for (; keep < trail.length && total < need; keep++) total += Math.hypot(trail[keep].x - trail[keep - 1].x, trail[keep].y - trail[keep - 1].y);
+  trail.length = Math.min(trail.length, keep + 1);
+
+  drawGrass();
+  // sample body points every SEG px along the trail
+  const pts = [trail[0]]; let acc = 0;
+  for (let i = 1; i < trail.length && pts.length <= S.length; i++) {
+    acc += Math.hypot(trail[i].x - trail[i - 1].x, trail[i].y - trail[i - 1].y);
+    if (acc >= SEG) { pts.push(trail[i]); acc = 0; }
+  }
+  const [c1, c2] = LEVELS[S.level].skin;
+  for (let i = pts.length - 1; i >= 1; i--) {
+    const r = 17 - 9 * (i / Math.max(pts.length, 12));
+    cx.fillStyle = 'rgba(0,0,0,.18)'; cx.beginPath(); cx.arc(pts[i].x + 4, pts[i].y + 6, r, 0, 7); cx.fill();
+    cx.fillStyle = i % 3 === 0 ? c2 : c1; cx.beginPath(); cx.arc(pts[i].x, pts[i].y, r, 0, 7); cx.fill();
+  }
+  // head
+  const h = pts[0], b = pts[1] || { x: h.x - 1, y: h.y };
+  const ang = Math.atan2(h.y - b.y, h.x - b.x);
+  cx.save(); cx.translate(h.x, h.y); cx.rotate(ang);
+  if (Math.sin(Date.now() / 150) > .3) {   // flicking tongue
+    cx.strokeStyle = '#e53935'; cx.lineWidth = 3; cx.beginPath();
+    cx.moveTo(22, 0); cx.lineTo(36, 0); cx.lineTo(42, -5); cx.moveTo(36, 0); cx.lineTo(42, 5); cx.stroke();
+  }
+  cx.fillStyle = c1; cx.beginPath(); cx.ellipse(4, 0, 26, 21, 0, 0, 7); cx.fill();
+  for (const s of [-1, 1]) {
+    cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(10, s * 10, 8, 0, 7); cx.fill();
+    cx.fillStyle = '#111'; cx.beginPath(); cx.arc(13, s * 10, 4.5, 0, 7); cx.fill();
+  }
+  cx.restore();
+
+  particles = particles.filter(q => q.life-- > 0);
+  for (const q of particles) {
+    q.x += q.vx; q.y += q.vy; if (!q.text) q.vy += .25;
+    cx.globalAlpha = Math.min(1, q.life / 20);
+    if (q.text) { cx.fillStyle = '#ffeb3b'; cx.font = 'bold 36px sans-serif'; cx.textAlign = 'center'; cx.fillText(q.text, q.x, q.y); }
+    else { cx.fillStyle = q.c; cx.fillRect(q.x, q.y, 8, 8); }
+    cx.globalAlpha = 1;
+  }
+  requestAnimationFrame(frame);
+}
+cv.addEventListener('pointerdown', () => sfx.hiss());
+
+// ---------- Grown-up settings (hold top-right corner 3s) ----------
+let holdT;
+$('corner').addEventListener('pointerdown', () => { holdT = setTimeout(openParent, 3000); });
+['pointerup', 'pointerleave', 'pointercancel'].forEach(e => $('corner').addEventListener(e, () => clearTimeout(holdT)));
+function openParent() {
+  $('pLvl').textContent = S.level + 1;
+  $('pInfo').textContent = `Apples eaten: ${S.eaten}. Levels go up after ${NEED} right answers in a row, and step down after 3 misses out of 4.`;
+  $('parent').classList.add('show');
+}
+const setLvl = d => { S.level = Math.max(0, Math.min(LEVELS.length - 1, S.level + d)); streak = 0; recent = []; save(); renderHud(); $('pLvl').textContent = S.level + 1; };
+$('pUp').onclick = () => setLvl(1);
+$('pDown').onclick = () => setLvl(-1);
+$('pReset').onclick = () => { S = { level: 0, eaten: 0, length: 4 }; streak = 0; recent = []; save(); renderHud(); $('pLvl').textContent = 1; };
+$('pClose').onclick = () => { $('parent').classList.remove('show'); next(); };
+
+document.addEventListener('contextmenu', e => e.preventDefault());
+renderHud(); next(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>

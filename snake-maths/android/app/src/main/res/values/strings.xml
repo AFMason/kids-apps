@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Snake Maths</string>
+    <string name="title_activity_main">Snake Maths</string>
+    <string name="package_name">au.mason.orlando.snakemaths</string>
+    <string name="custom_url_scheme">au.mason.orlando.snakemaths</string>
+</resources>

@@ -14,6 +14,8 @@ Custom offline apps for Orlando's Samsung Galaxy tablet, built as web apps, wrap
 |---|---|
 | `robot-builder.html` | Robot building game for a 6-year-old. Single self-contained file, no external assets. Becomes `www/index.html` in its Capacitor project. |
 | `sam-the-sheep.html` | Sleep trainer nightlight, clock and alarm: red at night, green in the morning. |
+| `luisa-tablet/` | Luisa's tablet (old SM-T350): her games from `index.html` plus offline videos from the SD card. |
+| `get-videos.bat` | Downloads YouTube links as tablet-friendly MP4s for Luisa's tablet. |
 | `README.md` | This guide. |
 
 Suggested layout as more apps are added:
@@ -197,6 +199,32 @@ Thumbnail crop boxes for each category are in `VB`.
 - 🔊 reads the question aloud (speechSynthesis; needs a TTS voice on the tablet).
 - **Grown-up settings**: hold the top-right corner for 3 seconds to set the level or reset.
 - State is stored in `localStorage` under `snake-maths`. Add levels by appending to `LEVELS`.
+
+## Luisa's Tablet: app notes
+
+`luisa-tablet/` is the app for the old **Samsung Galaxy Tab A 8.0 (SM-T350, Android 7.1.1)**. It holds Luisa's games (Bubbles, Body Parts, Let's Go!) plus a **Videos** tile that plays videos from the SD card, offline and with no ads or autoplay. App ID: `au.mason.luisa.tablet`.
+
+- **Same games, one source**: `www/` is a copy of the root `index.html`, `audio/` and `photos/`. When the page finds the native `Videos` plugin, it opens straight to Luisa's menu, hides the 🏠 back to "Who's playing?", and shows the Videos tile. Orlando's version is unchanged.
+- **Update after editing `index.html`**: run `npm run sync` in `luisa-tablet/` (copies the page, audio and photos, then runs `cap sync`), then rebuild.
+- **Videos** go in a folder called **`Luisa Videos`** at the top of the SD card (internal storage also works). Copy files over USB (tablet shows up as *Card*) or put the card in the PC. The app re-reads the folder each time the Videos screen opens, so there's no rebuild for new videos.
+  - Format: **MP4 (H.264 video + AAC audio), 720p or lower**. The tablet's chip can't handle VP9/AV1 or 1080p+ smoothly.
+  - Thumbnails: a picture with the same name (`Peppa.mp4` + `Peppa.jpg`/`.png`/`.webp`) is used if present, otherwise the app grabs a frame from the video. The title under each tile is the file name. Files are sorted by name, so prefix with `01 `, `02 ` to order them.
+  - First launch asks for permission to read files. Allow it. If it was denied: Settings → Apps → Luisa → Permissions → Storage.
+- **Player**: tap the picture to play full screen. Tap anywhere to pause or resume. When the video ends it goes back to the grid. Hold 📺 (top left) to leave early. The screen stays on only while a video plays.
+- **Lock-in**: like Sam, the app pins itself (confirm the prompt once), the Back button does nothing, and system bars are hidden. Unpin: hold Back + Recents.
+- **Native bits** (`android/app/src/main/java/au/mason/luisa/tablet/`): `VideosPlugin` lists the folder and toggles keep-screen-on. `VideoWebViewClient` serves `/_video_/<n>` with byte-range support (so long videos stream and seek) and `/_thumb_/<n>.jpg`.
+
+**Getting videos from YouTube**: double-click `get-videos.bat` and paste links one at a time (single videos or whole playlists). You can also drag a .txt file of links, one per line, onto it. It saves H.264 MP4s up to 720p, each with a matching .jpg thumbnail, into `%USERPROFILE%\Videos\Luisa Videos`. That folder is outside OneDrive, so big files don't sync. Anything already downloaded is skipped. Then copy the folder's contents to the SD card. Note that YouTube's terms don't allow downloading.
+
+- It uses [yt-dlp](https://github.com/yt-dlp/yt-dlp) plus ffmpeg and Deno, all installed with `winget install yt-dlp.yt-dlp`.
+- If YouTube downloads start failing (YouTube changes often), update with `winget upgrade yt-dlp.yt-dlp`.
+
+**Installing on the SM-T350** (Android 7 has no Wireless debugging, so use a USB cable):
+
+1. Settings → About device → Software info → tap **Build number** 7 times. Then Settings → Developer options → **USB debugging** on.
+2. Plug into the PC, accept the "Allow USB debugging?" prompt on the tablet, then `adb install -r luisa-tablet/android/app/build/outputs/apk/debug/app-debug.apk`.
+3. In the Play Store, update **Android System WebView** (and Chrome) if offered. The games and player run in it.
+4. Turn on screen pinning: Settings → Lock screen and security → Other security settings → **Pin windows**.
 
 ## Ideas for next apps
 

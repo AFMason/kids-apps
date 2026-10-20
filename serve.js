@@ -9,11 +9,24 @@ const ROOT = __dirname;
 const AUDIO = path.join(ROOT, 'audio');
 const MANIFEST = path.join(AUDIO, 'manifest.json');
 const PORT = 8080;
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.wav': 'audio/wav', '.md': 'text/plain', '.css': 'text/css', '.png': 'image/png' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.wav': 'audio/wav', '.md': 'text/plain', '.css': 'text/css', '.png': 'image/png',
+  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.m4a': 'audio/mp4', '.mp3': 'audio/mpeg', '.aac': 'audio/aac', '.ogg': 'audio/ogg' };
 
 fs.mkdirSync(AUDIO, { recursive: true });
 const readManifest = () => { try { return JSON.parse(fs.readFileSync(MANIFEST, 'utf8')); } catch (e) { return {}; } };
 const writeManifest = m => fs.writeFileSync(MANIFEST, JSON.stringify(m, Object.keys(m).sort(), 2));
+
+// Pick up clips dropped into audio/ by hand (e.g. Mum's phone recordings named mum_hello.m4a)
+{
+  const man = readManifest(); let added = 0;
+  for (const f of fs.readdirSync(AUDIO)) {
+    const m = f.match(/^([a-z0-9_]+)\.(wav|m4a|mp3|aac|ogg)$/);
+    if (!m || man[m[1]] !== undefined) continue;
+    man[m[1]] = m[2] === 'wav' ? fs.statSync(path.join(AUDIO, f)).mtimeMs | 0 : f;
+    added++; console.log('found', f);
+  }
+  if (added) writeManifest(man);
+}
 
 http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);

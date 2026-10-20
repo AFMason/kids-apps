@@ -102,6 +102,108 @@
   .palette .go { background: #2fb344; color: #fff; width: auto; padding: 0 26px; font-size: 34px; font-family: inherit; }
   .palette .clr { background: #dee2e6; }
 
+  /* Videos (Luisa's tablet only: files from the SD card) */
+  .tile4 { background: #f03e3e; }
+  #videos { background: #2b2d42; overflow-y: auto; display: none; }
+  #videos.active { display: block; }
+  .vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; padding: 100px 24px 40px; }
+  .vcard { border: none; padding: 0; border-radius: 24px; overflow: hidden; background: #444; box-shadow: 0 8px 0 rgba(0,0,0,.3); aspect-ratio: 16 / 9; position: relative; }
+  .vcard:active { transform: translateY(6px); box-shadow: 0 2px 0 rgba(0,0,0,.3); }
+  .vcard img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vcard .noimg { font-size: 90px; line-height: 2; text-align: center; }
+  .vcard .vt { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 12px 8px; font-size: 18px; color: #fff; text-align: left;
+    background: linear-gradient(transparent, rgba(0,0,0,.65)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vempty { color: #fff; font-family: system-ui, sans-serif; font-size: 20px; max-width: 640px; margin: 120px auto 0; padding: 0 24px; line-height: 1.5; }
+  .vempty code { background: rgba(255,255,255,.15); padding: 2px 8px; border-radius: 6px; }
+  #player { background: #000; justify-content: center; }
+  #player video { width: 100%; height: 100%; object-fit: contain; }
+  .bigplay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 140px; opacity: .85; pointer-events: none; display: none; }
+  #player.paused .bigplay { display: block; }
+  #player .back { opacity: .35; } #player.paused .back { opacity: 1; }
+
+  /* Luisa's menu holds lots of games: smaller tiles */
+  #luisa { overflow-y: auto; }
+  #luisa .row { padding-bottom: 40px; }
+  #luisa .big { min-width: 200px; font-size: 26px; padding: 18px 22px; }
+  #luisa .big .emoji { font-size: 72px; }
+  .tile5 { background: #40c057; } .tile6 { background: #4c6ef5; } .tile7 { background: #e64980; } .tile8 { background: #fab005; }
+  .navbtn { position: absolute; top: 50%; transform: translateY(-50%); border: none; border-radius: 50%; width: 110px; height: 110px; font-size: 56px;
+    background: rgba(255,255,255,.9); box-shadow: 0 6px 0 rgba(0,0,0,.15); z-index: 5; }
+  .navbtn.prev { left: 16px; } .navbtn.next { right: 16px; }
+  .navbtn.glow { animation: hintpulse .7s infinite alternate; }
+  .navbtn[hidden] { display: none; }
+  .scene { font-size: min(30vmin, 260px); line-height: 1.1; text-align: center; cursor: pointer; }
+  .scene img { width: min(55vmin, 420px); height: min(55vmin, 420px); object-fit: cover; border-radius: 50%; border: 10px solid #fff; box-shadow: 0 8px 20px rgba(0,0,0,.2); }
+  .caption { font-size: min(5.5vmin, 44px); text-align: center; padding: 0 140px; margin-top: 20px; color: #333; }
+  .pop-in { animation: popin .5s; } @keyframes popin { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .heart { position: absolute; font-size: 60px; pointer-events: none; transition: transform 1.2s ease-out, opacity 1.2s; z-index: 30; }
+
+  /* Our Big Trip (story) */
+  #trip { justify-content: center; transition: background .5s; }
+  .rainbowpath { position: absolute; top: 18px; left: 100px; right: 20px; display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+  .rainbowpath span { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.6); font-size: 20px; display: flex; align-items: center; justify-content: center; }
+  .rainbowpath span.lit { box-shadow: 0 0 0 3px #fff; }
+  .rainbowpath span.today::after { content: "⭐"; position: absolute; transform: translateY(-26px); font-size: 18px; }
+  .moons { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; max-width: 900px; margin-top: 20px; }
+  .moons span { font-size: 70px; cursor: pointer; transition: transform .3s; } .moons span.counted { transform: scale(1.3); filter: drop-shadow(0 0 12px #ffd43b); }
+  .mumbtn { margin-top: 24px; border: none; border-radius: 40px; background: #fff; font: inherit; font-size: 32px; padding: 14px 30px; box-shadow: 0 6px 0 rgba(0,0,0,.12); }
+
+  /* Plane practice */
+  #plane { background: linear-gradient(#74c0fc, #d0ebff); justify-content: center; transition: background .8s; }
+  #plane.dark { background: linear-gradient(#1c2541, #3a506b); } #plane.dark .caption { color: #fff; }
+  .stage { position: relative; width: min(80vw, 800px); height: 45vh; display: flex; align-items: center; justify-content: center; font-size: min(22vmin, 190px); cursor: pointer; }
+  .xray { position: absolute; width: 38%; height: 70%; border-radius: 24px; background: #495057; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #8ce99a; }
+  .slide { transition: transform 2.4s linear; }
+  .takeoff { animation: takeoff 2.4s ease-in forwards; } @keyframes takeoff { 0% { transform: none; } 40% { transform: translateX(10vw); } 100% { transform: translate(40vw, -30vh) rotate(-20deg); } }
+  .landing { animation: landing 1.6s ease-out; } @keyframes landing { 0% { transform: translate(-40vw, -25vh) rotate(10deg); } 85% { transform: translateY(0); } 92% { transform: translateY(-14px); } 100% { transform: none; } }
+  .belt { display: flex; align-items: center; gap: 0; transition: gap .4s; }
+  .belt b { display: inline-block; width: 26vmin; height: 7vmin; background: #868e96; border-radius: 10px; transition: transform .4s; }
+  .belt.on b:first-child { transform: translateX(3vmin); } .belt.on b:last-child { transform: translateX(-3vmin); }
+
+  /* Koala feelings */
+  #feel { background: linear-gradient(#e6fcf5, #fff8ec); justify-content: flex-start; padding-top: 90px; }
+  #koala { height: 46vh; max-width: 90vw; cursor: pointer; transition: transform .3s; }
+  #koala.jump { animation: bounce .6s 2; } #koala.shiver { animation: rock .25s 4; }
+  .feelings { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+  .feelings button { border: none; background: #fff; border-radius: 26px; font-size: 64px; width: 110px; height: 110px; box-shadow: 0 6px 0 rgba(0,0,0,.12); }
+  .feelings button.story { background: #ffe066; }
+  .feelprop { font-size: 80px; height: 90px; }
+
+  /* Rainbow count */
+  #count { background: linear-gradient(#e7f5ff, #fff9db); overflow: hidden; }
+  .countq { margin-top: 100px; font-size: 54px; background: #fff; border-radius: 40px; padding: 10px 34px; box-shadow: 0 4px 10px rgba(0,0,0,.08); }
+  .field { position: relative; width: 100%; flex: 1; }
+  .critter { position: absolute; font-size: 100px; cursor: pointer; transition: left .6s ease-in-out, top .6s ease-in-out, transform .3s; }
+  .bridge { display: flex; gap: 10px; margin-bottom: 40px; min-height: 130px; align-items: flex-end; }
+  .bridge .band { width: 110px; height: 110px; border-radius: 24px; background: rgba(0,0,0,.06); display: flex; align-items: center; justify-content: center; font-size: 30px; color: #fff; font-weight: bold; transition: background .3s; }
+
+  /* Supertree dance party */
+  #dance { background: radial-gradient(ellipse at bottom, #2b1055, #0b0b2b); overflow: hidden; justify-content: flex-end; }
+  #dance.lullaby { background: radial-gradient(ellipse at bottom, #1b2a4a, #05060f); }
+  .trees { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; align-items: flex-end; pointer-events: none; }
+  .stree { display: flex; flex-direction: column; align-items: center; transition: filter .25s; }
+  .stree .cap { width: 26vmin; height: 9vmin; border-radius: 50%; background: radial-gradient(hsl(var(--h),100%,70%), hsl(var(--h),90%,40%)); box-shadow: 0 0 40px hsl(var(--h),100%,60%); transition: all .25s; }
+  .stree .trunk { width: 5vmin; background: linear-gradient(hsl(var(--h),70%,45%), #2b1055); clip-path: polygon(0 0, 100% 0, 65% 100%, 35% 100%); }
+  .dancer { position: absolute; bottom: 18vh; font-size: min(30vmin, 260px); transition: transform .15s; z-index: 2; pointer-events: none; }
+  .dancer.frozen { filter: drop-shadow(0 0 20px #a5d8ff) saturate(.3); }
+  .danceui { position: absolute; top: 14px; left: 100px; right: 14px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; z-index: 5; }
+  .danceui button { border: none; border-radius: 22px; font-size: 44px; width: 86px; height: 86px; background: rgba(255,255,255,.85); }
+  .danceui button.on { background: #ffd43b; box-shadow: 0 0 0 4px #fff; }
+  .spark { position: absolute; font-size: 44px; pointer-events: none; transition: transform 1s ease-out, opacity 1s; }
+
+  /* Choo choo map (route) */
+  #route { background: linear-gradient(#d0ebff, #ebfbee); justify-content: center; }
+  .track { position: relative; width: 100%; height: 360px; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; }
+  .trackin { position: relative; height: 100%; }
+  .trackin .line { position: absolute; top: 150px; left: 0; height: 10px; background: repeating-linear-gradient(90deg, #868e96 0 30px, transparent 30px 50px); }
+  .stop { position: absolute; top: 60px; width: 180px; margin-left: -90px; text-align: center; }
+  .stop .pin { font-size: 90px; line-height: 1; } .stop .pin img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 5px solid #fff; }
+  .stop .nm { font-size: 22px; margin-top: 110px; color: #495057; }
+  .stop.been .pin { filter: none; } .stop.todo .pin { filter: grayscale(.8) opacity(.6); }
+  .mover { position: absolute; top: 160px; font-size: 80px; margin-left: -45px; transition: left 2.2s ease-in-out; z-index: 3; }
+  .gobtn { margin-top: 60px; border: none; border-radius: 50%; width: 220px; height: 220px; font-size: 130px; background: #fff; box-shadow: 0 10px 0 rgba(0,0,0,.15); animation: hintpulse .8s infinite alternate; }
+  .gobtn:disabled { animation: none; opacity: .5; }
+
   /* Recorder */
   #recorder { background: #f4f1ec; overflow-y: auto; display: none; align-items: stretch; padding: 90px 16px 40px; }
   #recorder.active { display: block; }
@@ -137,6 +239,13 @@
     <button class="big tile1" data-go="bubbles"><span class="emoji">🫧</span>Bubbles</button>
     <button class="big tile3" data-go="bodyparts"><span class="emoji">👃</span>Body Parts</button>
     <button class="big tile2" data-go="travel"><span class="emoji">✈️</span>Let's Go!</button>
+    <button class="big tile5" data-go="trip"><span class="emoji">📖</span>Our Big Trip</button>
+    <button class="big tile6" data-go="route"><span class="emoji">🗺️</span>Choo Choo Map</button>
+    <button class="big tile7" data-go="feel"><span class="emoji">🐨</span>Koala Feelings</button>
+    <button class="big tile8" data-go="count"><span class="emoji">🌈</span>Rainbow Count</button>
+    <button class="big tile1" data-go="dance"><span class="emoji">💃</span>Dance Party</button>
+    <button class="big tile3" data-go="plane"><span class="emoji">🛫</span>Plane Practice</button>
+    <button class="big tile4" data-go="videos" id="videosTile" hidden><span class="emoji">📺</span>Videos</button>
   </div>
 </section>
 
@@ -200,6 +309,72 @@
   <div class="tgrid" id="tgrid"></div>
 </section>
 
+<!-- OUR BIG TRIP (story + countdown) -->
+<section id="trip" class="screen">
+  <div class="topbar"><button class="back hold" data-hold="luisa"><span class="fill"></span>🏠</button></div>
+  <div class="rainbowpath" id="trippath"></div>
+  <button class="navbtn prev" id="tripPrev">◀</button><button class="navbtn next" id="tripNext">▶</button>
+  <div id="tripbody" style="display:flex;flex-direction:column;align-items:center"></div>
+</section>
+
+<!-- PLANE PRACTICE -->
+<section id="plane" class="screen">
+  <div class="topbar"><button class="back hold" data-hold="luisa"><span class="fill"></span>🏠</button></div>
+  <button class="navbtn prev" id="planePrev">◀</button><button class="navbtn next" id="planeNext">▶</button>
+  <div class="stage" id="pstage"></div>
+  <div class="caption" id="pcap"></div>
+</section>
+
+<!-- KOALA FEELINGS -->
+<section id="feel" class="screen">
+  <div class="topbar"><button class="back hold" data-hold="luisa"><span class="fill"></span>🏠</button></div>
+  <div class="feelprop" id="feelprop"></div>
+  <svg id="koala" viewBox="0 0 300 300">
+    <circle cx="62" cy="88" r="56" fill="#9aa5b1"/><circle cx="238" cy="88" r="56" fill="#9aa5b1"/>
+    <circle cx="62" cy="92" r="32" fill="#f3c4d4"/><circle cx="238" cy="92" r="32" fill="#f3c4d4"/>
+    <ellipse cx="150" cy="165" rx="115" ry="105" fill="#b6bec8"/>
+    <circle cx="80" cy="200" r="16" fill="#f3c4d4" opacity=".7"/><circle cx="220" cy="200" r="16" fill="#f3c4d4" opacity=".7"/>
+    <ellipse cx="150" cy="182" rx="27" ry="36" fill="#3b3b3b"/>
+    <g id="kface"></g>
+  </svg>
+  <div class="caption" id="feelcap" style="padding:0 20px;margin-top:6px"></div>
+  <div class="feelings" id="feelbtns"></div>
+</section>
+
+<!-- RAINBOW COUNT -->
+<section id="count" class="screen">
+  <div class="topbar"><button class="back hold" data-hold="luisa"><span class="fill"></span>🏠</button></div>
+  <div class="countq" id="countq"></div>
+  <div class="field" id="field"></div>
+  <div class="bridge" id="bridge"></div>
+</section>
+
+<!-- SUPERTREE DANCE PARTY -->
+<section id="dance" class="screen">
+  <div class="topbar"><button class="back hold" data-hold="luisa"><span class="fill"></span>🏠</button></div>
+  <div class="danceui" id="danceui"></div>
+  <div class="trees" id="trees"></div>
+  <div class="dancer" id="dancer">🐨</div>
+</section>
+
+<!-- CHOO CHOO MAP (route) -->
+<section id="route" class="screen">
+  <div class="topbar"><button class="back hold" data-hold="luisa"><span class="fill"></span>🏠</button></div>
+  <div class="track" id="track"><div class="trackin" id="trackin"></div></div>
+  <button class="gobtn" id="gobtn"></button>
+</section>
+
+<!-- VIDEOS (Luisa's tablet app: a "Luisa Videos" folder on the SD card) -->
+<section id="videos" class="screen">
+  <div class="topbar"><button class="back hold" data-hold="luisa"><span class="fill"></span>🏠</button></div>
+  <div class="vgrid" id="vgrid"></div>
+</section>
+<section id="player" class="screen">
+  <div class="topbar"><button class="back hold" data-hold="videos"><span class="fill"></span>📺</button></div>
+  <video id="video" playsinline preload="auto"></video>
+  <div class="bigplay">▶️</div>
+</section>
+
 <!-- CODER ROBOT -->
 <section id="robot" class="screen">
   <div class="topbar"><button class="back" data-go="orlando">🏠</button><div class="stars" id="rstars"></div></div>
@@ -229,10 +404,60 @@ const BODY = ['nose', 'eyes', 'ears', 'mouth', 'hair', 'hands', 'tummy', 'feet']
 const TRAVEL = [
   { key: 'plane', emoji: '✈️', say: 'Plane! Zoom!', anim: 'fly' },
   { key: 'car', emoji: '🚗', say: 'Car! Beep beep!', anim: 'drive' },
-  { key: 'beach', emoji: '🏖️', say: 'Beach! Splash splash!', anim: 'bounce' },
+  { key: 'bike', emoji: '🚲', say: 'Bike! Ring ring!', anim: 'drive' },
   { key: 'suitcase', emoji: '🧳', say: 'Suitcase! Pack it up!', anim: 'rock', poof: ['👕', '🕶️', '🩳', '🧸'] },
   { key: 'train', emoji: '🚂', say: 'Train! Choo choo!', anim: 'drive' },
   { key: 'boat', emoji: '⛵', say: 'Boat! Splish splash!', anim: 'rock' },
+];
+/* ---- Luisa's big trip (Oct-Nov 2026) ---- */
+const MUM_DAY = '2026-10-28', HOME_DAY = '2026-11-22';
+// Story pages, in order. date = the day it happens (for "we are here" and the rainbow path)
+const STORY = [
+  { key: 'st_pack', date: '2026-10-26', art: '🧳🧸', bg: '#ffe8cc', text: "We pack our suitcase. Don't forget Teddy!" },
+  { key: 'st_plane', date: '2026-10-26', art: '✈️☁️', bg: '#d0ebff', text: 'A big, big plane to Singapore! Zoom!' },
+  { key: 'st_trees', date: '2026-10-27', art: '🌳✨🌳', bg: '#3b2a6b', dark: true, text: 'Giant glowing trees in Singapore!' },
+  { key: 'st_night', date: '2026-10-27', art: '✈️🌙', bg: '#1c2541', dark: true, text: 'A sleepy plane in the night. Night night!' },
+  { key: 'st_mum', date: '2026-10-28', art: 'MUM', bg: '#ffdeeb', text: 'Mum is at the airport! Big hugs!' },
+  { key: 'st_bike', date: '2026-10-28', art: '🚲📦', bg: '#d3f9d8', text: 'We ride in the bike box! Ring ring!' },
+  { key: 'st_halloween', date: '2026-10-31', art: '🎃👻', bg: '#ffd8a8', text: 'Halloween! Trick or treat!' },
+  { key: 'st_castle', date: '2026-11-02', art: '🏰🧚', bg: '#e5dbff', text: 'A fairy-tale forest with a castle!' },
+  { key: 'st_seatrain', date: '2026-11-04', art: '🚄🐟', bg: '#c5f6fa', text: 'A fast train under the sea! Whoosh!' },
+  { key: 'st_fireworks', date: '2026-11-05', art: '🎆🙉', bg: '#212529', dark: true, text: 'Fireworks! Bang! Cover your ears!' },
+  { key: 'st_dinos', date: '2026-11-06', art: '🦕🦖', bg: '#d8f5a2', text: 'Big dinosaurs at the museum! Roar!' },
+  { key: 'st_paddington', date: '2026-11-09', art: '🐻🥪', bg: '#ffc9c9', text: 'Paddington Bear at the train station!' },
+  { key: 'st_paris', date: '2026-11-09', art: '🥐🗼', bg: '#fff3bf', text: 'Paris! Yummy croissants!' },
+  { key: 'st_bears', date: '2026-11-10', art: '🐻🐻', bg: '#e9ecef', text: 'Real bears in Bern! Grrr!' },
+  { key: 'st_snow', date: '2026-11-14', art: '🏔️⛄', bg: '#e7f5ff', text: 'Snowy mountains! Brrr!' },
+  { key: 'st_daddy', date: '2026-11-15', art: '👨‍💼🚆', bg: '#fff0f6', text: 'Daddy goes to work for three sleeps. Then he comes back!' },
+  { key: 'st_flyhome', date: '2026-11-19', art: '✈️🌙', bg: '#1c2541', dark: true, text: 'A big plane home. Night night!' },
+  { key: 'st_home', date: '2026-11-22', art: '🏠🐨', bg: '#ebfbee', text: 'Home sweet home!' },
+];
+// Choo Choo Map: each leg = how we travel, then where we arrive
+const ROUTE = [
+  { pin: '🏠', name: 'Home' },
+  { by: '✈️', clip: 'plane', pin: '🌳', name: 'Singapore', at: 'at_singapore' },
+  { by: '✈️', clip: 'plane', pin: 'MUM', name: 'Amsterdam', at: 'at_amsterdam', mum: true },
+  { by: '🚆', clip: 'train', pin: '🚲', name: 'Eindhoven', at: 'at_eindhoven' },
+  { by: '🚄', clip: 'seatrain', pin: '💂', name: 'London', at: 'at_london' },
+  { by: '🚇', clip: 'tube', pin: '🦕', name: 'Oxford', at: 'at_oxford' },
+  { by: '🚄', clip: 'seatrain', pin: '🥐', name: 'Paris', at: 'at_paris' },
+  { by: '🚅', clip: 'fast_train', pin: '🐻', name: 'Bern', at: 'at_bern' },
+  { by: '🚞', clip: 'mountain_train', pin: '🏔️', name: 'Mountains', at: 'at_mountains' },
+  { by: '🚆', clip: 'train', pin: '🐻', name: 'Bern', at: 'at_bern_again' },
+  { by: '✈️', clip: 'plane', pin: '🌳', name: 'Singapore', at: 'at_singapore' },
+  { by: '✈️', clip: 'plane', pin: '🏠', name: 'Home', at: 'at_home' },
+];
+const ANIMALS = [['koalas', '🐨'], ['monkeys', '🐒'], ['sharks', '🦈'], ['whales', '🐳'], ['dolphins', '🐬'], ['crocodiles', '🐊'], ['lizards', '🦎'], ['bears', '🐻'], ['dinosaurs', '🦕']];
+const RAINBOW = ['#ff4d4d', '#ff922b', '#ffd43b', '#40c057', '#3d8bfd', '#5c40c0', '#cc5de8'];
+const FEELINGS = { happy: '😀', sad: '😢', scared: '😨', cross: '😠', tired: '😴', excited: '🤩' };
+// Feelings stories: koala starts in a mood, Luisa taps koala to help, koala ends in a new mood
+const FEEL_STORIES = [
+  { prop: '👩', mood: 'sad', ask: 'fs_mum', end: 'happy', ok: 'fs_mum_ok', help: '🤗' },
+  { prop: '🎆', mood: 'scared', ask: 'fs_bang', end: 'happy', ok: 'fs_bang_ok', help: '🙉' },
+  { prop: '👨‍💼', mood: 'sad', ask: 'fs_daddy', end: 'happy', ok: 'fs_daddy_ok', help: '🤗' },
+  { prop: '✈️', mood: 'tired', ask: 'fs_tired', end: 'sleep', ok: 'fs_tired_ok', help: '🧸' },
+  { prop: '🍪', mood: 'cross', ask: 'fs_cross', end: 'happy', ok: 'fs_cross_ok', help: '🌬️' },
+  { prop: '👩', mood: 'excited', ask: 'fs_seemum', end: 'excited', ok: 'mum_hug', help: '💖' },
 ];
 const CLIPS = [
   ['General', [['hi_luisa', 'Hi Luisa!'], ['hi_orlando', 'Hi Orlando!'], ['yay', 'Yay!'], ['wow', 'Wow!'], ['you_did_it', 'You did it!']]],
@@ -253,11 +478,47 @@ const CLIPS = [
     ['oops', 'Oops! Try again!'], ['almost', 'Almost! The treasure is somewhere else.'], ['treasure', 'Treasure! You did it!'],
     ['new_blocks', 'New blocks! Now the robot turns. Watch which way it is looking!'], ['robot_done', 'You finished every level! Super coder!']]],
   ['Numbers', Array.from({ length: 20 }, (_, i) => ['n' + (i + 1), String(i + 1)])],
+  ['Our Big Trip', [
+    ['sleeps_until_mum', 'sleeps until we see Mum!'], ['one_sleep', 'One more sleep until we see Mum!'],
+    ['with_mum', "We're with Mum! Hooray!"], ['sleeps_until_home', 'sleeps until we go home.'], ['count_moons', "Let's count the sleeps!"],
+    ...STORY.map(s => [s.key, s.text])]],
+  ['Choo Choo Map', [
+    ['route_start', "Let's go and see Mum!"], ['seatrain', 'A train under the sea! Whoosh!'], ['tube', 'The underground train!'],
+    ['fast_train', 'A super fast train!'], ['mountain_train', 'The mountain train! Up, up, up!'],
+    ['at_singapore', 'Singapore! Glowing trees!'], ['at_amsterdam', 'Amsterdam! Mum is here! Hooray!'], ['at_eindhoven', 'Eindhoven! Ride the bike!'],
+    ['at_london', 'London!'], ['at_oxford', 'Oxford! Dinosaurs!'], ['at_paris', 'Paris!'], ['at_bern', 'Bern! Hello bears!'],
+    ['at_mountains', 'Snowy mountains!'], ['at_bern_again', 'Back to Bern!'], ['at_home', 'Home! We did it!']]],
+  ['Koala Feelings', [
+    ['how_feel', 'How do you feel?'],
+    ...Object.keys(FEELINGS).map(f => ['feel_' + f, { happy: 'Koala feels happy!', sad: 'Koala feels sad.', scared: 'Koala feels scared.', cross: 'Koala feels cross! Grrr.', tired: 'Koala feels tired. Yawn.', excited: 'Koala feels excited! Wheee!' }[f]]),
+    ['fs_mum', 'Koala misses Mum. Give Koala a cuddle!'], ['fs_mum_ok', 'Mum is coming soon. Koala feels happy!'],
+    ['fs_bang', 'Bang! Loud fireworks! Koala is scared. Cover Koala\'s ears!'], ['fs_bang_ok', 'Pretty fireworks! Koala feels happy!'],
+    ['fs_daddy', 'Daddy is going to work for three sleeps. Koala is sad. Give Koala a cuddle!'], ['fs_daddy_ok', 'Daddy comes back soon. Koala feels happy!'],
+    ['fs_tired', 'Koala is tired on the big plane. Give Koala a teddy!'], ['fs_tired_ok', 'Night night, Koala.'],
+    ['fs_cross', 'No more biscuits! Koala is cross! Let\'s take a big breath.'], ['fs_cross_ok', 'Ahhh. Koala feels better.'],
+    ['fs_seemum', 'Look! It\'s Mum! Koala is so excited!']]],
+  ['Rainbow Count', [['lets_count', "Let's count the"], ['rainbow', 'A whole rainbow! Hooray!'], ...ANIMALS.map(([k]) => [k, k])]],
+  ['Dance Party', [['dance_party', 'Dance party! Tap to dance!'], ['freeze', 'Freeze!'], ['dance', 'Dance!'], ['sleepy_song', 'Sleepy time song. Shhh.']]],
+  ['Plane Practice', [
+    ['pp_xray', 'Our bag goes through the magic box. Tap the bag!'], ['pp_xray_ok', 'Beep! Here it is. Teddy is safe!'],
+    ['pp_belt', 'Time for the seatbelt. Tap to click it!'], ['pp_belt_ok', 'Click! All buckled up!'],
+    ['pp_takeoff', 'The plane goes fast. Tap to fly!'], ['pp_takeoff_ok', 'Up, up, up! Big yawn for your ears!'],
+    ['pp_snack', 'Snack time on the plane! Tap the tray!'], ['pp_snack_ok', 'Yum yum!'],
+    ['pp_bed', 'Plane bedtime. Tap to turn the lights off.'], ['pp_bed_ok', 'Blanket, teddy, night night.'],
+    ['pp_land', 'Wake up! Tap to land the plane!'], ['pp_land_ok', 'Bump! We landed! Hooray!']]],
+  ['From Mum (Sarah records these on her phone)', [
+    ['mum_hello', 'Hi Luisa! It\'s Mum! I love you so much.'], ['mum_soon', 'I\'m in the Netherlands, and I can\'t wait to see you at the airport!'],
+    ['mum_hug', 'I\'m so happy to see you! Big hug!'], ['mum_night', 'Night night, my darling. Sleep on the big plane, and when you wake up, I\'ll be there.'],
+    ['mum_brave', 'You are so brave! Mum is proud of you.']]],
 ];
+// Mum's lines are only ever played in her real voice (never the robot voice)
+const NO_TTS = k => k.startsWith('mum_');
 const CLIP_TEXT = {}; CLIPS.forEach(([, list]) => list.forEach(([k, t]) => CLIP_TEXT[k] = t));
 
 /* ============ STORAGE (IndexedDB for recordings) ============ */
 const recordings = {}; // key -> object URL
+const audioFiles = {}; // key -> manifest entry for voice files in audio/
+let serverMode = false; // true when running from serve.js on the laptop
 let db;
 function openDB() {
   return new Promise(res => {
@@ -314,13 +575,13 @@ function say(keys) {
 function playOne(key) {
   return new Promise(done => {
     // Priority: recorded on this device > voice file in audio/ > robot voice
-    const url = (!serverMode && recordings[key]) || (audioFiles[key] && `audio/${key}.wav?v=${audioFiles[key]}`);
+    const url = (!serverMode && recordings[key]) || clipUrl(key);
     if (url) {
       const a = new Audio(url);
       currentAudio = a;
       a.onended = a.onerror = done;
       a.play().catch(done);
-    } else if ('speechSynthesis' in window && CLIP_TEXT[key]) {
+    } else if ('speechSynthesis' in window && CLIP_TEXT[key] && !NO_TTS(key)) {
       const u = new SpeechSynthesisUtterance(CLIP_TEXT[key]);
       u.rate = 0.9; u.pitch = 1.2;
       u.onend = u.onerror = done;
@@ -707,6 +968,378 @@ async function rRun() {
 }
 onEnter.robot = () => { rLoad(); say('robot_intro'); };
 
+/* ============ TRIP HELPERS (Luisa's trip games) ============ */
+const todayStr = () => new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, local time
+const daysUntil = d => Math.round((new Date(d + 'T00:00') - new Date(todayStr() + 'T00:00')) / 864e5);
+// Mum's photo (photos/mum.jpg) if there is one, otherwise an emoji
+const mumArt = () => `<img src="photos/mum.jpg" alt="" onerror="this.replaceWith('👩')">`;
+const hasClip = k => !!(recordings[k] || audioFiles[k]);
+function firstEmoji(s) {
+  if (s === 'MUM') return '👩';
+  try { return [...new Intl.Segmenter().segment(s)][0].segment; } catch (e) { return '•'; }
+}
+// Little emojis that float up and fade (hearts, sparkles)
+function floatUp(parent, x, y, emoji, n = 5, cls = 'heart') {
+  for (let i = 0; i < n; i++) {
+    const h = document.createElement('div'); h.className = cls; h.textContent = emoji;
+    h.style.left = x + 'px'; h.style.top = y + 'px'; parent.appendChild(h);
+    const dx = (Math.random() - .5) * 260, dy = -120 - Math.random() * 200;
+    requestAnimationFrame(() => { h.style.transform = `translate(${dx}px, ${dy}px) scale(1.3)`; h.style.opacity = '0'; });
+    setTimeout(() => h.remove(), 1300);
+  }
+}
+const centreOf = el => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2 - 30, r.top + r.height / 3]; };
+const replay = (el, cls) => { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); };
+
+/* ============ OUR BIG TRIP: story book + countdown (Luisa) ============ */
+const TR = { page: -1, el: document.getElementById('trip'), body: document.getElementById('tripbody') };
+const todayPage = () => { let p = -1; STORY.forEach((s, i) => { if (s.date <= todayStr()) p = i; }); return p; };
+function renderTrip() {
+  const tp = todayPage();
+  document.getElementById('trippath').innerHTML = STORY.map((s, i) =>
+    `<span class="${i <= TR.page ? 'lit' : ''} ${i === tp ? 'today' : ''}" style="background:${i <= TR.page ? RAINBOW[i % 7] : ''}">${firstEmoji(s.art)}</span>`).join('');
+  document.getElementById('tripPrev').hidden = TR.page < 0;
+  document.getElementById('tripNext').hidden = TR.page >= STORY.length - 1;
+  if (TR.page < 0) return renderCountdown();
+  const s = STORY[TR.page];
+  TR.el.style.background = s.bg;
+  TR.body.innerHTML = `<div class="scene pop-in">${s.art === 'MUM' ? mumArt() : s.art}</div>
+    <div class="caption" style="color:${s.dark ? '#fff' : '#333'}">${s.text}</div>`;
+  const art = TR.body.querySelector('.scene');
+  const tell = () => say(s.art === 'MUM' ? [s.key, 'mum_hug'] : s.key);
+  art.onclick = () => { replay(art, 'pop-in'); floatUp(TR.el, ...centreOf(art), s.art === 'MUM' ? '💖' : '✨'); tell(); };
+  tell();
+}
+function renderCountdown() {
+  TR.el.style.background = 'linear-gradient(#ffdeeb, #e5dbff)';
+  const d = daysUntil(MUM_DAY), h = daysUntil(HOME_DAY);
+  let html, lines;
+  if (d > 1) {
+    html = `<div class="scene" style="font-size:min(18vmin,150px)">🌙 ➜ ${mumArt()}</div>
+      <div class="caption"><b>${d}</b> sleeps until we see Mum!</div>
+      ${d <= 20 ? `<div class="moons">${'<span>🌙</span>'.repeat(d)}</div>` : ''}`;
+    lines = d <= 20 ? ['count_moons'] : ['n' + d, 'sleeps_until_mum'];
+  } else if (d === 1) {
+    html = `<div class="scene">🌙 ➜ ${mumArt()}</div><div class="caption">One more sleep until we see Mum!</div>`;
+    lines = ['one_sleep'];
+  } else if (h > 0) {
+    html = `<div class="scene">${mumArt()}</div><div class="caption">We're with Mum! Hooray!<br><small>${h} sleeps until we go home</small></div>`;
+    lines = ['with_mum'];
+  } else {
+    html = `<div class="scene">🏠🐨</div><div class="caption">Home sweet home!</div>`;
+    lines = ['st_home'];
+  }
+  if (hasClip('mum_hello')) html += `<button class="mumbtn" id="mumMsg">💌 Message from Mum</button>`;
+  TR.body.innerHTML = html;
+  say(lines);
+  // Tap the moons to count the sleeps
+  let counted = 0;
+  TR.body.querySelectorAll('.moons span').forEach(m => m.onclick = () => {
+    if (m.classList.contains('counted')) return;
+    m.classList.add('counted'); counted++; sfx('pop');
+    say(counted === d ? ['n' + d, 'sleeps_until_mum'] : 'n' + counted);
+  });
+  const mb = document.getElementById('mumMsg');
+  if (mb) mb.onclick = () => say(['mum_hello', 'mum_soon']);
+}
+document.getElementById('tripPrev').onclick = () => { if (TR.page > -1) { TR.page--; renderTrip(); } };
+document.getElementById('tripNext').onclick = () => { if (TR.page < STORY.length - 1) { TR.page++; renderTrip(); } };
+// Before the trip, open on the countdown. During the trip, open on today's page.
+onEnter.trip = () => { TR.page = daysUntil(MUM_DAY) > 0 || daysUntil(HOME_DAY) < 0 ? -1 : todayPage(); renderTrip(); };
+
+/* ============ PLANE PRACTICE (Luisa) ============ */
+// Each scene: draw it, Luisa taps the stage, it plays out with a happy ending
+const PS = [
+  { key: 'pp_xray', draw: '<div class="xray">〰️〰️〰️</div><span class="slide" id="pbag" style="transform:translateX(-28vw)">🧳</span>',
+    act: st => { st.querySelector('#pbag').style.transform = 'translateX(28vw)'; return 2400; }, after: st => floatUp(st, st.clientWidth * .8, st.clientHeight / 2, '🧸', 1) },
+  { key: 'pp_belt', draw: '<div class="belt"><b></b><b></b></div>',
+    act: st => { st.querySelector('.belt').classList.add('on'); sfx('boop'); return 400; } },
+  { key: 'pp_takeoff', draw: '<span id="pl">✈️</span>',
+    act: st => { st.querySelector('#pl').classList.add('takeoff'); return 2400; }, after: st => { st.innerHTML = '🥱'; } },
+  { key: 'pp_snack', draw: '<span>🍽️</span>',
+    act: st => { st.innerHTML = '<span class="pop-in">🧃🍪🍎</span>'; return 300; } },
+  { key: 'pp_bed', draw: '<span>🧸💡</span>', ok: ['pp_bed_ok', 'mum_night'],
+    act: st => { document.getElementById('plane').classList.add('dark'); st.innerHTML = '<span class="pop-in">😴🧸🌙</span>'; return 600; } },
+  { key: 'pp_land', draw: '<span id="pl">✈️</span>', ok: ['pp_land_ok', 'mum_brave'],
+    act: st => { st.querySelector('#pl').classList.add('landing'); return 1600; }, after: st => floatUp(st, st.clientWidth / 2, st.clientHeight / 2, '🎉', 6, 'spark') },
+];
+const PL = { i: 0, busy: false, done: false };
+function renderPlane() {
+  const s = PS[PL.i], st = document.getElementById('pstage');
+  document.getElementById('plane').classList.remove('dark');
+  st.innerHTML = s.draw;
+  document.getElementById('pcap').textContent = CLIP_TEXT[s.key];
+  document.getElementById('planePrev').hidden = PL.i === 0;
+  const next = document.getElementById('planeNext');
+  next.textContent = PL.i === PS.length - 1 ? '🔁' : '▶'; next.classList.remove('glow');
+  PL.busy = false; PL.done = false;
+  say(s.key);
+}
+document.getElementById('pstage').addEventListener('pointerdown', async () => {
+  const s = PS[PL.i], st = document.getElementById('pstage');
+  if (PL.busy || PL.done) return;
+  PL.busy = true; sfx('pop');
+  await wait(s.act(st));
+  if (s.after) s.after(st);
+  document.getElementById('pcap').textContent = CLIP_TEXT[s.key + '_ok'];
+  PL.done = true; PL.busy = false;
+  await say(s.ok || s.key + '_ok');
+  document.getElementById('planeNext').classList.add('glow');
+});
+document.getElementById('planePrev').onclick = () => { if (PL.i > 0) { PL.i--; renderPlane(); } };
+document.getElementById('planeNext').onclick = () => { PL.i = (PL.i + 1) % PS.length; renderPlane(); };
+onEnter.plane = () => { PL.i = 0; renderPlane(); };
+
+/* ============ KOALA FEELINGS (Luisa) ============ */
+const EYE = (x, d) => d.replace(/X/g, x);
+function koalaFace(m) {
+  const ln = 'stroke="#222" stroke-width="7" fill="none" stroke-linecap="round"';
+  const dots = `<circle cx="105" cy="140" r="11" fill="#222"/><circle cx="195" cy="140" r="11" fill="#222"/><circle cx="109" cy="136" r="4" fill="#fff"/><circle cx="199" cy="136" r="4" fill="#fff"/>`;
+  return {
+    happy: `<path d="M90,146 Q105,126 120,146" ${ln}/><path d="M180,146 Q195,126 210,146" ${ln}/><path d="M118,228 Q150,262 182,228" ${ln}/>`,
+    excited: `<circle cx="105" cy="138" r="15" fill="#222"/><circle cx="195" cy="138" r="15" fill="#222"/><circle cx="111" cy="132" r="6" fill="#fff"/><circle cx="201" cy="132" r="6" fill="#fff"/>
+      <path d="M116,224 Q150,276 184,224 Z" fill="#c2255c"/><text x="240" y="70" font-size="40">✨</text><text x="20" y="70" font-size="40">✨</text>`,
+    sad: dots + `<path d="M86,122 L122,108" ${ln}/><path d="M214,122 L178,108" ${ln}/><path d="M124,244 Q150,224 176,244" ${ln}/><ellipse cx="96" cy="168" rx="7" ry="12" fill="#74c0fc"/>`,
+    scared: `<circle cx="105" cy="140" r="17" fill="#fff" stroke="#222" stroke-width="4"/><circle cx="195" cy="140" r="17" fill="#fff" stroke="#222" stroke-width="4"/><circle cx="105" cy="142" r="7" fill="#222"/><circle cx="195" cy="142" r="7" fill="#222"/>
+      <path d="M86,110 Q105,96 124,110" ${ln}/><path d="M176,110 Q195,96 214,110" ${ln}/><ellipse cx="150" cy="240" rx="14" ry="18" fill="#333"/>`,
+    cross: dots + `<path d="M84,112 L124,128" ${ln}/><path d="M216,112 L176,128" ${ln}/><path d="M124,240 L176,240" ${ln}/>`,
+    tired: `<path d="M90,142 Q105,152 120,142" ${ln}/><path d="M180,142 Q195,152 210,142" ${ln}/><ellipse cx="150" cy="240" rx="11" ry="14" fill="#333"/>`,
+    sleep: `<path d="M90,142 Q105,154 120,142" ${ln}/><path d="M180,142 Q195,154 210,142" ${ln}/><path d="M135,236 Q150,246 165,236" ${ln}/><text x="225" y="60" font-size="42" fill="#5c7cfa">Zzz</text>`,
+  }[m];
+}
+const KF = { mood: 'happy', story: -1, waiting: null, koala: document.getElementById('koala') };
+function setMood(m) { KF.mood = m; document.getElementById('kface').innerHTML = koalaFace(m); }
+const feelBtns = document.getElementById('feelbtns');
+Object.entries(FEELINGS).forEach(([f, em]) => {
+  const b = document.createElement('button'); b.textContent = em;
+  b.onclick = () => { KF.waiting = null; document.getElementById('feelprop').innerHTML = '';
+    setMood(f); replay(KF.koala, f === 'scared' ? 'shiver' : 'jump'); document.getElementById('feelcap').textContent = CLIP_TEXT['feel_' + f]; say('feel_' + f); };
+  feelBtns.appendChild(b);
+});
+const storyBtn = document.createElement('button'); storyBtn.className = 'story'; storyBtn.textContent = '📖';
+storyBtn.onclick = () => {
+  KF.story = (KF.story + 1) % FEEL_STORIES.length;
+  const s = FEEL_STORIES[KF.story];
+  KF.waiting = s;
+  document.getElementById('feelprop').innerHTML = s.prop === '👩' ? `<span style="display:inline-block;width:90px;height:90px">${mumArt().replace('<img', '<img style="width:90px;height:90px;border-radius:50%;object-fit:cover"')}</span>` : s.prop;
+  setMood(s.mood); replay(KF.koala, s.mood === 'scared' ? 'shiver' : 'jump');
+  document.getElementById('feelcap').textContent = CLIP_TEXT[s.ask];
+  say(s.ask);
+};
+feelBtns.appendChild(storyBtn);
+KF.koala.addEventListener('pointerdown', () => {
+  const s = KF.waiting;
+  if (s) {
+    KF.waiting = null;
+    floatUp(document.getElementById('feel'), ...centreOf(KF.koala), s.help, 4);
+    setTimeout(() => { setMood(s.end); replay(KF.koala, 'jump'); }, 500);
+    document.getElementById('feelcap').textContent = CLIP_TEXT[s.ok] || CLIP_TEXT.feel_excited;
+    say(s.ok === 'mum_hug' ? ['feel_excited', 'mum_hug'] : s.ok);
+  } else { replay(KF.koala, 'jump'); say(KF.mood === 'sleep' ? 'fs_tired_ok' : 'feel_' + KF.mood); }
+});
+onEnter.feel = () => { KF.waiting = null; document.getElementById('feelprop').innerHTML = ''; setMood('happy'); document.getElementById('feelcap').textContent = 'How do you feel?'; say('how_feel'); };
+
+/* ============ RAINBOW COUNT (Luisa) ============ */
+// Count 2-3 animals, then up to 5, then up to 7 (a whole rainbow). Each tap lights the next rainbow colour.
+const CT = { round: 0, n: 0, counted: 0, animal: null, busy: false };
+function newCountRound() {
+  const max = CT.round < 5 ? 3 : CT.round < 10 ? 5 : 7;
+  CT.n = rand(2, max); CT.counted = 0; CT.busy = false;
+  let a; do { a = ANIMALS[rand(0, ANIMALS.length - 1)]; } while (CT.animal && a[0] === CT.animal[0]);
+  CT.animal = a;
+  document.getElementById('countq').innerHTML = `${CT.n} ${a[1]}`;
+  const field = document.getElementById('field'), bridge = document.getElementById('bridge');
+  field.innerHTML = ''; bridge.innerHTML = '<div class="band"></div>'.repeat(CT.n);
+  // spread the animals over a loose grid so they don't overlap
+  const W = field.clientWidth || innerWidth, H = field.clientHeight || innerHeight * .5;
+  const cells = []; for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) cells.push([c, r]);
+  cells.sort(() => Math.random() - .5);
+  for (let i = 0; i < CT.n; i++) {
+    const [c, r] = cells[i], el = document.createElement('div');
+    el.className = 'critter pop-in'; el.textContent = a[1];
+    el.style.left = (c * W / 4 + Math.random() * (W / 4 - 120)) + 'px';
+    el.style.top = (r * H / 3 + Math.random() * Math.max(0, H / 3 - 120)) + 'px';
+    el.addEventListener('pointerdown', e => { e.preventDefault(); countTap(el); });
+    field.appendChild(el);
+  }
+  say(['lets_count', a[0]]);
+}
+async function countTap(el) {
+  if (CT.busy || el.dataset.done) return;
+  el.dataset.done = 1; CT.counted++;
+  const band = document.getElementById('bridge').children[CT.counted - 1];
+  band.style.background = RAINBOW[CT.counted - 1]; band.innerHTML = `<span style="font-size:60px">${CT.animal[1]}</span>`;
+  el.style.transform = 'scale(0)'; setTimeout(() => el.remove(), 300);
+  sfx('pop');
+  if (CT.counted < CT.n) { say('n' + CT.counted); return; }
+  CT.busy = true;
+  await say('n' + CT.counted);
+  sfx('ding'); toast(CT.n === 7 ? '🌈🌈🌈' : '🌈 Yay!');
+  floatUp(document.getElementById('count'), innerWidth / 2, innerHeight - 200, '🌈', 6, 'spark');
+  await say(['n' + CT.n, CT.animal[0], CT.n === 7 ? 'rainbow' : 'yay']);
+  CT.round++;
+  if (current === 'count') setTimeout(newCountRound, 800);
+}
+onEnter.count = () => { CT.round = 0; CT.animal = null; requestAnimationFrame(newCountRound); };
+
+/* ============ SUPERTREE DANCE PARTY (Luisa) ============ */
+const DN = { timer: 0, beat: 0, mode: 'party', freeze: false, frozen: false, dancer: document.getElementById('dancer'), gain: null, nextFreeze: 8 };
+const PENTA = [261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3];
+// Twinkle Twinkle (traditional), for the sleepy song
+const TWINKLE = [0, 0, 4, 4, 5, 5, 4, -1, 3, 3, 2, 2, 1, 1, 0, -1, 4, 4, 3, 3, 2, 2, 1, -1, 4, 4, 3, 3, 2, 2, 1, -1];
+const TW_NOTES = [261.6, 293.7, 329.6, 349.2, 392, 440];
+function note(freq, dur, type = 'triangle', vol = .2) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+    o.type = type; o.frequency.value = freq; o.connect(g); g.connect(actx.destination);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    o.start(t); o.stop(t + dur);
+  } catch (e) {}
+}
+const trees = document.getElementById('trees');
+[22, 34, 28, 38, 24].forEach((h, i) => {
+  const t = document.createElement('div'); t.className = 'stree'; t.style.setProperty('--h', i * 70);
+  t.innerHTML = `<div class="cap"></div><div class="trunk" style="height:${h}vh"></div>`;
+  trees.appendChild(t);
+});
+const dui = document.getElementById('danceui');
+['🐨', '🐒', '🐊', '🐬', '🦈', '🐳'].forEach(a => {
+  const b = document.createElement('button'); b.textContent = a;
+  b.onclick = () => { DN.dancer.textContent = a; sfx('pop'); };
+  dui.appendChild(b);
+});
+const freezeBtn = document.createElement('button'); freezeBtn.textContent = '❄️';
+freezeBtn.onclick = () => { DN.freeze = !DN.freeze; freezeBtn.classList.toggle('on', DN.freeze); DN.nextFreeze = DN.beat + rand(8, 16); };
+const sleepBtn = document.createElement('button'); sleepBtn.textContent = '🌙';
+sleepBtn.onclick = () => { setDanceMode(DN.mode === 'party' ? 'lullaby' : 'party'); };
+dui.append(freezeBtn, sleepBtn);
+function setDanceMode(m) {
+  DN.mode = m; DN.beat = 0; DN.frozen = false; DN.dancer.classList.remove('frozen');
+  sleepBtn.classList.toggle('on', m === 'lullaby');
+  document.getElementById('dance').classList.toggle('lullaby', m === 'lullaby');
+  clearInterval(DN.timer);
+  DN.timer = setInterval(danceBeat, m === 'party' ? 320 : 700);
+  say(m === 'party' ? 'dance_party' : 'sleepy_song');
+}
+let melody = 3;
+function danceBeat() {
+  if (DN.frozen) return;
+  const b = DN.beat++;
+  if (DN.mode === 'party') {
+    if (b % 2 === 0) note(PENTA[0] / 2, .25, 'sine', .25);
+    melody = Math.max(0, Math.min(PENTA.length - 1, melody + rand(-2, 2)));
+    if (b % 4 !== 3) note(PENTA[melody], .22, 'square', .05);
+    DN.dancer.style.transform = `translateY(${b % 2 ? -30 : 0}px) rotate(${b % 4 < 2 ? -12 : 12}deg)`;
+    [...trees.children].forEach((t, i) => t.style.setProperty('--h', (b * 25 + i * 70) % 360));
+    if (DN.freeze && b >= DN.nextFreeze) doFreeze();
+  } else {
+    const n = TWINKLE[b % TWINKLE.length];
+    if (n >= 0) note(TW_NOTES[n], .9, 'sine', .12);
+    DN.dancer.style.transform = `rotate(${b % 2 ? -6 : 6}deg)`;
+    [...trees.children].forEach((t, i) => t.style.setProperty('--h', 220 + ((b * 6 + i * 20) % 60)));
+  }
+}
+async function doFreeze() {
+  DN.frozen = true; DN.dancer.classList.add('frozen'); DN.dancer.style.transform = '';
+  await say('freeze'); await wait(2200);
+  if (current !== 'dance') return;
+  await say('dance');
+  DN.frozen = false; DN.dancer.classList.remove('frozen'); DN.nextFreeze = DN.beat + rand(8, 16);
+}
+document.getElementById('dance').addEventListener('pointerdown', e => {
+  if (e.target.closest('button')) return;
+  floatUp(document.getElementById('dance'), e.clientX - 20, e.clientY - 20, ['⭐', '✨', '💖', '🌈'][rand(0, 3)], 4, 'spark');
+  if (!DN.frozen) { DN.dancer.style.transform = 'rotate(360deg) scale(1.15)'; note(PENTA[rand(3, 7)], .3, 'triangle', .15); }
+});
+onEnter.dance = () => setDanceMode('party');
+onLeave.dance = () => { clearInterval(DN.timer); DN.frozen = false; };
+
+/* ============ CHOO CHOO MAP: our route, one leg at a time (Luisa) ============ */
+const RT = { pos: store.get('route_pos', 0), moving: false };
+const stopX = i => 120 + i * 230;
+function renderRoute() {
+  const tin = document.getElementById('trackin');
+  tin.style.width = stopX(ROUTE.length - 1) + 140 + 'px';
+  tin.innerHTML = `<div class="line" style="width:${stopX(ROUTE.length - 1) + 140}px"></div>` +
+    ROUTE.map((s, i) => `<div class="stop ${i <= RT.pos ? 'been' : 'todo'}" style="left:${stopX(i)}px">
+      <div class="pin">${s.pin === 'MUM' ? mumArt() : s.pin}</div><div class="nm">${s.name}</div></div>`).join('') +
+    `<div class="mover" id="mover" style="left:${stopX(RT.pos)}px">🐨</div>`;
+  const next = ROUTE[RT.pos + 1];
+  const btn = document.getElementById('gobtn');
+  btn.textContent = next ? next.by : '🔁'; btn.disabled = false;
+  document.getElementById('track').scrollLeft = Math.max(0, stopX(RT.pos) - innerWidth / 3);
+}
+document.getElementById('gobtn').onclick = async () => {
+  if (RT.moving) return;
+  if (RT.pos >= ROUTE.length - 1) { RT.pos = 0; store.set('route_pos', 0); renderRoute(); say('route_start'); return; }
+  const leg = ROUTE[RT.pos + 1], mover = document.getElementById('mover'), btn = document.getElementById('gobtn');
+  RT.moving = true; btn.disabled = true;
+  say(leg.clip);
+  mover.textContent = leg.by;
+  document.getElementById('track').scrollLeft = Math.max(0, stopX(RT.pos + 1) - innerWidth / 3);
+  mover.style.left = stopX(RT.pos + 1) + 'px';
+  await wait(2300);
+  RT.pos++; store.set('route_pos', RT.pos); RT.moving = false;
+  renderRoute();
+  const stop = document.querySelectorAll('#trackin .stop')[RT.pos];
+  floatUp(document.getElementById('route'), ...centreOf(stop), leg.mum ? '💖' : '⭐', 5);
+  sfx('ding');
+  if (RT.pos === ROUTE.length - 1) toast('🏠🎉');
+  say(leg.mum ? [leg.at, 'mum_hug'] : leg.at);
+};
+onEnter.route = () => { renderRoute(); if (RT.pos === 0) say('route_start'); };
+
+/* ============ VIDEOS (Luisa's tablet app only) ============ */
+// The luisa-tablet build has a native "Videos" plugin that lists a folder on the SD card.
+const hasVideos = !!(window.Capacitor && Capacitor.PluginHeaders && Capacitor.PluginHeaders.some(h => h.name === 'Videos'));
+const videoApi = (method, opts = {}) => Capacitor.nativePromise('Videos', method, opts);
+const vgrid = document.getElementById('vgrid'), video = document.getElementById('video'), player = document.getElementById('player');
+let videoList = [];
+if (hasVideos) {
+  // Her tablet opens straight to her games, with no way back to "Who's playing?"
+  document.getElementById('videosTile').hidden = false;
+  document.querySelector('#luisa .back').hidden = true;
+  go('luisa');
+}
+onEnter.videos = async () => {
+  let res = {};
+  try { res = await videoApi('list'); } catch (e) {}
+  videoList = res.videos || [];
+  vgrid.innerHTML = '';
+  if (!videoList.length) {
+    vgrid.innerHTML = `<div class="vempty">📺 No videos yet.<br><br>Grown-ups: copy <b>.mp4</b> files into a folder called <code>Luisa Videos</code>
+      at the top of the SD card, then come back to this screen.` +
+      (res.needPermission ? '<br><br>⚠️ The app needs permission to read files: Settings → Apps → Luisa → Permissions → Storage.' : '') +
+      `<br><br><small>Looked in:<br>${(res.folders || []).join('<br>')}</small></div>`;
+    return;
+  }
+  videoList.forEach((v, i) => {
+    const b = document.createElement('button');
+    b.className = 'vcard';
+    b.innerHTML = '<img alt=""><div class="vt"></div>';
+    const img = b.querySelector('img');
+    img.onerror = () => { img.outerHTML = '<div class="noimg">📺</div>'; };
+    img.src = v.thumb;
+    b.querySelector('.vt').textContent = v.title;
+    b.addEventListener('click', () => playVideo(i));
+    vgrid.appendChild(b);
+  });
+};
+function playVideo(i) {
+  go('player');
+  video.src = videoList[i].src;
+  video.play().catch(() => player.classList.add('paused'));
+}
+const keepAwake = on => videoApi('keepAwake', { on }).catch(() => {});
+video.addEventListener('play', () => { player.classList.remove('paused'); keepAwake(true); });
+video.addEventListener('pause', () => { player.classList.add('paused'); keepAwake(false); });
+video.addEventListener('ended', () => go('videos')); // no autoplay chain: back to the picture grid
+video.addEventListener('error', () => { if (current === 'player') { toast('😕'); setTimeout(() => go('videos'), 1500); } });
+// Tap anywhere to pause / play
+player.addEventListener('click', e => { if (!e.target.closest('.back')) video.paused ? video.play().catch(() => {}) : video.pause(); });
+onLeave.player = () => { video.pause(); video.removeAttribute('src'); video.load(); player.classList.remove('paused'); keepAwake(false); };
+
 /* ============ VOICE RECORDER (grown-ups) ============ */
 let mediaStream, recorder, recordingKey;
 function renderRecorder() {
@@ -715,6 +1348,7 @@ function renderRecorder() {
   document.getElementById('recMode').textContent = serverMode
     ? `💻 Laptop mode: clips are saved as files in the audio folder (${Object.keys(audioFiles).length} so far).`
     : '📱 Recordings are saved on this device only.';
+  offlineStatus().then(t => { if (t && !serverMode) document.getElementById('recMode').textContent += '  ' + t; });
   CLIPS.forEach(([group, clips]) => {
     const g = document.createElement('div'); g.className = 'rec-group';
     g.innerHTML = `<h2>${group}</h2>`;
@@ -797,10 +1431,26 @@ async function toCleanWav(blob) {
 }
 
 // Voice files in audio/ (recorded on the laptop, listed in audio/manifest.json)
-const audioFiles = {};
-let serverMode = false;
+// manifest value: a number = <key>.wav recorded on the laptop (number busts the cache); a string = file name (e.g. Mum's phone recordings)
+function clipUrl(key) {
+  const v = audioFiles[key];
+  return v === undefined ? null : typeof v === 'string' ? 'audio/' + v : `audio/${key}.wav?v=${v}`;
+}
 fetch('audio/manifest.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : {}).then(m => Object.assign(audioFiles, m)).catch(() => {});
 fetch('api/ping').then(r => { serverMode = r.ok; }).catch(() => {});
+// Offline mode for the web version (not needed inside Luisa's tablet app, or on the laptop recorder)
+if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.Capacitor) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    if (navigator.onLine) navigator.serviceWorker.ready.then(r => r.active && r.active.postMessage('refresh'));
+  }).catch(() => {});
+}
+async function offlineStatus() {
+  try {
+    if (window.Capacitor) return '✈️ Offline ready: everything is built into this app.';
+    const c = await caches.open('kids-apps-v1'), keys = (await c.keys()).filter(r => r.url.includes('/audio/') && !r.url.endsWith('manifest.json'));
+    return `✈️ Offline: ${keys.length} of ${Object.keys(audioFiles).length} voice clips saved on this device.`;
+  } catch (e) { return ''; }
+}
 openDB().then(loadRecordings);
 </script>
 </body>

@@ -7,6 +7,8 @@
 <style>
   :root { --glow: #ff2a1a; --bg: #120202; --ink: #ff6a5a; }
   body.day { --glow: #3ddc5a; --bg: #06240e; --ink: #b9ffc6; }
+  body.day.white { --bg: #ffffff; --ink: #1d7a33; }
+  body.day.white #glow { opacity: .35; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; overflow: hidden; }
   body {
@@ -126,9 +128,11 @@
 <div id="settings">
   <div class="card">
     <h2>🐑 Grown-up settings</h2>
+    <label>Sam's time zone <select id="sTz"></select></label>
     <label>Sleep (red) from <input type="time" id="sNight"></label>
     <label>Wake (green) at <input type="time" id="sDay"></label>
-    <label>Alarm on <input type="checkbox" id="sAlarmOn"></label>
+    <label>White background in daytime <input type="checkbox" id="sWhite"></label>
+    <label>Alarm on<input type="checkbox" id="sAlarmOn"></label>
     <label>Alarm time <input type="time" id="sAlarm"></label>
     <label>Alarm sound
       <select id="sSound"><option value="baa">Baa-baa tune</option><option value="chime">Gentle chime</option></select>
@@ -144,7 +148,7 @@
 
 <script>
 (() => {
-  const DEF = { night: '19:00', day: '07:00', alarmOn: false, alarm: '07:00', sound: 'baa', dim: 55, h24: false, nightClock: true };
+  const DEF = { tz: '', whiteDay: false, night: '19:00', day: '07:00', alarmOn: false, alarm: '07:00', sound: 'baa', dim: 55, h24: false, nightClock: true };
   let cfg = { ...DEF };
   try { cfg = { ...DEF, ...JSON.parse(localStorage.getItem('sam-settings') || '{}') }; } catch (e) {}
   const save = () => { try { localStorage.setItem('sam-settings', JSON.stringify(cfg)); } catch (e) {} };
@@ -153,8 +157,22 @@
   const mins = hhmm => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
   let preview = null, lastAlarmKey = null, ringing = false;
 
+  const CITIES = { '': 'Tablet time', 'Australia/Sydney': 'Wollongong', 'Asia/Singapore': 'Singapore',
+    'Europe/Amsterdam': 'Eindhoven', 'Europe/London': 'Oxford', 'Europe/Zurich': 'Bern' };
+  // Current time as {h, m, day} in the chosen city (or the tablet's own zone)
+  function nowParts() {
+    const d = new Date();
+    if (cfg.tz) try {
+      const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: cfg.tz, hourCycle: 'h23',
+        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+        .formatToParts(d).map(x => [x.type, x.value]));
+      return { h: +p.hour, m: +p.minute, day: `${p.year}-${p.month}-${p.day}` };
+    } catch (e) {}
+    return { h: d.getHours(), m: d.getMinutes(), day: d.toDateString() };
+  }
+
   function isNight(now) {
-    const t = now.getHours() * 60 + now.getMinutes(), n = mins(cfg.night), d = mins(cfg.day);
+    const t = now.h * 60 + now.m, n = mins(cfg.night), d = mins(cfg.day);
     return n > d ? (t >= n || t < d) : (t >= n && t < d);
   }
   function fmt(hhmm) {
@@ -165,23 +183,25 @@
   }
 
   function tick() {
-    const now = new Date();
+    const now = nowParts();
     const night = preview ? preview === 'night' : isNight(now);
     document.body.classList.toggle('night', night);
     document.body.classList.toggle('day', !night);
+    document.body.classList.toggle('white', cfg.whiteDay);
     document.body.style.setProperty('--dim', cfg.dim / 100);
 
-    let h = now.getHours(), m = String(now.getMinutes()).padStart(2, '0'), ap = '';
+    let h = now.h, m = String(now.m).padStart(2, '0'), ap = '';
     if (!cfg.h24) { ap = h < 12 ? 'am' : 'pm'; h = h % 12 || 12; } else h = String(h).padStart(2, '0');
     $('clock').innerHTML = `${h}:${m}<span id="ampm">${ap}</span>`;
     $('clock').style.visibility = night && !cfg.nightClock ? 'hidden' : 'visible';
 
     $('msg').textContent = ringing ? 'Good morning! Tap Sam 🐑'
       : night ? 'Shhh… Sam is sleeping. Stay in bed!' : 'Sam is awake! You can get up! ☀️';
-    $('alarmBadge').textContent = cfg.alarmOn ? `⏰ ${fmt(cfg.alarm)}` : '';
+    $('alarmBadge').textContent = [cfg.tz ? `🌏 ${CITIES[cfg.tz]} time` : '', cfg.alarmOn ? `⏰ ${fmt(cfg.alarm)}` : '']
+      .filter(Boolean).join('  ·  ');
 
-    const key = now.toDateString() + cfg.alarm;
-    const hhmm = `${String(now.getHours()).padStart(2, '0')}:${m}`;
+    const key = now.day + cfg.alarm;
+    const hhmm = `${String(now.h).padStart(2, '0')}:${m}`;
     if (cfg.alarmOn && hhmm === cfg.alarm && lastAlarmKey !== key) { lastAlarmKey = key; startAlarm(); }
   }
 
@@ -250,8 +270,9 @@
   $('hold').addEventListener('pointerdown', () => { ring.classList.add('on'); holdT = setTimeout(openSettings, 3000); });
   ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => $('hold').addEventListener(ev, () => { clearTimeout(holdT); ring.classList.remove('on'); }));
 
-  const fields = { sNight: 'night', sDay: 'day', sAlarm: 'alarm', sSound: 'sound', sDim: 'dim' };
-  const checks = { sAlarmOn: 'alarmOn', s24: 'h24', sNightClock: 'nightClock' };
+  $('sTz').innerHTML = Object.entries(CITIES).map(([z, c]) => `<option value="${z}">${c}</option>`).join('');
+  const fields = { sTz: 'tz', sNight: 'night', sDay: 'day', sAlarm: 'alarm', sSound: 'sound', sDim: 'dim' };
+  const checks = { sWhite: 'whiteDay', sAlarmOn: 'alarmOn', s24: 'h24', sNightClock: 'nightClock' };
   function openSettings() {
     ring.classList.remove('on'); audio().resume();
     for (const [id, k] of Object.entries(fields)) $(id).value = cfg[k];

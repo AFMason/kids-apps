@@ -15,6 +15,7 @@ Custom offline apps for Orlando's Samsung Galaxy tablet, built as web apps, wrap
 | `robot-builder.html` | Robot building game for a 6-year-old. Single self-contained file, no external assets. Becomes `www/index.html` in its Capacitor project. |
 | `sam-the-sheep.html` | Sleep trainer nightlight, clock and alarm: red at night, green in the morning. |
 | `luisa-tablet/` | Luisa's tablet (old SM-T350): her games from `index.html` plus offline videos from the SD card. |
+| `orlando-tablet/` | Orlando's tablet (Galaxy Tab S8): his games and books from `index.html`, with a native robot voice. |
 | `make-books.py` / `.bat` | Converts PDFs, EPUBs, StoryWeaver zips and picture folders in `books/` into the app's bookshelf (`books/shelf`). |
 | `get-videos.bat` | Downloads YouTube links as tablet-friendly MP4s for Luisa's tablet. |
 | `README.md` | This guide. |
@@ -227,6 +228,16 @@ Thumbnail crop boxes for each category are in `VB`.
 2. Plug into the PC, accept the "Allow USB debugging?" prompt on the tablet, then `adb install -r luisa-tablet/android/app/build/outputs/apk/debug/app-debug.apk`.
 3. In the Play Store, update **Android System WebView** (and Chrome) if offered. The games and player run in it.
 4. Turn on screen pinning: Settings → Lock screen and security → Other security settings → **Pin windows**.
+
+## Orlando's Tablet: app notes
+
+`orlando-tablet/` is Orlando's version of the games app for his **Galaxy Tab S8 (SM-X700)**. It holds his games (Number Bakery, Coder Robot) and his Books, all bundled for offline use, with the same screen-time limits. App ID: `au.mason.orlando.kids`.
+
+- **Same page as Luisa's app**: `npm run sync` copies the root `index.html` (marked `<html data-kid="orlando">`), `audio/`, `photos/` and `books/shelf`, then runs `cap sync`. The page opens straight to his menu, hides 🏠, and puts the grown-up ⚙️ on his menu.
+- **Robot voice**: Android's WebView has no `speechSynthesis`, so `SpeechPlugin` (Android text-to-speech, Australian English if installed) stands in for it. That covers tap-a-word, 🔊 on a page, and any voice line that hasn't been recorded.
+- **Lock-in** works like Luisa's: it pins itself (confirm once), Back does nothing, and system bars are hidden. Unpin: hold Back + Recents.
+- **Install over Wi‑Fi**: Wireless debugging → *Pair device with pairing code*, then `adb pair <ip>:<pairing-port>` and `adb connect <ip>:<port>`. `adb mdns services` shows the connect port. Then `adb install -r orlando-tablet/android/app/build/outputs/apk/debug/app-debug.apk`.
+- If Gradle says "SDK location not found", create `android/local.properties` with `sdk.dir=C:/Users/<you>/AppData/Local/Android/Sdk`. It's git-ignored, so each project needs one.
 
 ## Screen time limits
 

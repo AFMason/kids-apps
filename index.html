@@ -313,6 +313,7 @@
     <button class="big tile1" data-go="robot"><span class="emoji">🤖</span>Coder Robot</button>
     <button class="big tile9" data-shelf="orlando"><span class="emoji">📚</span>Books</button>
   </div>
+  <button class="gear" id="orlandoGear" hidden><span class="fill"></span>⚙️</button>
 </section>
 
 <!-- BUBBLES -->
@@ -652,6 +653,20 @@ const store = {
 };
 
 /* ============ SPEECH: recorded clip, else text-to-speech ============ */
+// Android's WebView has no speechSynthesis. Orlando's tablet app has a native "Speech" plugin, so stand in for it there.
+if (!('speechSynthesis' in window) && window.Capacitor && Capacitor.PluginHeaders && Capacitor.PluginHeaders.some(h => h.name === 'Speech')) {
+  window.SpeechSynthesisUtterance = function (text) { this.text = text; this.rate = 1; this.pitch = 1; };
+  window.speechSynthesis = {
+    speak(u) {
+      Capacitor.nativeCallback('Speech', 'speak', { text: u.text, rate: u.rate, pitch: u.pitch }, (res, err) => {
+        if (res && res.type === 'range') { if (u.onboundary) u.onboundary({ charIndex: res.charIndex }); }
+        else if (u.onend) u.onend();
+      });
+    },
+    cancel() { Capacitor.nativePromise('Speech', 'cancel', {}).catch(() => {}); },
+    getVoices: () => [],
+  };
+}
 let sayToken = 0, currentAudio = null;
 function say(keys) {
   const token = ++sayToken;
@@ -728,9 +743,9 @@ function holdButton(el, ms, action) {
 // Back buttons need a short hold, so a stray toddler tap doesn't leave the game
 const BACK_HOLD_MS = 800;
 document.querySelectorAll('.back.hold').forEach(b => holdButton(b, BACK_HOLD_MS, () => go(b.dataset.hold)));
-// Grown-up gate: hold ⚙️ for 3 seconds (home, the all-done screen, and Luisa's menu on her own tablet)
+// Grown-up gate: hold ⚙️ for 3 seconds (home, the all-done screen, and each child's menu in their own tablet app)
 let grownupFrom = 'home';
-['gear', 'timeupGear', 'luisaGear'].forEach(id => holdButton(document.getElementById(id), 3000, () => { grownupFrom = current; go('grownup'); }));
+['gear', 'timeupGear', 'luisaGear', 'orlandoGear'].forEach(id => holdButton(document.getElementById(id), 3000, () => { grownupFrom = current; go('grownup'); }));
 // (from the all-done screen, back goes to the child's menu: a grown-up may have just added time)
 document.getElementById('grownupBack').onclick = () => go(grownupFrom === 'timeup' ? timeupFor.kid : grownupFrom);
 onEnter.luisa = () => { say('hi_luisa'); markLocked('luisa'); };
@@ -1521,12 +1536,14 @@ const hasVideos = !!(window.Capacitor && Capacitor.PluginHeaders && Capacitor.Pl
 const videoApi = (method, opts = {}) => Capacitor.nativePromise('Videos', method, opts);
 const vgrid = document.getElementById('vgrid'), video = document.getElementById('video'), player = document.getElementById('player');
 let videoList = [], videoGroup = '', videoScroll = {};
-if (hasVideos) {
-  // Her tablet opens straight to her games, with no way back to "Who's playing?"
-  document.getElementById('videosTile').hidden = false;
-  document.querySelector('#luisa .back').hidden = true;
-  document.getElementById('luisaGear').hidden = false; // the grown-up gate, since "Who's playing?" is out of reach
-  go('luisa');
+if (hasVideos) document.getElementById('videosTile').hidden = false;
+// Each child's tablet app opens straight to their menu, with no way back to "Who's playing?"
+// (Orlando's app marks the page <html data-kid="orlando">; Luisa's is the one with videos)
+const appKid = document.documentElement.dataset.kid || (hasVideos ? 'luisa' : '');
+if (appKid) {
+  document.querySelector(`#${appKid} .back`).hidden = true;
+  document.getElementById(appKid + 'Gear').hidden = false; // the grown-up gate, since "Who's playing?" is out of reach
+  go(appKid);
 }
 const videosEl = document.getElementById('videos');
 // 🏠 (hold): from a show's episodes back to all videos, from there back to Luisa's games

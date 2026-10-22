@@ -208,9 +208,10 @@ Thumbnail crop boxes for each category are in `VB`.
 - **Update after editing `index.html`**: run `npm run sync` in `luisa-tablet/` (copies the page, audio and photos, then runs `cap sync`), then rebuild.
 - **Videos** go in a folder called **`Luisa Videos`** at the top of the SD card (internal storage also works). Copy files over USB (tablet shows up as *Card*) or put the card in the PC. The app re-reads the folder each time the Videos screen opens, so there's no rebuild for new videos.
   - Format: **MP4 (H.264 video + AAC audio), 720p or lower**. The tablet's chip can't handle VP9/AV1 or 1080p+ smoothly.
+  - Show folders: a subfolder (e.g. `Luisa Videos/Bluey/`) appears as one stacked tile named after the folder, using its first episode's picture. Tapping it opens the episodes. Holding 🏠 goes back up a level, and holding it again returns to the games. Only one level of subfolders is read.
   - Thumbnails: a picture with the same name (`Peppa.mp4` + `Peppa.jpg`/`.png`/`.webp`) is used if present, otherwise the app grabs a frame from the video. The title under each tile is the file name. Files are sorted by name, so prefix with `01 `, `02 ` to order them.
   - First launch asks for permission to read files. Allow it. If it was denied: Settings → Apps → Luisa → Permissions → Storage.
-- **Player**: tap the picture to play full screen. Tap anywhere to pause or resume. When the video ends it goes back to the grid. Hold 📺 (top left) to leave early. The screen stays on only while a video plays.
+- **Player**: tap the picture to play full screen. Tap anywhere to pause or resume. When the video ends it goes back to the grid. Hold 📺 (top left, 0.8 s, set by `BACK_HOLD_MS`) to leave early. The screen stays on only while a video plays.
 - **Lock-in**: like Sam, the app pins itself (confirm the prompt once), the Back button does nothing, and system bars are hidden. Unpin: hold Back + Recents.
 - **Native bits** (`android/app/src/main/java/au/mason/luisa/tablet/`): `VideosPlugin` lists the folder and toggles keep-screen-on. `VideoWebViewClient` serves `/_video_/<n>` with byte-range support (so long videos stream and seek) and `/_thumb_/<n>.jpg`.
 

@@ -45,12 +45,16 @@ public class VideosPlugin extends Plugin {
         JSObject ret = new JSObject();
         JSArray folders = new JSArray();
         List<File> found = new ArrayList<>();
+        List<String> groups = new ArrayList<>();
         for (File dir : folders()) {
             folders.put(dir.getAbsolutePath());
-            File[] files = dir.listFiles();
-            if (files == null) continue;
-            Arrays.sort(files, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-            for (File f : files) if (f.isFile() && !f.getName().startsWith(".") && EXTS.contains(ext(f.getName()))) found.add(f);
+            File[] files = sorted(dir);
+            // Videos at the top level, then one level of show folders (e.g. "Bluey/Bluey S1 E01.mp4")
+            for (File f : files) if (isVideo(f)) { found.add(f); groups.add(""); }
+            for (File sub : files) {
+                if (!sub.isDirectory() || sub.getName().startsWith(".")) continue;
+                for (File f : sorted(sub)) if (isVideo(f)) { found.add(f); groups.add(sub.getName()); }
+            }
         }
         videos = found;
 
@@ -59,6 +63,7 @@ public class VideosPlugin extends Plugin {
             String name = found.get(i).getName();
             JSObject v = new JSObject();
             v.put("title", base(name));
+            v.put("group", groups.get(i));
             v.put("src", "/_video_/" + i + "/" + encode(name));
             v.put("thumb", "/_thumb_/" + i + ".jpg?v=" + found.get(i).lastModified());
             list.put(v);
@@ -95,6 +100,17 @@ public class VideosPlugin extends Plugin {
         roots.add(canonical(new File(Environment.getExternalStorageDirectory(), FOLDER)));
         roots.addAll(own);
         return roots;
+    }
+
+    private static File[] sorted(File dir) {
+        File[] files = dir.listFiles();
+        if (files == null) return new File[0];
+        Arrays.sort(files, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+        return files;
+    }
+
+    private static boolean isVideo(File f) {
+        return f.isFile() && !f.getName().startsWith(".") && EXTS.contains(ext(f.getName()));
     }
 
     static File canonical(File f) {

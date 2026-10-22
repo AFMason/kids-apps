@@ -15,6 +15,7 @@ Custom offline apps for Orlando's Samsung Galaxy tablet, built as web apps, wrap
 | `robot-builder.html` | Robot building game for a 6-year-old. Single self-contained file, no external assets. Becomes `www/index.html` in its Capacitor project. |
 | `sam-the-sheep.html` | Sleep trainer nightlight, clock and alarm: red at night, green in the morning. |
 | `luisa-tablet/` | Luisa's tablet (old SM-T350): her games from `index.html` plus offline videos from the SD card. |
+| `make-books.py` / `.bat` | Converts PDFs, EPUBs, StoryWeaver zips and picture folders in `books/` into the app's bookshelf (`books/shelf`). |
 | `get-videos.bat` | Downloads YouTube links as tablet-friendly MP4s for Luisa's tablet. |
 | `README.md` | This guide. |
 
@@ -226,6 +227,36 @@ Thumbnail crop boxes for each category are in `VB`.
 2. Plug into the PC, accept the "Allow USB debugging?" prompt on the tablet, then `adb install -r luisa-tablet/android/app/build/outputs/apk/debug/app-debug.apk`.
 3. In the Play Store, update **Android System WebView** (and Chrome) if offered. The games and player run in it.
 4. Turn on screen pinning: Settings → Lock screen and security → Other security settings → **Pin windows**.
+
+## Screen time limits
+
+Daily limits for each child, for each kind of thing: **Games** and **Videos** start at 10 min a day, and **Reading** is always unlimited.
+
+- **Settings**: hold ⚙️ for 3 seconds. The gear is on "Who's playing?", on the all-done screen, and on Luisa's menu on her own tablet. Each limit has − / + buttons in 5-minute steps. **Off** closes that category for the day, and going past 3 hours means no limit. **+10 min today** adds extra time for today only. Limits are saved on each device (`localStorage` key `screen-time`), so each tablet and browser keeps its own.
+- **For the kids**: a small ring in the top right counts down the minutes left. At 1 minute it turns orange, wobbles and says "One more minute!". At zero, a game goes to the friendly "All done for today! Want to read a book?" screen. A video that's playing gets to finish first. Videos count only while playing, not while choosing. Tiles with no time left turn grey.
+- **New day**: resets at local midnight. Travelling west can turn the date back to yesterday, and that never hands out a second allowance (the day just runs a little longer). A clock more than a day ahead is treated as wrong and resets.
+- Which screens count as what: `SCREEN_CAT` / `SCREEN_KID` in `index.html`.
+
+## Books
+
+Each child has a 📚 **Books** shelf. **Luisa** gets picture books: swipe or ◀ ▶ to turn pages, and a page reads itself aloud if a grown-up has recorded it. **Orlando** gets easy readers with big words: tap a word to hear it, or 🔊 to hear the page. Both use the robot voice, so they work in Chrome and Safari but not inside a wrapped app (Android WebView has no speech). A recorded page clip is used if there is one.
+
+**Adding books** (on the computer):
+1. Put books in `books\luisa`, `books\orlando` or `books\both` (the folder decides whose shelf). You can use:
+   - **StoryWeaver** downloads, as the `.zip` exactly as downloaded (PDF + attribution file). The words are lifted off the pictures so they show (and can be tapped) underneath.
+   - Any **PDF**: one page per page, keeping the biggest picture.
+   - **EPUB**, e.g. Project Gutenberg's "EPUB3 (E-readers incl. Send-to-Kindle)" with images. A new page starts at each picture, and front matter and licence text are dropped.
+   - A **folder of pictures** (sorted by name), with an optional `text.txt` (one line per page) and `credit.txt`.
+2. Double-click **`make-books.bat`** (needs [uv](https://docs.astral.sh/uv/)). It writes `books\shelf\` (pictures sized for the tablets, plus `index.json`) and skips books it has already done.
+3. Luisa's tablet: `npm run sync` in `luisa-tablet/` and rebuild, since books are bundled into the app. Web version: commit `books/shelf` and push. The offline worker (`sw.js`) saves every book page the next time the page opens online. The recorder screen shows how many pages are saved.
+
+The originals in `books\luisa|orlando|both` are git-ignored, and only `books\shelf` is published. Credits (CC BY attribution for StoryWeaver) show on each book's last page.
+
+**Free sources**
+- [StoryWeaver](https://storyweaver.org.in) (CC BY 4.0, free account needed to download). Filter by *Level 1* (Luisa / early Orlando) and *Level 2* (Orlando). It allows only a few downloads before asking you to fill in a short "how will you use these" form.
+- [Project Gutenberg](https://www.gutenberg.org) (public domain): Beatrix Potter's tales, L. Leslie Brooke's *Three Little Pigs*. Use the "EPUB3 with images" download. Older books with tiny decorations or drop caps (e.g. *The Little Red Hen*, #18735) convert poorly.
+
+**Starter set** (22 Oct 2026): Luisa: Too Big! Too Small!, My Fish! No, My Fish!, I Want That One! (StoryWeaver), and Peter Rabbit, Fierce Bad Rabbit, Miss Moppet, Tom Kitten, Jemima Puddle-Duck (Gutenberg). Orlando: The Red Raincoat, Can and Can't, Busy Ants, Watch Out! The Tiger is Here! (StoryWeaver). Both: The Three Little Pigs (Gutenberg).
 
 ## Ideas for next apps
 

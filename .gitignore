@@ -9,3 +9,8 @@ local.properties
 *.jks
 *.keystore
 .env*
+
+# Book originals (only the converted books/shelf is published)
+books/luisa/
+books/orlando/
+books/both/

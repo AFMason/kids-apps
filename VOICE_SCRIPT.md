@@ -1,6 +1,6 @@
 # Voice Script
 
-Record these in the app: on the home screen, **hold ⚙️ for 3 seconds**, then tap ● beside each line (tap again to stop). Any line you skip uses the robot voice.
+Record these in the app: on the home screen, **hold ⚙️ for 3 seconds**, tap 🎙️ Record voices, then tap ● beside each line (tap again to stop). Any line you skip uses the robot voice.
 
 **Tips**
 - Sound excited and warm, a little slower than normal. Smile while you talk.
@@ -18,6 +18,17 @@ Record these in the app: on the home screen, **hold ⚙️ for 3 seconds**, then
 | yay | Yay! |
 | wow | Wow! |
 | you_did_it | You did it! |
+
+## Time & books
+| Key | Say |
+|---|---|
+| one_minute | One more minute! |
+| all_done | All done for today! Shall we read a book? |
+| lets_read | Let's read a book! |
+| the_end | The end! |
+
+## Book read-alouds (Luisa)
+Each book has its own 📚 group at the bottom of the recorder, one line per page, showing the page's words. Read them the way you would at bedtime. For a page with no words, say what's in the picture. Recorded pages play by themselves when Luisa turns to them. On her tablet that's the only voice for books, because the tablet has no robot voice.
 
 ## Bubbles (Luisa): colours
 Say each one bright and clear. She hears these a lot.

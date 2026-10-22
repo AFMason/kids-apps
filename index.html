@@ -218,6 +218,57 @@
   .rec-row button.rec { background: #ffd6d6; }
   .rec-row button.recording { background: #e03131; color: #fff; animation: wobble .5s infinite alternate; }
   .rec-row .done { width: 24px; text-align: center; }
+
+  /* Screen time: countdown ring, all-done screen, grown-up limits */
+  .tring { position: fixed; top: 12px; right: 12px; width: 72px; height: 72px; z-index: 40; display: none; pointer-events: none; }
+  .tring.show { display: block; }
+  .tring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .tring .bg { fill: rgba(255,255,255,.92); stroke: #e9ecef; stroke-width: 7; }
+  .tring .arc { fill: none; stroke: #40c057; stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  .tring b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #495057; }
+  .tring.low .arc { stroke: #ff922b; } .tring.low { animation: wobble .6s infinite alternate; }
+  .tring.out .arc { stroke: #adb5bd; }
+  body.timed .topbar { right: 96px; } body.timed .danceui, body.timed .rainbowpath { right: 96px; }
+  #timeup { background: linear-gradient(#d0bfff, #fff0f6); justify-content: center; text-align: center; }
+  #timeup .moon { font-size: 150px; animation: bounce 2s infinite; }
+  #timeup h1 { margin: 10px 20px; } #timeup p { font-size: 32px; margin: 0 0 30px; color: #5f3dc4; }
+  #grownup { background: #f4f1ec; overflow-y: auto; display: none; padding: 90px 16px 40px; }
+  #grownup.active { display: block; }
+  .tl { width: 100%; border-collapse: separate; border-spacing: 6px; font-family: system-ui, sans-serif; }
+  .tl th { font-size: 18px; color: #666; font-weight: normal; }
+  .tl td { background: #fff; border-radius: 12px; padding: 10px; text-align: center; vertical-align: top; }
+  .tl td.kid { font-size: 22px; text-align: left; vertical-align: middle; }
+  .tl td.inf { font-size: 30px; color: #999; vertical-align: middle; }
+  .step { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 22px; }
+  .step span { min-width: 76px; }
+  .tl button { border: none; border-radius: 10px; background: #eee; font-size: 22px; min-width: 44px; height: 44px; font-family: inherit; }
+  .tl button.more { background: #d3f9d8; font-size: 16px; margin-top: 6px; padding: 0 10px; }
+  .tl .used { font-size: 14px; color: #888; margin-top: 4px; }
+  .gunote { font-family: system-ui, sans-serif; color: #666; font-size: 15px; }
+  .gubtn { border: none; border-radius: 14px; background: #fff; font-size: 22px; padding: 14px 22px; margin-top: 18px; box-shadow: 0 3px 0 rgba(0,0,0,.08); }
+
+  /* Books: shelf + reader */
+  .tile9 { background: #0ca678; }
+  #shelf { background: linear-gradient(#fff4e6, #ffe8cc); overflow-y: auto; display: none; }
+  #shelf.active { display: block; }
+  #shelf h1 { text-align: center; }
+  .bgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 28px; padding: 10px 28px 50px; }
+  .bcard { border: none; padding: 0; background: #fff; border-radius: 18px; overflow: hidden; box-shadow: 0 8px 0 rgba(0,0,0,.12); font: inherit; }
+  .bcard:active { transform: translateY(6px); box-shadow: 0 2px 0 rgba(0,0,0,.12); }
+  .bcard img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: #f1f3f5; }
+  .bcard .bt { padding: 8px 10px 12px; font-size: 19px; line-height: 1.2; color: #333; }
+  #reader { background: #fffdf8; }
+  .pagebox { position: absolute; inset: 96px 140px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+  .pagebox img { flex: 1 1 0; min-height: 0; max-width: 100%; object-fit: contain; border-radius: 12px; }
+  .ptext { font-size: 26px; line-height: 1.5; text-align: center; color: #333; max-width: 900px; }
+  .ptext.big { font-size: 38px; line-height: 1.6; }
+  .ptext.only { font-size: 46px; }
+  .ptext .w { border-radius: 10px; padding: 0 3px; }
+  .ptext .w.lit { background: #ffe066; }
+  .turn-next { animation: turnnext .35s ease-out; } @keyframes turnnext { from { transform: translateX(14vw); opacity: 0; } to { transform: none; opacity: 1; } }
+  .turn-prev { animation: turnprev .35s ease-out; } @keyframes turnprev { from { transform: translateX(-14vw); opacity: 0; } to { transform: none; opacity: 1; } }
+  .theend { font-size: 64px; } .credit { font-family: system-ui, sans-serif; font-size: 14px; color: #888; max-width: 700px; text-align: center; }
+  .endbtns { display: flex; gap: 24px; } .endbtns .big { min-width: 200px; font-size: 28px; padding: 18px 26px; } .endbtns .emoji { font-size: 60px; }
 </style>
 </head>
 <body>
@@ -230,7 +281,7 @@
     <button class="big orlando" data-go="orlando"><span class="emoji">🚀</span>Orlando</button>
   </div>
   <button class="gear" id="gear"><span class="fill"></span>⚙️</button>
-  <div class="gatehint" style="position:absolute;bottom:24px">Grown-ups: hold ⚙️ to record voices</div>
+  <div class="gatehint" style="position:absolute;bottom:24px">Grown-ups: hold ⚙️ for time limits and voices</div>
 </section>
 
 <!-- LUISA MENU -->
@@ -248,7 +299,9 @@
     <button class="big tile1" data-go="dance"><span class="emoji">💃</span>Dance Party</button>
     <button class="big tile3" data-go="plane"><span class="emoji">🛫</span>Plane Practice</button>
     <button class="big tile4" data-go="videos" id="videosTile" hidden><span class="emoji">📺</span>Videos</button>
+    <button class="big tile9" data-shelf="luisa"><span class="emoji">📚</span>Books</button>
   </div>
+  <button class="gear" id="luisaGear" hidden><span class="fill"></span>⚙️</button>
 </section>
 
 <!-- ORLANDO MENU -->
@@ -258,6 +311,7 @@
   <div class="row">
     <button class="big tile2" data-go="bakery"><span class="emoji">🧁</span>Number Bakery</button>
     <button class="big tile1" data-go="robot"><span class="emoji">🤖</span>Coder Robot</button>
+    <button class="big tile9" data-shelf="orlando"><span class="emoji">📚</span>Books</button>
   </div>
 </section>
 
@@ -385,9 +439,44 @@
   <div class="palette" id="palette"></div>
 </section>
 
+<!-- BOOKS: shelf + reader (books/shelf, made by make-books.py) -->
+<section id="shelf" class="screen">
+  <div class="topbar"><button class="back hold" id="shelfBack"><span class="fill"></span>🏠</button></div>
+  <h1>📚 Books</h1>
+  <div class="bgrid" id="bgrid"></div>
+</section>
+<section id="reader" class="screen">
+  <div class="topbar"><button class="back hold" data-hold="shelf"><span class="fill"></span>📚</button><button class="back" id="readAloud">🔊</button></div>
+  <button class="navbtn prev" id="pgPrev">◀</button><button class="navbtn next" id="pgNext">▶</button>
+  <div class="pagebox" id="pagebox"></div>
+</section>
+
+<!-- SCREEN TIME: all done for today -->
+<section id="timeup" class="screen">
+  <div class="topbar"><button class="back hold" id="timeupBack"><span class="fill"></span>🏠</button></div>
+  <div class="moon">🌙</div>
+  <h1 id="timeupTitle">All done for today!</h1>
+  <p>Want to read a book?</p>
+  <button class="big tile9" id="timeupRead"><span class="emoji">📚</span>Let's read!</button>
+  <button class="gear" id="timeupGear"><span class="fill"></span>⚙️</button>
+</section>
+
+<!-- GROWN-UPS (hold ⚙️) -->
+<section id="grownup" class="screen">
+  <div class="topbar"><button class="back" id="grownupBack">↩️</button></div>
+  <div class="rec-wrap">
+    <h1 style="font-size:32px">⚙️ Grown-ups</h1>
+    <h2 style="font-family:system-ui;font-size:22px">⏱️ Daily time limits</h2>
+    <table class="tl" id="limits"></table>
+    <p class="gunote">Saved on this tablet only. Resets at midnight, local time (a time zone that turns the clock back to yesterday won't hand out a second allowance).
+      Videos only count while playing, and a video that's playing when time runs out gets to finish. Set a limit to Off to close it for the day, or past 3 hours for no limit.</p>
+    <button class="gubtn" data-go="recorder">🎙️ Record voices (and book read-alouds)</button>
+  </div>
+</section>
+
 <!-- RECORDER -->
 <section id="recorder" class="screen">
-  <div class="topbar"><button class="back" data-go="home">🏠</button></div>
+  <div class="topbar"><button class="back" data-go="grownup">↩️</button></div>
   <div class="rec-wrap">
     <h1 style="font-size:32px">🎙️ Voice recorder</h1>
     <p style="font-family:system-ui">Tap ● to record, ● again to stop. ▶ plays your recording (or the robot voice if you haven't recorded one). ✓ = recorded.</p>
@@ -397,6 +486,7 @@
 </section>
 
 <div class="toast" id="toast"></div>
+<div class="tring" id="tring"><svg viewBox="0 0 72 72"><circle class="bg" cx="36" cy="36" r="30"/><circle class="arc" cx="36" cy="36" r="30"/></svg><b></b></div>
 
 <script>
 /* ============ VOICE CLIPS (keep in sync with VOICE_SCRIPT.md) ============ */
@@ -463,6 +553,8 @@ const FEEL_STORIES = [
 ];
 const CLIPS = [
   ['General', [['hi_luisa', 'Hi Luisa!'], ['hi_orlando', 'Hi Orlando!'], ['yay', 'Yay!'], ['wow', 'Wow!'], ['you_did_it', 'You did it!']]],
+  ['Time & books', [['one_minute', 'One more minute!'], ['all_done', 'All done for today! Shall we read a book?'],
+    ['lets_read', "Let's read a book!"], ['the_end', 'The end!']]],
   ['Bubbles: colours', Object.keys(COLORS).map(c => [c, c[0].toUpperCase() + c.slice(1) + '!'])],
   ['Bubbles: find', Object.keys(COLORS).map(c => ['find_' + c, `Can you pop the ${c} ones?`])],
   ['Bakery: phrases', [
@@ -614,9 +706,11 @@ function toast(text) {
 const onEnter = {}, onLeave = {};
 let current = 'home';
 function go(id) {
+  id = timeGate(id);
   if (onLeave[current]) onLeave[current]();
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
   current = id;
+  if (!SCREEN_CAT[id]) showRing(null);
   if (onEnter[id]) onEnter[id]();
 }
 document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
@@ -634,9 +728,136 @@ function holdButton(el, ms, action) {
 // Back buttons need a short hold, so a stray toddler tap doesn't leave the game
 const BACK_HOLD_MS = 800;
 document.querySelectorAll('.back.hold').forEach(b => holdButton(b, BACK_HOLD_MS, () => go(b.dataset.hold)));
-holdButton(document.getElementById('gear'), 3000, () => go('recorder'));
-onEnter.luisa = () => say('hi_luisa');
-onEnter.orlando = () => say('hi_orlando');
+// Grown-up gate: hold ⚙️ for 3 seconds (home, the all-done screen, and Luisa's menu on her own tablet)
+let grownupFrom = 'home';
+['gear', 'timeupGear', 'luisaGear'].forEach(id => holdButton(document.getElementById(id), 3000, () => { grownupFrom = current; go('grownup'); }));
+// (from the all-done screen, back goes to the child's menu: a grown-up may have just added time)
+document.getElementById('grownupBack').onclick = () => go(grownupFrom === 'timeup' ? timeupFor.kid : grownupFrom);
+onEnter.luisa = () => { say('hi_luisa'); markLocked('luisa'); };
+onEnter.orlando = () => { say('hi_orlando'); markLocked('orlando'); };
+
+/* ============ SCREEN TIME (daily limits per child, stored on this device) ============ */
+const KIDS = { luisa: '🦋 Luisa', orlando: '🚀 Orlando' };
+const LIMITED = ['games', 'videos']; // reading is always unlimited
+const SCREEN_CAT = { bubbles: 'games', bodyparts: 'games', travel: 'games', trip: 'games', plane: 'games', feel: 'games', count: 'games',
+  dance: 'games', route: 'games', bakery: 'games', robot: 'games', videos: 'videos', player: 'videos' };
+const SCREEN_KID = { bakery: 'orlando', robot: 'orlando' }; // every other timed screen is Luisa's
+const STEP_MIN = 5, MAX_MIN = 180, BONUS_MIN = 10; // grown-up stepper: above MAX_MIN = no limit (null)
+const kidOf = id => SCREEN_KID[id] || 'luisa';
+let tl = store.get('screen-time', {}), warned = {};
+tl.limits = Object.assign({ luisa: { games: 10, videos: 10 }, orlando: { games: 10, videos: 10 } }, tl.limits);
+tl.used = tl.used || {}; tl.bonus = tl.bonus || {};
+const saveTL = () => store.set('screen-time', tl);
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+// New day = the local date moved forward. Flying west can turn the date back to yesterday: that keeps
+// today's allowance going rather than handing out a second one. (More than a day back = the clock was wrong.)
+function rollDay() {
+  const t = todayKey();
+  if (tl.day === t) return;
+  if (tl.day && t < tl.day && Date.parse(tl.day) - Date.parse(t) <= 864e5) return;
+  tl.day = t; tl.used = {}; tl.bonus = {}; warned = {};
+  saveTL();
+}
+const get2 = (o, kid, cat) => (o[kid] && o[kid][cat]) || 0;
+const add2 = (o, kid, cat, n) => { o[kid] = o[kid] || {}; o[kid][cat] = (o[kid][cat] || 0) + n; };
+function leftSec(kid, cat) {
+  const lim = tl.limits[kid][cat];
+  return lim === null ? Infinity : lim * 60 + get2(tl.bonus, kid, cat) - get2(tl.used, kid, cat);
+}
+// Called by go(): a screen whose time has run out shows the all-done screen instead
+let timeupFor = { kid: 'luisa', cat: 'games' };
+function timeGate(id) {
+  const cat = SCREEN_CAT[id];
+  if (!cat || id === current) return id;
+  rollDay();
+  if (leftSec(kidOf(id), cat) > 0) return id;
+  timeupFor = { kid: kidOf(id), cat };
+  return 'timeup';
+}
+function markLocked(kid) {
+  rollDay();
+  document.querySelectorAll(`#${kid} [data-go]`).forEach(b => {
+    const cat = SCREEN_CAT[b.dataset.go];
+    b.classList.toggle('locked', !!cat && leftSec(kid, cat) <= 0);
+  });
+}
+
+// Countdown ring (top right) while a timed screen is open
+const ring = document.getElementById('tring'), ringArc = ring.querySelector('.arc'), ringNum = ring.querySelector('b');
+const ARC = 2 * Math.PI * 30;
+ringArc.style.strokeDasharray = ARC;
+function showRing(kid, cat) {
+  const left = kid ? leftSec(kid, cat) : Infinity, on = left !== Infinity;
+  ring.classList.toggle('show', on); document.body.classList.toggle('timed', on);
+  if (!on) return;
+  const total = (tl.limits[kid][cat] * 60 + get2(tl.bonus, kid, cat)) || 1;
+  ringArc.style.strokeDashoffset = ARC * (1 - Math.max(0, left) / total);
+  ringNum.textContent = left > 0 ? Math.ceil(left / 60) : '0';
+  ring.classList.toggle('low', left > 0 && left <= 60);
+  ring.classList.toggle('out', left <= 0);
+}
+let lastTick = Date.now(), ticks = 0;
+setInterval(() => {
+  rollDay();
+  const now = Date.now(), dt = Math.min(5, (now - lastTick) / 1000); // a sleeping tablet doesn't count
+  lastTick = now;
+  const cat = SCREEN_CAT[current], kid = kidOf(current);
+  if (!cat || document.hidden) return showRing(null);
+  // Videos only count while one is playing, not while choosing
+  if (current !== 'videos' && !(current === 'player' && video.paused)) {
+    add2(tl.used, kid, cat, dt);
+    if (++ticks % 5 === 0) saveTL();
+  }
+  const left = leftSec(kid, cat);
+  showRing(kid, cat);
+  if (left <= 60 && left > 0 && !warned[kid + cat]) {
+    warned[kid + cat] = true;
+    toast('⏰ 1 minute!'); sfx('ding');
+    if (current !== 'player') say('one_minute');
+  }
+  // Games stop at zero; a video that's playing finishes first (its 'ended' goes back to the grid, which is gated)
+  if (left <= 0 && current !== 'player') { saveTL(); timeupFor = { kid, cat }; go('timeup'); }
+}, 1000);
+document.addEventListener('visibilitychange', () => { lastTick = Date.now(); saveTL(); });
+
+onEnter.timeup = () => {
+  saveTL();
+  document.getElementById('timeupTitle').textContent = timeupFor.cat === 'videos' ? 'All done with videos for today!' : 'All done with games for today!';
+  say('all_done');
+};
+document.getElementById('timeupRead').onclick = () => openShelf(timeupFor.kid);
+holdButton(document.getElementById('timeupBack'), BACK_HOLD_MS, () => go(timeupFor.kid));
+
+// Grown-up settings: limits per child and category, plus "+10 min" for today
+function renderLimits() {
+  rollDay();
+  const fmt = m => m === null ? 'No limit' : m === 0 ? 'Off' : m + ' min';
+  let h = '<tr><th></th><th>🎮 Games</th><th>📺 Videos</th><th>📚 Reading</th></tr>';
+  for (const kid in KIDS) {
+    h += `<tr><td class="kid">${KIDS[kid]}</td>`;
+    for (const cat of LIMITED) {
+      const used = Math.floor(get2(tl.used, kid, cat) / 60), bonus = Math.round(get2(tl.bonus, kid, cat) / 60);
+      h += `<td><div class="step"><button data-kid="${kid}" data-cat="${cat}" data-d="-1">−</button><span>${fmt(tl.limits[kid][cat])}</span>` +
+        `<button data-kid="${kid}" data-cat="${cat}" data-d="1">+</button></div>` +
+        `<div class="used">${used} min used today${bonus ? ` (+${bonus} extra)` : ''}</div>` +
+        `<button class="more" data-kid="${kid}" data-cat="${cat}">+${BONUS_MIN} min today</button></td>`;
+    }
+    h += '<td class="inf">∞</td></tr>';
+  }
+  const t = document.getElementById('limits');
+  t.innerHTML = h;
+  t.querySelectorAll('button').forEach(b => b.onclick = () => {
+    const { kid, cat } = b.dataset, lim = tl.limits[kid][cat];
+    if (b.classList.contains('more')) { add2(tl.bonus, kid, cat, BONUS_MIN * 60); delete warned[kid + cat]; toast(`+${BONUS_MIN} min`); }
+    else if (b.dataset.d === '1') tl.limits[kid][cat] = lim === null || lim + STEP_MIN > MAX_MIN ? null : lim + STEP_MIN;
+    else tl.limits[kid][cat] = lim === null ? MAX_MIN : Math.max(0, lim - STEP_MIN);
+    saveTL(); renderLimits();
+  });
+}
+onEnter.grownup = renderLimits;
 
 /* ============ BUBBLE POP (Luisa) ============ */
 const B = { el: document.getElementById('bubbles'), list: [], pops: 0, target: null, targetHits: 0, running: false, spawnT: 0, last: 0 };
@@ -1304,6 +1525,7 @@ if (hasVideos) {
   // Her tablet opens straight to her games, with no way back to "Who's playing?"
   document.getElementById('videosTile').hidden = false;
   document.querySelector('#luisa .back').hidden = true;
+  document.getElementById('luisaGear').hidden = false; // the grown-up gate, since "Who's playing?" is out of reach
   go('luisa');
 }
 const videosEl = document.getElementById('videos');
@@ -1367,6 +1589,116 @@ video.addEventListener('error', () => { if (current === 'player') { toast('😕'
 // Tap anywhere to pause / play
 player.addEventListener('click', e => { if (!e.target.closest('.back')) video.paused ? video.play().catch(() => {}) : video.pause(); });
 onLeave.player = () => { video.pause(); video.removeAttribute('src'); video.load(); player.classList.remove('paused'); keepAwake(false); };
+
+/* ============ BOOKS (books/shelf/index.json, made on the PC by make-books.py) ============ */
+// Luisa: picture books, read aloud when a grown-up has recorded the page (🎙️ recorder → 📚 groups).
+// Orlando: easy readers, with big words he can tap to hear.
+let BOOKS = [], shelfKid = 'luisa', book = null, pageNo = 0;
+const pageKey = (b, i) => `bk_${b.id}_${i + 1}`;
+fetch('books/shelf/index.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : {}).then(d => {
+  BOOKS = d.books || [];
+  BOOKS.forEach(b => {
+    CLIPS.push(['📚 ' + b.title, b.pages.map((p, i) => [pageKey(b, i), p.text || `Page ${i + 1} (no words: say what you see!)`])]);
+    b.pages.forEach((p, i) => { if (p.text) CLIP_TEXT[pageKey(b, i)] = p.text; });
+  });
+  if (current === 'shelf') renderShelf();
+}).catch(() => {});
+
+document.querySelectorAll('[data-shelf]').forEach(b => b.addEventListener('click', () => openShelf(b.dataset.shelf)));
+function openShelf(kid) { shelfKid = kid; go('shelf'); }
+holdButton(document.getElementById('shelfBack'), BACK_HOLD_MS, () => go(shelfKid));
+const bgrid = document.getElementById('bgrid');
+function renderShelf() {
+  const mine = BOOKS.filter(b => b.for.includes(shelfKid));
+  bgrid.innerHTML = mine.length ? '' : `<div class="vempty" style="color:#333">📚 No books yet.<br><br>Grown-ups: put PDFs, EPUBs or StoryWeaver
+    downloads in <code>books\\${shelfKid}</code>, then run <code>make-books.bat</code> on the computer.</div>`;
+  mine.forEach(b => {
+    const card = document.createElement('button'); card.className = 'bcard';
+    const cover = b.pages.find(p => p.img);
+    card.innerHTML = (cover ? `<img src="books/shelf/${b.id}/${cover.img}" loading="lazy" alt="">` : '<img alt="">') + `<div class="bt"></div>`;
+    card.querySelector('.bt').textContent = b.title;
+    card.onclick = () => { book = b; pageNo = 0; go('reader'); };
+    bgrid.appendChild(card);
+  });
+}
+onEnter.shelf = () => { renderShelf(); say('lets_read'); };
+
+const pagebox = document.getElementById('pagebox'), readBtn = document.getElementById('readAloud');
+const pgPrev = document.getElementById('pgPrev'), pgNext = document.getElementById('pgNext');
+let words = []; // Orlando's tappable words: [{el, start}] for highlighting along with the robot voice
+function showPage(dir) {
+  const n = book.pages.length, p = book.pages[pageNo], big = shelfKid === 'orlando';
+  pgPrev.hidden = pageNo === 0; pgNext.hidden = pageNo >= n;
+  pagebox.className = 'pagebox' + (dir ? ' turn-' + dir : '');
+  pagebox.innerHTML = ''; words = [];
+  say([]); // stop the last page's voice
+  if (pageNo >= n) { // the end
+    readBtn.hidden = true;
+    pagebox.innerHTML = `<div class="theend">⭐ The End ⭐</div><div class="endbtns">
+      <button class="big tile5" id="again"><span class="emoji">🔁</span>Again</button><button class="big tile9" id="more"><span class="emoji">📚</span>More books</button></div>
+      <div class="credit"></div>`;
+    pagebox.querySelector('.credit').textContent = book.credit;
+    pagebox.querySelector('#again').onclick = () => { pageNo = 0; showPage('prev'); };
+    pagebox.querySelector('#more').onclick = () => go('shelf');
+    say('the_end');
+    return;
+  }
+  if (p.img) { const im = new Image(); im.src = `books/shelf/${book.id}/${p.img}`; im.alt = ''; pagebox.appendChild(im); }
+  if (p.text) {
+    const t = document.createElement('div');
+    t.className = 'ptext' + (big ? ' big' : '') + (p.img ? '' : ' only');
+    let pos = 0;
+    p.text.split(/(\s+)/).forEach(tok => {
+      if (/^\s+$/.test(tok) || !tok) { t.appendChild(document.createTextNode(tok)); pos += tok.length; return; }
+      const w = document.createElement('span'); w.className = 'w'; w.textContent = tok;
+      if (big) {
+        words.push({ el: w, start: pos });
+        w.onclick = e => { e.stopPropagation(); sayWord(w, tok); };
+      }
+      t.appendChild(w); pos += tok.length;
+    });
+    pagebox.appendChild(t);
+  }
+  // 🔊: Luisa's pages when a grown-up has recorded them (and they play by themselves);
+  // Orlando's whenever there are words (recorded voice, else the robot voice)
+  const key = pageKey(book, pageNo), recorded = hasClip(key);
+  readBtn.hidden = !(recorded || (big && p.text));
+  if (recorded && !big) say(key);
+}
+function sayWord(el, tok) {
+  say([]);
+  words.forEach(w => w.el.classList.toggle('lit', w.el === el));
+  const word = tok.replace(/^[^\w']+|[^\w']+$/g, '');
+  if (!word || !('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(word);
+  u.rate = 0.75; u.pitch = 1.1;
+  u.onend = () => el.classList.remove('lit');
+  speechSynthesis.speak(u);
+}
+function readPage() {
+  const p = book.pages[pageNo], key = pageKey(book, pageNo);
+  if (hasClip(key) || !('speechSynthesis' in window)) return say(key);
+  // Robot voice, lighting up each word as it's spoken (where the tablet's voice reports word positions)
+  say([]);
+  const u = new SpeechSynthesisUtterance(p.text);
+  u.rate = 0.8; u.pitch = 1.1;
+  u.onboundary = e => { let cur = null; words.forEach(w => { if (w.start <= e.charIndex) cur = w; }); words.forEach(w => w.el.classList.toggle('lit', w === cur)); };
+  u.onend = () => words.forEach(w => w.el.classList.remove('lit'));
+  speechSynthesis.speak(u);
+}
+readBtn.onclick = readPage;
+pgNext.onclick = () => { if (pageNo < book.pages.length) { pageNo++; sfx('boop'); showPage('next'); } };
+pgPrev.onclick = () => { if (pageNo > 0) { pageNo--; sfx('boop'); showPage('prev'); } };
+// Swipe to turn pages too
+let swipeX = null;
+pagebox.addEventListener('pointerdown', e => { swipeX = e.clientX; });
+pagebox.addEventListener('pointerup', e => {
+  if (swipeX === null) return;
+  const dx = e.clientX - swipeX; swipeX = null;
+  if (dx < -70) pgNext.onclick(); else if (dx > 70) pgPrev.onclick();
+});
+onEnter.reader = () => showPage();
+onLeave.reader = () => say([]);
 
 /* ============ VOICE RECORDER (grown-ups) ============ */
 let mediaStream, recorder, recordingKey;
@@ -1475,8 +1807,11 @@ if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.Ca
 async function offlineStatus() {
   try {
     if (window.Capacitor) return '✈️ Offline ready: everything is built into this app.';
-    const c = await caches.open('kids-apps-v1'), keys = (await c.keys()).filter(r => r.url.includes('/audio/') && !r.url.endsWith('manifest.json'));
-    return `✈️ Offline: ${keys.length} of ${Object.keys(audioFiles).length} voice clips saved on this device.`;
+    const c = await caches.open('kids-apps-v1'), all = await c.keys();
+    const keys = all.filter(r => r.url.includes('/audio/') && !r.url.endsWith('manifest.json'));
+    const pages = all.filter(r => r.url.includes('/books/shelf/') && !r.url.endsWith('.json')).length;
+    const total = BOOKS.reduce((n, b) => n + b.pages.filter(p => p.img).length, 0);
+    return `✈️ Offline: ${keys.length} of ${Object.keys(audioFiles).length} voice clips and ${pages} of ${total} book pages saved on this device.`;
   } catch (e) { return ''; }
 }
 openDB().then(loadRecordings);

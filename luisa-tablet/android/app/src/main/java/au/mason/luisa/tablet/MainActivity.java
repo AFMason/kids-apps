@@ -15,6 +15,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(VideosPlugin.class);
+        registerPlugin(SpeechPlugin.class); // robot voice for lines nobody has recorded yet
         super.onCreate(savedInstanceState);
         // Serves the SD-card videos and thumbnails to the page
         bridge.setWebViewClient(new VideoWebViewClient(bridge));

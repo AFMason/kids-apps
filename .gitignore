@@ -17,3 +17,6 @@ books/both/
 
 # Sarah's original WhatsApp voice notes (converted copies are audio/mum_*.wav)
 audio/sarah/
+
+# Family photos: bundled into the tablet apps only, never published (the repo is public)
+photos/

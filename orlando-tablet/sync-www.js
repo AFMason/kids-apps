@@ -8,6 +8,8 @@ fs.mkdirSync('www');
 const page = fs.readFileSync('../index.html', 'utf8').replace('<html lang="en">', '<html lang="en" data-kid="orlando">');
 if (!page.includes('data-kid="orlando"')) throw new Error('index.html: <html lang="en"> not found');
 fs.writeFileSync('www/index.html', page);
+fs.copyFileSync('../snake-maths.html', 'www/snake-maths.html');
+fs.copyFileSync('../robot-builder_v2.html', 'www/robot-builder_v2.html');
 for (const dir of ['audio', 'photos', 'books/shelf']) {
   if (fs.existsSync('../' + dir)) fs.cpSync('../' + dir, 'www/' + dir, { recursive: true, filter: f => !f.endsWith('book.json') });
 }

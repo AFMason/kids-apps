@@ -22,7 +22,7 @@ async function list(cache, url, toUrls) {
 
 async function saveEverything() {
   const cache = await caches.open(CACHE);
-  await cache.addAll(['./', 'index.html']);
+  await cache.addAll(['./', 'index.html', 'snake-maths.html', 'robot-builder_v2.html']);
   const urls = [...await list(cache, 'audio/manifest.json', clipUrls), ...await list(cache, 'books/shelf/index.json', bookUrls), ...PHOTOS];
   // a missing file shouldn't stop the rest from saving
   await Promise.all(urls.map(u => cache.match(u).then(hit => hit || cache.add(u).catch(() => {}))));

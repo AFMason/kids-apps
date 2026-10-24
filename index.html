@@ -83,6 +83,12 @@
   .rock { animation: rock 1s; } @keyframes rock { 0%,100% { transform: none; } 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }
   .poof { position: absolute; font-size: 54px; pointer-events: none; transition: transform .8s ease-out, opacity .8s; }
 
+  /* Games in a frame (Robot Builder) */
+  .gameframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+
+  /* Snake Maths */
+  #snakeFrame { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+
   /* Coder Robot */
   #robot { background: #e7f5ff; padding-top: 96px; }
   .rgrid { position: relative; background: #8ce99a; border-radius: 20px; border: 8px solid #69db7c; flex-shrink: 0; }
@@ -138,6 +144,7 @@
   .scene img { width: min(55vmin, 420px); height: min(55vmin, 420px); object-fit: cover; border-radius: 50%; border: 10px solid #fff; box-shadow: 0 8px 20px rgba(0,0,0,.2); }
   .caption { font-size: min(5.5vmin, 44px); text-align: center; padding: 0 140px; margin-top: 20px; color: #333; }
   .pop-in { animation: popin .5s; } @keyframes popin { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  img.mum { object-position: 35% 45%; } /* her face sits left of centre in the photo */
   .heart { position: absolute; font-size: 60px; pointer-events: none; transition: transform 1.2s ease-out, opacity 1.2s; z-index: 30; }
 
   /* Our Big Trip (story) */
@@ -148,6 +155,8 @@
   .rainbowpath span.today::after { content: "⭐"; position: absolute; transform: translateY(-26px); font-size: 18px; }
   .moons { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; max-width: 900px; margin-top: 20px; }
   .moons span { font-size: 70px; cursor: pointer; transition: transform .3s; } .moons span.counted { transform: scale(1.3); filter: drop-shadow(0 0 12px #ffd43b); }
+  .countrow { display: flex; align-items: center; justify-content: center; gap: 2vmin; font-size: min(14vmin, 120px); }
+  .countrow img { width: min(42vmin, 320px); height: min(42vmin, 320px); }
   .mumbtn { margin-top: 24px; border: none; border-radius: 40px; background: #fff; font: inherit; font-size: 32px; padding: 14px 30px; box-shadow: 0 6px 0 rgba(0,0,0,.12); }
 
   /* Plane practice */
@@ -163,13 +172,26 @@
   .belt.on b:first-child { transform: translateX(3vmin); } .belt.on b:last-child { transform: translateX(-3vmin); }
 
   /* Koala feelings */
-  #feel { background: linear-gradient(#e6fcf5, #fff8ec); justify-content: flex-start; padding-top: 90px; }
-  #koala { height: 46vh; max-width: 90vw; cursor: pointer; transition: transform .3s; }
+  #feel { background: linear-gradient(#e6fcf5, #fff8ec); justify-content: flex-start; padding-top: 70px; }
+  #feel.breathing { background: linear-gradient(#d0ebff, #e6fcf5); }
+  .koalawrap { position: relative; height: 38vh; display: flex; align-items: center; justify-content: center; }
+  #koala { height: 38vh; max-width: 90vw; cursor: pointer; position: relative; z-index: 1; }
   #koala.jump { animation: bounce .6s 2; } #koala.shiver { animation: rock .25s 4; }
-  .feelings { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
-  .feelings button { border: none; background: #fff; border-radius: 26px; font-size: 64px; width: 110px; height: 110px; box-shadow: 0 6px 0 rgba(0,0,0,.12); }
-  .feelings button.story { background: #ffe066; }
-  .feelprop { font-size: 80px; height: 90px; }
+  .balloon { position: absolute; width: 34vh; height: 34vh; border-radius: 50%; background: radial-gradient(#a5d8ff, #74c0fc 60%, rgba(116,192,252,0)); opacity: 0;
+    transition: transform 4s ease-in-out, opacity .6s; transform: scale(.6); }
+  #feel.breathing .balloon { opacity: .9; } .balloon.big { transform: scale(1.35); }
+  .feelings { display: grid; grid-template-columns: repeat(7, 96px); gap: 10px; justify-content: center; margin-top: 10px; }
+  .feelings.three { grid-template-columns: repeat(3, 170px); gap: 26px; margin-top: 24px; }
+  .feelings button { border: none; background: #fff; border-radius: 24px; width: 100%; aspect-ratio: 1; padding: 4px; box-shadow: 0 5px 0 rgba(0,0,0,.12); }
+  .feelings button svg { width: 100%; height: 100%; display: block; }
+  .feelings button.on { box-shadow: 0 0 0 5px #ffd43b, 0 5px 0 rgba(0,0,0,.12); }
+  .feelings button.nope { animation: rock .4s; }
+  .feelprop { font-size: 76px; height: 84px; line-height: 84px; }
+  .feelmodes { position: absolute; bottom: 14px; left: 0; right: 0; display: flex; gap: 14px; justify-content: center; }
+  .feelmodes button { border: none; border-radius: 26px; background: #fff; font-size: 52px; width: 120px; height: 96px; box-shadow: 0 5px 0 rgba(0,0,0,.12); }
+  .feelmodes button.on { background: #ffe066; }
+  .feelnext { margin-top: 18px; border: none; border-radius: 50%; width: 120px; height: 120px; font-size: 60px; background: #fff; box-shadow: 0 6px 0 rgba(0,0,0,.15); }
+  .feelnext.glow { animation: hintpulse .7s infinite alternate; }
 
   /* Rainbow count */
   #count { background: linear-gradient(#e7f5ff, #fff9db); overflow: hidden; }
@@ -193,18 +215,22 @@
   .danceui button.on { background: #ffd43b; box-shadow: 0 0 0 4px #fff; }
   .spark { position: absolute; font-size: 44px; pointer-events: none; transition: transform 1s ease-out, opacity 1s; }
 
-  /* Choo choo map (route) */
-  #route { background: linear-gradient(#d0ebff, #ebfbee); justify-content: center; }
-  .track { position: relative; width: 100%; height: 360px; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; }
-  .trackin { position: relative; height: 100%; }
-  .trackin .line { position: absolute; top: 150px; left: 0; height: 10px; background: repeating-linear-gradient(90deg, #868e96 0 30px, transparent 30px 50px); }
-  .stop { position: absolute; top: 60px; width: 180px; margin-left: -90px; text-align: center; }
-  .stop .pin { font-size: 90px; line-height: 1; } .stop .pin img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 5px solid #fff; }
-  .stop .nm { font-size: 22px; margin-top: 110px; color: #495057; }
-  .stop.been .pin { filter: none; } .stop.todo .pin { filter: grayscale(.8) opacity(.6); }
-  .mover { position: absolute; top: 160px; font-size: 80px; margin-left: -45px; transition: left 2.2s ease-in-out; z-index: 3; }
-  .gobtn { margin-top: 60px; border: none; border-radius: 50%; width: 220px; height: 220px; font-size: 130px; background: #fff; box-shadow: 0 10px 0 rgba(0,0,0,.15); animation: hintpulse .8s infinite alternate; }
-  .gobtn:disabled { animation: none; opacity: .5; }
+  /* Choo choo map: SVG world map */
+  #route { background: #74c0fc; overflow: hidden; }
+  .worldmap { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+  .worldmap .pin { cursor: pointer; }
+  .worldmap .label { font-size: 30px; font-weight: bold; fill: #264653; paint-order: stroke; stroke: #fff; stroke-width: 8px; stroke-linejoin: round; }
+  #route .gobtn { position: absolute; bottom: 26px; left: 50%; margin-left: -110px; border: none; border-radius: 50%; width: 220px; height: 220px; padding: 22px;
+    background: #fff; box-shadow: 0 10px 0 rgba(0,0,0,.18); animation: hintpulse .8s infinite alternate; z-index: 5; }
+  #route .gobtn svg { width: 100%; height: 100%; display: block; }
+  #route .gobtn:disabled { animation: none; opacity: .55; }
+  .odo { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); background: #fff; border-radius: 30px; padding: 8px 22px; font-size: 26px; z-index: 5; box-shadow: 0 4px 10px rgba(0,0,0,.12); white-space: nowrap; }
+  .odo b { font-size: 32px; color: #1971c2; }
+  .fact { position: absolute; left: 16px; right: 16px; bottom: 262px; background: rgba(255,255,255,.95); border-radius: 22px; padding: 14px 20px; font-size: 26px; line-height: 1.4; z-index: 5; box-shadow: 0 4px 10px rgba(0,0,0,.12); }
+  .fact b { font-size: 30px; color: #e8590c; }
+  .facthear { border: none; background: #ffe066; border-radius: 50%; width: 48px; height: 48px; font-size: 24px; vertical-align: middle; margin-left: 6px; }
+  #route.orl .gobtn { width: 180px; height: 180px; margin-left: -90px; }
+  #route.orl .fact { bottom: 222px; }
 
   /* Recorder */
   #recorder { background: #f4f1ec; overflow-y: auto; display: none; align-items: stretch; padding: 90px 16px 40px; }
@@ -293,7 +319,7 @@
     <button class="big tile3" data-go="bodyparts"><span class="emoji">👃</span>Body Parts</button>
     <button class="big tile2" data-go="travel"><span class="emoji">✈️</span>Let's Go!</button>
     <button class="big tile5" data-go="trip"><span class="emoji">📖</span>Our Big Trip</button>
-    <button class="big tile6" data-go="route"><span class="emoji">🗺️</span>Choo Choo Map</button>
+    <button class="big tile6" data-route="luisa"><span class="emoji">🗺️</span>Choo Choo Map</button>
     <button class="big tile7" data-go="feel"><span class="emoji">🐨</span>Koala Feelings</button>
     <button class="big tile8" data-go="count"><span class="emoji">🌈</span>Rainbow Count</button>
     <button class="big tile1" data-go="dance"><span class="emoji">💃</span>Dance Party</button>
@@ -311,6 +337,9 @@
   <div class="row">
     <button class="big tile2" data-go="bakery"><span class="emoji">🧁</span>Number Bakery</button>
     <button class="big tile1" data-go="robot"><span class="emoji">🤖</span>Coder Robot</button>
+    <button class="big tile3" data-go="snake"><span class="emoji">🐍</span>Snake Maths</button>
+    <button class="big tile6" data-route="orlando"><span class="emoji">🗺️</span>Trip Map</button>
+    <button class="big tile5" data-go="builder"><span class="emoji">🦾</span>Robot Builder</button>
     <button class="big tile9" data-shelf="orlando"><span class="emoji">📚</span>Books</button>
   </div>
   <button class="gear" id="orlandoGear" hidden><span class="fill"></span>⚙️</button>
@@ -386,16 +415,11 @@
 <section id="feel" class="screen">
   <div class="topbar"><button class="back hold" data-hold="luisa"><span class="fill"></span>🏠</button></div>
   <div class="feelprop" id="feelprop"></div>
-  <svg id="koala" viewBox="0 0 300 300">
-    <circle cx="62" cy="88" r="56" fill="#9aa5b1"/><circle cx="238" cy="88" r="56" fill="#9aa5b1"/>
-    <circle cx="62" cy="92" r="32" fill="#f3c4d4"/><circle cx="238" cy="92" r="32" fill="#f3c4d4"/>
-    <ellipse cx="150" cy="165" rx="115" ry="105" fill="#b6bec8"/>
-    <circle cx="80" cy="200" r="16" fill="#f3c4d4" opacity=".7"/><circle cx="220" cy="200" r="16" fill="#f3c4d4" opacity=".7"/>
-    <ellipse cx="150" cy="182" rx="27" ry="36" fill="#3b3b3b"/>
-    <g id="kface"></g>
-  </svg>
+  <div class="koalawrap"><div class="balloon" id="balloon"></div><svg id="koala" viewBox="0 0 300 300"></svg></div>
   <div class="caption" id="feelcap" style="padding:0 20px;margin-top:6px"></div>
   <div class="feelings" id="feelbtns"></div>
+  <button class="feelnext" id="feelnext" hidden>▶</button>
+  <div class="feelmodes" id="feelmodes"></div>
 </section>
 
 <!-- RAINBOW COUNT -->
@@ -416,8 +440,10 @@
 
 <!-- CHOO CHOO MAP (route) -->
 <section id="route" class="screen">
-  <div class="topbar"><button class="back hold" data-hold="luisa"><span class="fill"></span>🏠</button></div>
-  <div class="track" id="track"><div class="trackin" id="trackin"></div></div>
+  <svg id="worldmap" class="worldmap" preserveAspectRatio="xMidYMid slice"></svg>
+  <div class="topbar"><button class="back" id="routeBack"><span class="fill"></span>🏠</button></div>
+  <div class="odo" id="odo" hidden></div>
+  <div class="fact" id="fact" hidden></div>
   <button class="gobtn" id="gobtn"></button>
 </section>
 
@@ -430,6 +456,18 @@
   <div class="topbar"><button class="back hold" data-hold="videos"><span class="fill"></span>📺</button></div>
   <video id="video" playsinline preload="auto"></video>
   <div class="bigplay">▶️</div>
+</section>
+
+<!-- ROBOT BUILDER (its own page, robot-builder_v2.html, in a frame) -->
+<section id="builder" class="screen">
+  <div class="topbar"><button class="back" data-go="orlando">🏠</button></div>
+  <iframe id="builderFrame" class="gameframe" title="Robot Builder"></iframe>
+</section>
+
+<!-- SNAKE MATHS (its own page, snake-maths.html, in a frame) -->
+<section id="snake" class="screen">
+  <div class="topbar"><button class="back" data-go="orlando">🏠</button></div>
+  <iframe id="snakeFrame" title="Snake Maths"></iframe>
 </section>
 
 <!-- CODER ROBOT -->
@@ -525,32 +563,30 @@ const STORY = [
   { key: 'st_flyhome', date: '2026-11-19', art: '✈️🌙', bg: '#1c2541', dark: true, text: 'A big plane home. Night night!' },
   { key: 'st_home', date: '2026-11-22', art: '🏠🐨', bg: '#ebfbee', text: 'Home sweet home!' },
 ];
-// Choo Choo Map: each leg = how we travel, then where we arrive
-const ROUTE = [
-  { pin: '🏠', name: 'Home' },
-  { by: '✈️', clip: 'plane', pin: '🌳', name: 'Singapore', at: 'at_singapore' },
-  { by: '✈️', clip: 'plane', pin: 'MUM', name: 'Amsterdam', at: 'at_amsterdam', mum: true },
-  { by: '🚆', clip: 'train', pin: '🚲', name: 'Eindhoven', at: 'at_eindhoven' },
-  { by: '🚄', clip: 'seatrain', pin: '💂', name: 'London', at: 'at_london' },
-  { by: '🚇', clip: 'tube', pin: '🦕', name: 'Oxford', at: 'at_oxford' },
-  { by: '🚄', clip: 'seatrain', pin: '🥐', name: 'Paris', at: 'at_paris' },
-  { by: '🚅', clip: 'fast_train', pin: '🐻', name: 'Bern', at: 'at_bern' },
-  { by: '🚞', clip: 'mountain_train', pin: '🏔️', name: 'Mountains', at: 'at_mountains' },
-  { by: '🚆', clip: 'train', pin: '🐻', name: 'Bern', at: 'at_bern_again' },
-  { by: '✈️', clip: 'plane', pin: '🌳', name: 'Singapore', at: 'at_singapore' },
-  { by: '✈️', clip: 'plane', pin: '🏠', name: 'Home', at: 'at_home' },
-];
 const ANIMALS = [['koalas', '🐨'], ['monkeys', '🐒'], ['sharks', '🦈'], ['whales', '🐳'], ['dolphins', '🐬'], ['crocodiles', '🐊'], ['lizards', '🦎'], ['bears', '🐻'], ['dinosaurs', '🦕']];
 const RAINBOW = ['#ff4d4d', '#ff922b', '#ffd43b', '#40c057', '#3d8bfd', '#5c40c0', '#cc5de8'];
-const FEELINGS = { happy: '😀', sad: '😢', scared: '😨', cross: '😠', tired: '😴', excited: '🤩' };
+// Koala's feelings: what Luisa hears for each (the faces are drawn in koalaFace)
+const FEELINGS = {
+  happy: 'Koala feels happy!', sad: 'Koala feels sad.', scared: 'Koala feels scared.', cross: 'Koala feels cross! Grrr.',
+  tired: 'Koala feels tired. Yawn.', excited: 'Koala feels excited! Wheee!', surprised: 'Koala feels surprised! Oh!',
+  silly: 'Koala feels silly! Hee hee!', proud: 'Koala feels proud!', calm: 'Koala feels calm. Ahhh.',
+  worried: 'Koala feels worried.', loved: 'Koala feels loved!', shy: 'Koala feels shy.',
+};
+// The "find the face" game sticks to the clearest faces
+const MATCH_MOODS = ['happy', 'sad', 'scared', 'cross', 'tired', 'surprised', 'silly', 'loved'];
 // Feelings stories: koala starts in a mood, Luisa taps koala to help, koala ends in a new mood
 const FEEL_STORIES = [
-  { prop: '👩', mood: 'sad', ask: 'fs_mum', end: 'happy', ok: 'fs_mum_ok', help: '🤗' },
+  { prop: 'MUM', mood: 'sad', ask: 'fs_mum', end: 'happy', ok: 'fs_mum_ok', help: '🤗' },
   { prop: '🎆', mood: 'scared', ask: 'fs_bang', end: 'happy', ok: 'fs_bang_ok', help: '🙉' },
+  { prop: '🧸', mood: 'worried', ask: 'fs_teddy', end: 'happy', ok: 'fs_teddy_ok', help: '🧸' },
   { prop: '👨‍💼', mood: 'sad', ask: 'fs_daddy', end: 'happy', ok: 'fs_daddy_ok', help: '🤗' },
+  { prop: '🎁', mood: 'surprised', ask: 'fs_present', end: 'excited', ok: 'fs_present_ok', help: '🎉' },
   { prop: '✈️', mood: 'tired', ask: 'fs_tired', end: 'sleep', ok: 'fs_tired_ok', help: '🧸' },
-  { prop: '🍪', mood: 'cross', ask: 'fs_cross', end: 'happy', ok: 'fs_cross_ok', help: '🌬️' },
-  { prop: '👩', mood: 'excited', ask: 'fs_seemum', end: 'excited', ok: 'mum_hug', help: '💖' },
+  { prop: '👧👦', mood: 'shy', ask: 'fs_shy', end: 'happy', ok: 'fs_shy_ok', help: '👋' },
+  { prop: '🍪', mood: 'cross', ask: 'fs_cross', end: 'calm', ok: 'fs_cross_ok', help: '🌬️' },
+  { prop: '🍌', mood: 'silly', ask: 'fs_silly', end: 'happy', ok: 'fs_silly_ok', help: '😂' },
+  { prop: '🧗', mood: 'proud', ask: 'fs_climb', end: 'proud', ok: 'fs_climb_ok', help: '⭐' },
+  { prop: 'MUM', mood: 'excited', ask: 'fs_seemum', end: 'loved', ok: 'mum_hug', help: '💖' },
 ];
 const CLIPS = [
   ['General', [['hi_luisa', 'Hi Luisa!'], ['hi_orlando', 'Hi Orlando!'], ['yay', 'Yay!'], ['wow', 'Wow!'], ['you_did_it', 'You did it!']]],
@@ -585,13 +621,20 @@ const CLIPS = [
     ['at_mountains', 'Snowy mountains!'], ['at_bern_again', 'Back to Bern!'], ['at_home', 'Home! We did it!']]],
   ['Koala Feelings', [
     ['how_feel', 'How do you feel?'],
-    ...Object.keys(FEELINGS).map(f => ['feel_' + f, { happy: 'Koala feels happy!', sad: 'Koala feels sad.', scared: 'Koala feels scared.', cross: 'Koala feels cross! Grrr.', tired: 'Koala feels tired. Yawn.', excited: 'Koala feels excited! Wheee!' }[f]]),
+    ...Object.entries(FEELINGS).map(([f, t]) => ['feel_' + f, t]),
     ['fs_mum', 'Koala misses Mum. Give Koala a cuddle!'], ['fs_mum_ok', 'Mum is coming soon. Koala feels happy!'],
     ['fs_bang', 'Bang! Loud fireworks! Koala is scared. Cover Koala\'s ears!'], ['fs_bang_ok', 'Pretty fireworks! Koala feels happy!'],
+    ['fs_teddy', 'Oh no, where is Teddy? Koala is worried. Help Koala find Teddy!'], ['fs_teddy_ok', 'There\'s Teddy! Koala feels better.'],
     ['fs_daddy', 'Daddy is going to work for three sleeps. Koala is sad. Give Koala a cuddle!'], ['fs_daddy_ok', 'Daddy comes back soon. Koala feels happy!'],
+    ['fs_present', 'Surprise! A present for Koala! Tap to open it!'], ['fs_present_ok', 'A new hat! Koala is so excited!'],
     ['fs_tired', 'Koala is tired on the big plane. Give Koala a teddy!'], ['fs_tired_ok', 'Night night, Koala.'],
-    ['fs_cross', 'No more biscuits! Koala is cross! Let\'s take a big breath.'], ['fs_cross_ok', 'Ahhh. Koala feels better.'],
-    ['fs_seemum', 'Look! It\'s Mum! Koala is so excited!']]],
+    ['fs_shy', 'Koala meets new friends. Koala feels shy. Let\'s wave hello!'], ['fs_shy_ok', 'Hello, friends! Koala feels happy.'],
+    ['fs_cross', 'No more biscuits! Koala is cross! Let\'s take a big breath.'], ['fs_cross_ok', 'Ahhh. Koala feels calm now.'],
+    ['fs_silly', 'Koala put a banana on her head! Koala feels silly!'], ['fs_silly_ok', 'Hee hee hee! Silly Koala!'],
+    ['fs_climb', 'Koala climbed the big hill all by herself!'], ['fs_climb_ok', 'Koala feels proud! Well done, Koala!'],
+    ['fs_seemum', 'Look! It\'s Mum! Koala is so excited!'],
+    ['how_koala', 'How does Koala feel? Find the face!'], ['look_again', 'Hmm, look again!'],
+    ['breathe_start', 'Let\'s breathe with Koala. Watch the balloon.'], ['breathe_in', 'Breathe in…'], ['breathe_out', 'And breathe out…']]],
   ['Rainbow Count', [['lets_count', "Let's count the"], ['rainbow', 'A whole rainbow! Hooray!'], ...ANIMALS.map(([k]) => [k, k])]],
   ['Dance Party', [['dance_party', 'Dance party! Tap to dance!'], ['freeze', 'Freeze!'], ['dance', 'Dance!'], ['sleepy_song', 'Sleepy time song. Shhh.']]],
   ['Plane Practice', [
@@ -742,7 +785,7 @@ function holdButton(el, ms, action) {
 }
 // Back buttons need a short hold, so a stray toddler tap doesn't leave the game
 const BACK_HOLD_MS = 800;
-document.querySelectorAll('.back.hold').forEach(b => holdButton(b, BACK_HOLD_MS, () => go(b.dataset.hold)));
+document.querySelectorAll('.back.hold[data-hold]').forEach(b => holdButton(b, BACK_HOLD_MS, () => go(b.dataset.hold)));
 // Grown-up gate: hold ⚙️ for 3 seconds (home, the all-done screen, and each child's menu in their own tablet app)
 let grownupFrom = 'home';
 ['gear', 'timeupGear', 'luisaGear', 'orlandoGear'].forEach(id => holdButton(document.getElementById(id), 3000, () => { grownupFrom = current; go('grownup'); }));
@@ -755,10 +798,10 @@ onEnter.orlando = () => { say('hi_orlando'); markLocked('orlando'); };
 const KIDS = { luisa: '🦋 Luisa', orlando: '🚀 Orlando' };
 const LIMITED = ['games', 'videos']; // reading is always unlimited
 const SCREEN_CAT = { bubbles: 'games', bodyparts: 'games', travel: 'games', trip: 'games', plane: 'games', feel: 'games', count: 'games',
-  dance: 'games', route: 'games', bakery: 'games', robot: 'games', videos: 'videos', player: 'videos' };
-const SCREEN_KID = { bakery: 'orlando', robot: 'orlando' }; // every other timed screen is Luisa's
+  dance: 'games', route: 'games', bakery: 'games', robot: 'games', snake: 'games', builder: 'games', videos: 'videos', player: 'videos' };
+const SCREEN_KID = { bakery: 'orlando', robot: 'orlando', snake: 'orlando', builder: 'orlando' }; // every other timed screen is Luisa's
 const STEP_MIN = 5, MAX_MIN = 180, BONUS_MIN = 10; // grown-up stepper: above MAX_MIN = no limit (null)
-const kidOf = id => SCREEN_KID[id] || 'luisa';
+const kidOf = id => id === 'route' ? routeKid : SCREEN_KID[id] || 'luisa';
 let tl = store.get('screen-time', {}), warned = {};
 tl.limits = Object.assign({ luisa: { games: 10, videos: 10 }, orlando: { games: 10, videos: 10 } }, tl.limits);
 tl.used = tl.used || {}; tl.bonus = tl.bonus || {};
@@ -794,8 +837,8 @@ function timeGate(id) {
 }
 function markLocked(kid) {
   rollDay();
-  document.querySelectorAll(`#${kid} [data-go]`).forEach(b => {
-    const cat = SCREEN_CAT[b.dataset.go];
+  document.querySelectorAll(`#${kid} [data-go], #${kid} [data-route]`).forEach(b => {
+    const cat = SCREEN_CAT[b.dataset.go || 'route'];
     b.classList.toggle('locked', !!cat && leftSec(kid, cat) <= 0);
   });
 }
@@ -1094,6 +1137,14 @@ document.getElementById('takeBtn').onclick = () => change(-1);
 document.getElementById('serveBtn').onclick = serve;
 onEnter.bakery = () => { K.streak = 0; say('bakery_welcome').then(newOrder); };
 
+/* ============ ROBOT BUILDER (Orlando) ============ */
+// Loaded on first visit; it keeps its own robots in localStorage
+onEnter.builder = () => { const f = document.getElementById('builderFrame'); if (!f.src) f.src = 'robot-builder_v2.html'; };
+
+/* ============ SNAKE MATHS (Orlando) ============ */
+// Loaded on first visit; it keeps its own level and progress in localStorage ('snake-maths')
+onEnter.snake = () => { const f = document.getElementById('snakeFrame'); if (!f.src) f.src = 'snake-maths.html'; };
+
 /* ============ CODER ROBOT (Orlando) ============ */
 // Levels 1-6: arrow blocks (up/down/left/right). Levels 7-10: forward + turn left/right (robot starts facing right).
 // Map: R robot, T treasure, # rock, . grass
@@ -1212,7 +1263,7 @@ onEnter.robot = () => { rLoad(); say('robot_intro'); };
 const todayStr = () => new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, local time
 const daysUntil = d => Math.round((new Date(d + 'T00:00') - new Date(todayStr() + 'T00:00')) / 864e5);
 // Mum's photo (photos/mum.jpg) if there is one, otherwise an emoji
-const mumArt = () => `<img src="photos/mum.jpg" alt="" onerror="this.replaceWith('👩')">`;
+const mumArt = () => `<img class="mum" src="photos/mum.jpg" alt="" onerror="this.replaceWith('👩')">`;
 const hasClip = k => !!(recordings[k] || audioFiles[k]);
 function firstEmoji(s) {
   if (s === 'MUM') return '👩';
@@ -1255,12 +1306,12 @@ function renderCountdown() {
   const d = daysUntil(MUM_DAY), h = daysUntil(HOME_DAY);
   let html, lines;
   if (d > 1) {
-    html = `<div class="scene" style="font-size:min(18vmin,150px)">🌙 ➜ ${mumArt()}</div>
+    html = `<div class="scene countrow">🌙<span>➜</span>${mumArt()}</div>
       <div class="caption"><b>${d}</b> sleeps until we see Mum!</div>
       ${d <= 20 ? `<div class="moons">${'<span>🌙</span>'.repeat(d)}</div>` : ''}`;
     lines = d <= 20 ? ['count_moons'] : ['n' + d, 'sleeps_until_mum'];
   } else if (d === 1) {
-    html = `<div class="scene">🌙 ➜ ${mumArt()}</div><div class="caption">One more sleep until we see Mum!</div>`;
+    html = `<div class="scene countrow">🌙<span>➜</span>${mumArt()}</div><div class="caption">One more sleep until we see Mum!</div>`;
     lines = ['one_sleep'];
   } else if (h > 0) {
     html = `<div class="scene">${mumArt()}</div><div class="caption">We're with Mum! Hooray!<br><small>${h} sleeps until we go home</small></div>`;
@@ -1331,53 +1382,152 @@ document.getElementById('planeNext').onclick = () => { PL.i = (PL.i + 1) % PS.le
 onEnter.plane = () => { PL.i = 0; renderPlane(); };
 
 /* ============ KOALA FEELINGS (Luisa) ============ */
-const EYE = (x, d) => d.replace(/X/g, x);
+// Four ways to play (buttons along the bottom): feelings (tap a face), stories (help Koala), find the face, breathe.
+const KOALA_HEAD = `<circle cx="62" cy="88" r="56" fill="#9aa5b1"/><circle cx="238" cy="88" r="56" fill="#9aa5b1"/>
+  <circle cx="62" cy="92" r="32" fill="#f3c4d4"/><circle cx="238" cy="92" r="32" fill="#f3c4d4"/>
+  <ellipse cx="150" cy="165" rx="115" ry="105" fill="#b6bec8"/>
+  <circle cx="80" cy="200" r="16" fill="#f3c4d4" opacity=".7"/><circle cx="220" cy="200" r="16" fill="#f3c4d4" opacity=".7"/>
+  <ellipse cx="150" cy="182" rx="27" ry="36" fill="#3b3b3b"/>`;
+const heartPath = (x, y, s, fill) => `<path transform="translate(${x},${y}) scale(${s})" fill="${fill}" d="M0,.3 C0,-.1 -.5,-.1 -.5,.25 C-.5,.55 0,.75 0,1 C0,.75 .5,.55 .5,.25 C.5,-.1 0,-.1 0,.3Z"/>`;
+function starPath(cx, cy, r, fill) {
+  let d = '';
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .45 : r;
+    d += (i ? 'L' : 'M') + (cx + Math.cos(a) * rr).toFixed(1) + ',' + (cy + Math.sin(a) * rr).toFixed(1);
+  }
+  return `<path d="${d}Z" fill="${fill}" stroke="#e8a400" stroke-width="3" stroke-linejoin="round"/>`;
+}
 function koalaFace(m) {
   const ln = 'stroke="#222" stroke-width="7" fill="none" stroke-linecap="round"';
   const dots = `<circle cx="105" cy="140" r="11" fill="#222"/><circle cx="195" cy="140" r="11" fill="#222"/><circle cx="109" cy="136" r="4" fill="#fff"/><circle cx="199" cy="136" r="4" fill="#fff"/>`;
+  const smileEyes = `<path d="M90,146 Q105,126 120,146" ${ln}/><path d="M180,146 Q195,126 210,146" ${ln}/>`;
+  const blush = `<ellipse cx="80" cy="205" rx="22" ry="13" fill="#ff8fab" opacity=".8"/><ellipse cx="220" cy="205" rx="22" ry="13" fill="#ff8fab" opacity=".8"/>`;
   return {
-    happy: `<path d="M90,146 Q105,126 120,146" ${ln}/><path d="M180,146 Q195,126 210,146" ${ln}/><path d="M118,228 Q150,262 182,228" ${ln}/>`,
+    happy: smileEyes + `<path d="M118,228 Q150,262 182,228" ${ln}/>`,
     excited: `<circle cx="105" cy="138" r="15" fill="#222"/><circle cx="195" cy="138" r="15" fill="#222"/><circle cx="111" cy="132" r="6" fill="#fff"/><circle cx="201" cy="132" r="6" fill="#fff"/>
-      <path d="M116,224 Q150,276 184,224 Z" fill="#c2255c"/><text x="240" y="70" font-size="40">✨</text><text x="20" y="70" font-size="40">✨</text>`,
+      <path d="M116,224 Q150,276 184,224 Z" fill="#c2255c"/>` + starPath(258, 40, 20, '#ffd43b') + starPath(40, 40, 16, '#ffd43b'),
     sad: dots + `<path d="M86,122 L122,108" ${ln}/><path d="M214,122 L178,108" ${ln}/><path d="M124,244 Q150,224 176,244" ${ln}/><ellipse cx="96" cy="168" rx="7" ry="12" fill="#74c0fc"/>`,
     scared: `<circle cx="105" cy="140" r="17" fill="#fff" stroke="#222" stroke-width="4"/><circle cx="195" cy="140" r="17" fill="#fff" stroke="#222" stroke-width="4"/><circle cx="105" cy="142" r="7" fill="#222"/><circle cx="195" cy="142" r="7" fill="#222"/>
       <path d="M86,110 Q105,96 124,110" ${ln}/><path d="M176,110 Q195,96 214,110" ${ln}/><ellipse cx="150" cy="240" rx="14" ry="18" fill="#333"/>`,
     cross: dots + `<path d="M84,112 L124,128" ${ln}/><path d="M216,112 L176,128" ${ln}/><path d="M124,240 L176,240" ${ln}/>`,
     tired: `<path d="M90,142 Q105,152 120,142" ${ln}/><path d="M180,142 Q195,152 210,142" ${ln}/><ellipse cx="150" cy="240" rx="11" ry="14" fill="#333"/>`,
-    sleep: `<path d="M90,142 Q105,154 120,142" ${ln}/><path d="M180,142 Q195,154 210,142" ${ln}/><path d="M135,236 Q150,246 165,236" ${ln}/><text x="225" y="60" font-size="42" fill="#5c7cfa">Zzz</text>`,
+    sleep: `<path d="M90,142 Q105,154 120,142" ${ln}/><path d="M180,142 Q195,154 210,142" ${ln}/><path d="M135,236 Q150,246 165,236" ${ln}/>
+      <path d="M228,40 h22 l-22,24 h22 M256,14 h14 l-14,16 h14" stroke="#5c7cfa" stroke-width="5" fill="none" stroke-linejoin="round"/>`,
+    surprised: `<circle cx="105" cy="140" r="15" fill="#222"/><circle cx="195" cy="140" r="15" fill="#222"/><circle cx="110" cy="134" r="5" fill="#fff"/><circle cx="200" cy="134" r="5" fill="#fff"/>
+      <path d="M86,104 Q105,88 124,104" ${ln}/><path d="M176,104 Q195,88 214,104" ${ln}/><ellipse cx="150" cy="244" rx="16" ry="22" fill="#333"/>`,
+    silly: `<path d="M90,142 Q105,132 120,142" ${ln}/><circle cx="195" cy="140" r="13" fill="#222"/><circle cx="199" cy="135" r="4" fill="#fff"/>
+      <path d="M118,226 Q150,256 182,226" ${ln}/><path d="M140,240 Q138,272 152,272 Q166,272 162,240 Z" fill="#ff6b8b" stroke="#c2255c" stroke-width="3"/>`,
+    proud: smileEyes + blush + `<path d="M116,224 Q150,262 184,224" ${ln}/>` + starPath(150, 26, 26, '#ffd43b'),
+    calm: `<path d="M90,144 Q105,154 120,144" ${ln}/><path d="M180,144 Q195,154 210,144" ${ln}/><path d="M130,232 Q150,244 170,232" ${ln}/>`,
+    worried: dots + `<path d="M86,116 Q100,104 122,110" ${ln}/><path d="M214,116 Q200,104 178,110" ${ln}/>
+      <path d="M122,242 q7,-8 14,0 q7,8 14,0 q7,-8 14,0 q7,8 14,0" ${ln}/>`,
+    loved: blush + heartPath(105, 124, 34, '#f03e3e') + heartPath(195, 124, 34, '#f03e3e') + `<path d="M118,226 Q150,260 182,226" ${ln}/>` +
+      heartPath(255, 26, 30, '#ff6b8b') + heartPath(40, 40, 22, '#ff6b8b'),
+    shy: `<circle cx="105" cy="150" r="10" fill="#222"/><circle cx="195" cy="150" r="10" fill="#222"/><path d="M90,138 Q105,130 120,138" ${ln}/><path d="M180,138 Q195,130 210,138" ${ln}/>` +
+      blush + blush + `<path d="M136,236 Q150,244 164,236" ${ln}/>`,
   }[m];
 }
-const KF = { mood: 'happy', story: -1, waiting: null, koala: document.getElementById('koala') };
-function setMood(m) { KF.mood = m; document.getElementById('kface').innerHTML = koalaFace(m); }
-const feelBtns = document.getElementById('feelbtns');
-Object.entries(FEELINGS).forEach(([f, em]) => {
-  const b = document.createElement('button'); b.textContent = em;
-  b.onclick = () => { KF.waiting = null; document.getElementById('feelprop').innerHTML = '';
-    setMood(f); replay(KF.koala, f === 'scared' ? 'shiver' : 'jump'); document.getElementById('feelcap').textContent = CLIP_TEXT['feel_' + f]; say('feel_' + f); };
-  feelBtns.appendChild(b);
-});
-const storyBtn = document.createElement('button'); storyBtn.className = 'story'; storyBtn.textContent = '📖';
-storyBtn.onclick = () => {
+const koalaSVG = m => KOALA_HEAD + koalaFace(m);
+const KF = { mood: 'happy', mode: 'free', story: -1, waiting: null, match: null, breath: 0, koala: document.getElementById('koala') };
+const feelEl = document.getElementById('feel'), feelBtns = document.getElementById('feelbtns'), feelCap = document.getElementById('feelcap');
+const feelProp = document.getElementById('feelprop'), feelNext = document.getElementById('feelnext'), balloon = document.getElementById('balloon');
+function setMood(m) { KF.mood = m; KF.koala.innerHTML = koalaSVG(m); }
+const caption = t => { feelCap.textContent = t || ''; };
+// A row of little koala faces to tap
+function faceButtons(moods, onTap, cls) {
+  feelBtns.className = 'feelings' + (cls ? ' ' + cls : ''); feelBtns.innerHTML = '';
+  moods.forEach(m => {
+    const b = document.createElement('button'); b.dataset.mood = m;
+    b.innerHTML = `<svg viewBox="0 0 300 300">${koalaSVG(m)}</svg>`;
+    b.onclick = () => onTap(m, b);
+    feelBtns.appendChild(b);
+  });
+}
+const propHTML = p => p === 'MUM'
+  ? `<span style="display:inline-block;width:84px;height:84px">${mumArt().replace('<img', '<img style="width:84px;height:84px;border-radius:50%;object-fit:cover;object-position:35% 45%"')}</span>` : p;
+
+// Mode 1: tap a face, Koala shows it and says it
+function feelFree() {
+  faceButtons(Object.keys(FEELINGS), (m, b) => {
+    feelBtns.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    setMood(m); replay(KF.koala, m === 'scared' || m === 'worried' ? 'shiver' : 'jump');
+    caption(FEELINGS[m]); say('feel_' + m);
+  });
+  setMood('happy'); caption('How do you feel?'); say('how_feel');
+}
+// Mode 2: a little story; Luisa taps Koala to help, then ▶ for the next one
+function feelStory() {
+  feelBtns.innerHTML = '';
   KF.story = (KF.story + 1) % FEEL_STORIES.length;
   const s = FEEL_STORIES[KF.story];
-  KF.waiting = s;
-  document.getElementById('feelprop').innerHTML = s.prop === '👩' ? `<span style="display:inline-block;width:90px;height:90px">${mumArt().replace('<img', '<img style="width:90px;height:90px;border-radius:50%;object-fit:cover"')}</span>` : s.prop;
-  setMood(s.mood); replay(KF.koala, s.mood === 'scared' ? 'shiver' : 'jump');
-  document.getElementById('feelcap').textContent = CLIP_TEXT[s.ask];
-  say(s.ask);
-};
-feelBtns.appendChild(storyBtn);
+  KF.waiting = s; feelNext.hidden = true; feelNext.classList.remove('glow');
+  feelProp.innerHTML = propHTML(s.prop);
+  setMood(s.mood); replay(KF.koala, s.mood === 'scared' || s.mood === 'worried' ? 'shiver' : 'jump');
+  caption(CLIP_TEXT[s.ask]); say(s.ask);
+}
+// Mode 3: Koala makes a face, Luisa finds the matching one of three
+function feelMatch() {
+  let m; do { m = MATCH_MOODS[rand(0, MATCH_MOODS.length - 1)]; } while (m === KF.match && MATCH_MOODS.length > 1);
+  KF.match = m;
+  const others = MATCH_MOODS.filter(x => x !== m).sort(() => Math.random() - .5).slice(0, 2);
+  const choices = [m, ...others].sort(() => Math.random() - .5);
+  setMood(m); replay(KF.koala, 'jump'); caption('How does Koala feel?');
+  faceButtons(choices, async (pick, b) => {
+    if (KF.busy) return;
+    if (pick !== m) { replay(b, 'nope'); sfx('boop'); say('look_again'); return; }
+    KF.busy = true; b.classList.add('on'); sfx('ding');
+    floatUp(feelEl, ...centreOf(b), '⭐', 4, 'spark');
+    caption(FEELINGS[m]);
+    await say(['yay', 'feel_' + m]);
+    KF.busy = false;
+    if (current === 'feel' && KF.mode === 'match') feelMatch();
+  }, 'three');
+  say('how_koala');
+}
+// Mode 4: breathe with Koala: the balloon grows (in) and shrinks (out), three times
+async function feelBreathe() {
+  feelBtns.innerHTML = ''; setMood('calm');
+  const run = ++KF.breath;
+  caption(CLIP_TEXT.breathe_start);
+  await say('breathe_start');
+  for (let i = 0; i < 3; i++) {
+    if (run !== KF.breath) return;
+    caption('Breathe in…'); balloon.classList.add('big'); say('breathe_in'); await wait(4200);
+    if (run !== KF.breath) return;
+    caption('Breathe out…'); balloon.classList.remove('big'); say('breathe_out'); await wait(4200);
+  }
+  if (run !== KF.breath) return;
+  caption(FEELINGS.calm); say('feel_calm'); floatUp(feelEl, ...centreOf(KF.koala), '💙', 4);
+}
+const FEEL_MODES = { free: ['😀', feelFree], story: ['📖', feelStory], match: ['🎯', feelMatch], breathe: ['🎈', feelBreathe] };
+const feelModes = document.getElementById('feelmodes');
+Object.entries(FEEL_MODES).forEach(([k, [icon]]) => {
+  const b = document.createElement('button'); b.textContent = icon; b.dataset.mode = k;
+  b.onclick = () => setFeelMode(k);
+  feelModes.appendChild(b);
+});
+function setFeelMode(k) {
+  KF.mode = k; KF.waiting = null; KF.busy = false; KF.breath++;
+  feelProp.innerHTML = ''; feelNext.hidden = true;
+  feelEl.classList.toggle('breathing', k === 'breathe'); balloon.classList.remove('big');
+  feelModes.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.mode === k));
+  sfx('pop');
+  FEEL_MODES[k][1]();
+}
+feelNext.onclick = () => { sfx('pop'); feelStory(); };
 KF.koala.addEventListener('pointerdown', () => {
   const s = KF.waiting;
-  if (s) {
+  if (s) { // story: Koala gets help
     KF.waiting = null;
-    floatUp(document.getElementById('feel'), ...centreOf(KF.koala), s.help, 4);
+    floatUp(feelEl, ...centreOf(KF.koala), s.help, 4);
     setTimeout(() => { setMood(s.end); replay(KF.koala, 'jump'); }, 500);
-    document.getElementById('feelcap').textContent = CLIP_TEXT[s.ok] || CLIP_TEXT.feel_excited;
-    say(s.ok === 'mum_hug' ? ['feel_excited', 'mum_hug'] : s.ok);
-  } else { replay(KF.koala, 'jump'); say(KF.mood === 'sleep' ? 'fs_tired_ok' : 'feel_' + KF.mood); }
+    caption(CLIP_TEXT[s.ok] || FEELINGS[s.end]);
+    say(s.ok === 'mum_hug' ? ['feel_loved', 'mum_hug'] : s.ok).then(() => { if (KF.mode === 'story') { feelNext.hidden = false; feelNext.classList.add('glow'); } });
+  } else if (KF.mode === 'breathe') feelBreathe();
+  else if (KF.mode !== 'match') { replay(KF.koala, 'jump'); say(KF.mood === 'sleep' ? 'fs_tired_ok' : 'feel_' + KF.mood); }
 });
-onEnter.feel = () => { KF.waiting = null; document.getElementById('feelprop').innerHTML = ''; setMood('happy'); document.getElementById('feelcap').textContent = 'How do you feel?'; say('how_feel'); };
+onEnter.feel = () => setFeelMode('free');
+onLeave.feel = () => { KF.breath++; KF.waiting = null; };
 
 /* ============ RAINBOW COUNT (Luisa) ============ */
 // Count 2-3 animals, then up to 5, then up to 7 (a whole rainbow). Each tap lights the next rainbow colour.
@@ -1495,40 +1645,367 @@ document.getElementById('dance').addEventListener('pointerdown', e => {
 onEnter.dance = () => setDanceMode('party');
 onLeave.dance = () => { clearInterval(DN.timer); DN.frozen = false; };
 
-/* ============ CHOO CHOO MAP: our route, one leg at a time (Luisa) ============ */
-const RT = { pos: store.get('route_pos', 0), moving: false };
-const stopX = i => 120 + i * 230;
-function renderRoute() {
-  const tin = document.getElementById('trackin');
-  tin.style.width = stopX(ROUTE.length - 1) + 140 + 'px';
-  tin.innerHTML = `<div class="line" style="width:${stopX(ROUTE.length - 1) + 140}px"></div>` +
-    ROUTE.map((s, i) => `<div class="stop ${i <= RT.pos ? 'been' : 'todo'}" style="left:${stopX(i)}px">
-      <div class="pin">${s.pin === 'MUM' ? mumArt() : s.pin}</div><div class="nm">${s.name}</div></div>`).join('') +
-    `<div class="mover" id="mover" style="left:${stopX(RT.pos)}px">🐨</div>`;
-  const next = ROUTE[RT.pos + 1];
-  const btn = document.getElementById('gobtn');
-  btn.textContent = next ? next.by : '🔁'; btn.disabled = false;
-  document.getElementById('track').scrollLeft = Math.max(0, stopX(RT.pos) - innerWidth / 3);
+/* ============ CHOO CHOO MAP: a cartoon world map of our trip, one leg at a time ============ */
+// Luisa: tap the big vehicle, Koala rides it to the next place. Orlando: the same map with distances and a fact to read at each stop.
+// Everything is drawn here as SVG (land, vehicles, landmarks): no emoji.
+const MAPX = lon => (lon + 180) * 8, MAPY = lat => (90 - lat) * 10; // gently squashed equirectangular
+// Coastlines as [lon, lat] points, smoothed into cartoon blobs
+const LAND = [
+  // Eurasia (from Lapland, east along the Arctic, round Asia and Arabia, the Mediterranean, then up the Atlantic and Baltic)
+  [[28,70.5],[33,69.5],[41,67],[44,68.5],[53,68.5],[60,69.8],[68,69],[73,72.5],[80,73.5],[90,75.5],[100,77],[105,77.5],[112,73.8],[120,73],[130,71.5],[140,72.5],[150,71],[160,69.7],[170,70],[180,69],[180,65],
+   [176,64.5],[170,60],[163,60],[160,54.5],[156.5,51],[155.5,55],[156,57.8],[150,59.5],[143,59.3],[137,54.5],[141,52.2],[140.5,48.5],[135.5,43.5],[131,42.5],[129.5,40.8],[129.4,36],[127,34.6],[126.3,34.8],
+   [126.5,37.5],[125,39.6],[121.5,40.9],[121.8,39],[118,39.2],[119.5,37.2],[122.5,37.1],[120.3,36],[119.3,34.5],[121,32],[122,30.5],[121.8,28.8],[120,26.6],[117.7,24],[114,22.3],[110.5,21],[109.7,21.6],
+   [108,21.5],[106.6,20.2],[105.7,18.8],[107,17],[108.8,15.4],[109.3,12.8],[108.8,11.3],[107,10.4],[105,8.7],[104.8,9.8],[103.2,10.5],[102.4,12.2],[100.9,12.8],[100,13.5],[99.2,10.2],[100.3,8.4],[101.3,6.9],
+   [102.6,5.8],[103.4,4.3],[103.5,2.7],[104.3,1.4],[103.5,1.3],[101.3,2.8],[100.4,4.8],[100.3,6.4],[99.3,7.9],[98.3,8.3],[98.6,10],[98.2,12],[97.8,14.9],[97.6,16.6],[96,16.9],[94.4,16],[94.3,18.7],
+   [92.4,20.6],[91.8,22.2],[90.3,21.8],[88.8,21.6],[87,20.7],[86,19.9],[84.8,19.2],[82.3,17],[80.3,15.6],[80.2,13.2],[79.8,10.3],[78.2,8.9],[77.5,8],[76.6,8.9],[75.8,11.3],[74.6,14],[73.4,16],[72.8,19],
+   [72.9,20.8],[72.6,21.4],[70.5,21],[69,22.3],[68.4,23.7],[66.8,25],[64.5,25.2],[61.5,25.1],[58.5,25.6],[57.3,25.8],[56.8,27.2],[54.8,26.5],[52.5,27.5],[51.3,28.5],[50.1,30.2],[48.5,30],[48,29.3],
+   [48.6,28],[49.6,26.9],[50.2,26],[50.8,24.8],[51.6,24.3],[54,24.1],[55.4,25.2],[56.3,26.2],[56.4,24.9],[57.9,23.7],[59.8,22.5],[58.5,20.4],[57.8,19],[56.6,18.2],[55.2,17.3],[52.2,15.9],[49.5,14.6],
+   [48.2,13.9],[45.5,13.2],[43.5,12.7],[42.8,15.5],[42.4,16.9],[41.2,19.3],[39.6,21],[38.9,22.6],[37.4,25.1],[35.5,27.8],[34.6,28.1],[34.3,31],[34.9,32.8],[35.8,35.2],[36,36.9],[34,36.3],[32,36.3],
+   [29.6,36.2],[27.4,37.1],[26.5,38.5],[26.8,39.7],[26.2,40.1],[26,40.8],[24,40.1],[23,39.2],[22.7,37.4],[21.7,36.8],[21.1,38.3],[20.2,39.6],[19.4,41.6],[18.5,42.5],[16,43.5],[15,44.5],[13.7,45.3],
+   [12.3,45.3],[12.4,44.2],[13.6,43.5],[14.2,42.4],[15.9,41.9],[17.5,40.8],[18.5,40.1],[17,39.5],[16.6,38.4],[15.7,38],[16.1,39.3],[15.6,40],[14.5,40.6],[13.7,41.2],[12.3,41.7],[11.1,42.4],[10.5,42.9],
+   [10.1,44],[8.8,44.4],[7.5,43.8],[6.6,43.2],[5,43.4],[4,43.5],[3.1,43.1],[3.2,41.9],[2.1,41.3],[0.8,41],[-0.3,39.5],[0.2,38.7],[-0.7,37.6],[-2.1,36.7],[-4.4,36.7],[-5.6,36],[-6.4,36.8],[-7.4,37.2],
+   [-8.9,37],[-8.8,38.7],[-9.5,38.8],[-8.9,40.2],[-8.7,42],[-9.3,43],[-8,43.7],[-5.8,43.6],[-4,43.4],[-1.8,43.4],[-1.2,44.6],[-1.2,46.1],[-2.2,47.1],[-4.4,47.9],[-4.6,48.6],[-3,48.8],[-1.6,48.7],
+   [-1.3,49.7],[0.2,49.4],[1.5,50.1],[1.6,50.9],[2.5,51.1],[3.4,51.4],[4,51.9],[4.6,52.5],[4.8,53],[5.6,53.4],[7.1,53.6],[8.6,53.9],[8.7,55],[8.1,55.6],[8.6,57.1],[10.6,57.7],[10.8,56.2],[12.5,55.7],
+   [12.1,54.2],[14.2,53.9],[16.5,54.5],[18.6,54.7],[19.9,54.4],[21.1,55.3],[21,56.8],[22.6,57.7],[24.1,57.1],[24.4,58.4],[23.5,59.2],[25.5,59.6],[28,59.5],[30,60],[28.8,60.5],[26.5,60.4],[23,59.9],
+   [21.4,60.8],[21.5,62.8],[23.5,64.1],[25.3,65.3]],
+  // Scandinavia
+  [[5,58.1],[7,58],[8.2,58.1],[10.5,59.2],[11,58.9],[11.8,58.3],[12.6,56.5],[12.9,55.4],[14.3,55.6],[16,56.3],[16.6,57.5],[16.6,58.6],[18.4,59.4],[17.7,60.5],[17.3,61.6],[18.9,63.3],[21.2,64.4],
+   [22.2,65.6],[24,65.8],[25,68],[28,70],[28.5,71],[25.7,71.1],[23.5,70.5],[19,70],[16,69],[14.5,68],[13,66.5],[11.6,64.8],[10,63.5],[8.5,63.3],[6.5,62.4],[5,61.5],[5,60],[5.5,59]],
+  // Great Britain, Ireland
+  [[-5.7,50.1],[-3,50.6],[1.4,51.2],[1.7,52.7],[0.2,53.5],[-0.3,54.6],[-1.6,55.6],[-2.1,57],[-1.8,57.6],[-4,57.7],[-3.1,58.6],[-5,58.6],[-6.2,57.5],[-5.6,56.3],[-6,55.3],[-4.9,54.8],[-3,54],
+   [-3.1,53.3],[-4.6,53.3],[-4,52.3],[-5.3,51.8],[-3,51.4],[-4.2,51.2]],
+  [[-6,52.2],[-6.2,53.9],[-5.6,54.6],[-7.3,55.3],[-8.5,54.4],[-10,53.8],[-9.6,52.2],[-10.4,51.7],[-8,51.6]],
+  // Africa, Madagascar
+  [[-17,21],[-17,14.7],[-15,11],[-13,8],[-8,4.5],[-4,5.2],[2,6.3],[5.5,4.5],[8.5,4.5],[9.5,1],[9,-2],[12,-5.5],[13.5,-11.5],[11.8,-17],[14.5,-23],[17,-29],[18.4,-34],[22,-34],[25.6,-34],[28,-32.5],
+   [32.5,-28.5],[32.8,-26],[35.5,-24],[35,-20],[40.5,-15],[40,-10],[39.3,-6],[40.5,-2.5],[43,0],[47,4.5],[51,10.5],[51.2,11.8],[44,10.5],[43.3,12],[39.5,15.5],[37.2,19],[35.5,24],[33.5,28],[32.3,31.3],
+   [29,30.9],[25,31.7],[20,30.5],[19.5,30.3],[15.5,32],[11.5,33.2],[10,36.8],[8.5,37],[3,36.8],[-1,35.5],[-5.9,35.8],[-9.5,32],[-10,29],[-13,27.5],[-16,23.8]],
+  [[49.3,-12],[50.4,-15.5],[49.5,-17.5],[47.2,-25],[45,-25.5],[43.5,-22],[44.3,-17],[47,-15.5]],
+  // Mediterranean islands
+  [[12.4,38.1],[15.6,38.3],[15.1,36.7],[12.6,37.6]], [[8.4,40.9],[9.8,41],[9.6,39.2],[8.4,39]],
+  // South and east Asia islands
+  [[80,9.8],[81.8,7.5],[80.5,6],[79.8,7.5]], [[121,25.2],[122,25],[121,22],[120.2,22.8]],
+  [[130,31],[131.5,34],[135,34.3],[137,34.6],[140,35.5],[141,38],[142,40],[141.5,41.5],[140,40],[139.5,38],[137,37],[136,36],[133,35.5],[131,34.5],[130,33]],
+  [[120,18.5],[122,18.5],[122.3,14],[124,12.5],[126,9],[125.5,6],[122,7],[120.5,10],[119.5,11],[120.5,14.5]],
+  [[109,1.5],[110,-1.5],[111,-3],[114.5,-4],[116.5,-2.5],[118,1],[119,5],[117,7],[115.5,5],[113,3.2],[111,1.7]],
+  [[95.3,5.6],[97.5,5.2],[100.4,2.2],[103.7,-1],[106,-3.2],[105.8,-5.8],[104.5,-5.9],[102.3,-4],[100.3,-0.5],[98.7,1.7]],
+  [[105.2,-6.8],[106,-5.9],[108.5,-6.5],[111,-6.4],[114.6,-7.7],[114.4,-8.7],[110.5,-8.2],[106.5,-7.4]],
+  [[119.5,-5.5],[120.5,0],[123,1],[125,1.4],[121.5,-1],[122,-4],[120.5,-5.5]],
+  [[131,-1],[138,-1.5],[142,-3],[147,-6],[150,-10.5],[147,-10],[143,-9],[141,-9],[138,-8],[135,-4],[132,-2.5]],
+  // Australia, Tasmania, New Zealand
+  [[113.5,-22],[114,-26.5],[115,-34],[118,-35],[123,-34],[129,-31.5],[134,-32.5],[138,-35],[140.5,-38],[144,-38.5],[146.5,-39],[150,-37.5],[151.5,-33],[153.5,-28],[153,-25],[150.5,-22.5],
+   [147,-19],[145.5,-15],[143.5,-11],[142,-11],[141,-16.5],[139,-17.5],[136,-15],[136.5,-12],[132,-11.5],[129.5,-15],[126,-14],[122,-17.5],[121,-19.5],[117,-20.7]],
+  [[145,-41],[148.3,-41],[148,-43.5],[146,-43.5]],
+  [[172.6,-34.4],[174.5,-36.5],[176,-37.6],[178.5,-37.7],[177,-39.5],[175.2,-41.6],[174.6,-39],[173.8,-39.2],[174.4,-36.9]],
+  [[172.7,-40.5],[174.3,-41.2],[173.5,-43],[171.2,-44.5],[169,-46.6],[166.5,-46],[168,-44],[171,-42],[172.2,-40.8]],
+];
+const LAKES = [
+  [[27.5,42],[28,43.4],[28.6,44.3],[29.7,45.3],[30.8,46.5],[32,46.2],[33.5,45.9],[32.5,45.3],[33.5,44.5],[35,45],[36.5,45.3],[38.2,46.9],[39.3,47.1],[38.3,46.2],[37.4,45],[38.7,44.3],[40,43.4],[41.6,41.6],
+   [40,41],[38,40.9],[36.4,41.3],[35,42],[33.3,42],[31.3,41.2],[29.1,41.2],[28.2,41.5]],
+  [[47.1,44.6],[48.9,46.7],[51.2,47.1],[53,46.8],[53.1,45.3],[51.3,44.5],[51.3,43.2],[52.7,42],[53,40.6],[53.9,39.2],[53.9,37.3],[51,36.8],[49.1,37.6],[48.9,38.5],[49.4,40.3],[50.3,40.4],[48.6,41.9],[47.5,43]],
+];
+// Closed, smooth (Catmull-Rom) path through [lon, lat] points
+function blob(pts) {
+  const p = pts.map(([lo, la]) => [MAPX(lo), MAPY(la)]), n = p.length, f = v => v.toFixed(1);
+  let d = `M${f(p[0][0])},${f(p[0][1])}`;
+  for (let i = 0; i < n; i++) {
+    const a = p[(i - 1 + n) % n], b = p[i], c = p[(i + 1) % n], e = p[(i + 2) % n];
+    d += `C${f(b[0] + (c[0] - a[0]) / 6)},${f(b[1] + (c[1] - a[1]) / 6)} ${f(c[0] - (e[0] - b[0]) / 6)},${f(c[1] - (e[1] - b[1]) / 6)} ${f(c[0])},${f(c[1])}`;
+  }
+  return d + 'Z';
 }
-document.getElementById('gobtn').onclick = async () => {
-  if (RT.moving) return;
-  if (RT.pos >= ROUTE.length - 1) { RT.pos = 0; store.set('route_pos', 0); renderRoute(); say('route_start'); return; }
-  const leg = ROUTE[RT.pos + 1], mover = document.getElementById('mover'), btn = document.getElementById('gobtn');
-  RT.moving = true; btn.disabled = true;
-  say(leg.clip);
-  mover.textContent = leg.by;
-  document.getElementById('track').scrollLeft = Math.max(0, stopX(RT.pos + 1) - innerWidth / 3);
-  mover.style.left = stopX(RT.pos + 1) + 'px';
-  await wait(2300);
-  RT.pos++; store.set('route_pos', RT.pos); RT.moving = false;
-  renderRoute();
-  const stop = document.querySelectorAll('#trackin .stop')[RT.pos];
-  floatUp(document.getElementById('route'), ...centreOf(stop), leg.mum ? '💖' : '⭐', 5);
-  sfx('ding');
-  if (RT.pos === ROUTE.length - 1) toast('🏠🎉');
-  say(leg.mum ? [leg.at, 'mum_hug'] : leg.at);
+
+// --- Cartoon art, each drawn in its own small box centred on 0,0 ---
+const INK = 'stroke="#264653" stroke-width="2.5" stroke-linejoin="round"';
+const koalaMini = (x, y, r) => `<circle cx="${x - r * .85}" cy="${y - r * .6}" r="${r * .55}" fill="#9aa5b1"/><circle cx="${x + r * .85}" cy="${y - r * .6}" r="${r * .55}" fill="#9aa5b1"/>
+  <ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * .9}" fill="#b6bec8"/><ellipse cx="${x}" cy="${y + r * .2}" rx="${r * .26}" ry="${r * .34}" fill="#333"/>
+  <circle cx="${x - r * .42}" cy="${y - r * .15}" r="${r * .12}" fill="#222"/><circle cx="${x + r * .42}" cy="${y - r * .15}" r="${r * .12}" fill="#222"/>`;
+const wheels = (xs, y, r = 6) => xs.map(x => `<circle cx="${x}" cy="${y}" r="${r}" fill="#343a40"/><circle cx="${x}" cy="${y}" r="${r * .35}" fill="#adb5bd"/>`).join('');
+const windowRow = (xs, y, w = 14, h = 12) => xs.map(x => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="#d0ebff" ${INK}/>`).join('');
+// Vehicles: 120 wide, facing right, with Koala at a window
+const VEHICLES = {
+  plane: `<path d="M-42,-9 L-54,-34 L-38,-34 L-22,-9Z" fill="#e63946" ${INK}/>
+    <path d="M-52,3 Q-56,-9 -40,-10 L30,-10 Q54,-9 59,2 Q54,13 30,13 L-40,13 Q-52,13 -52,3Z" fill="#fff" ${INK}/>
+    <path d="M-4,5 L-22,32 L-6,32 L18,5Z" fill="#457b9d" ${INK}/>
+    ${[-34, -24, -14, -4].map(x => `<circle cx="${x}" cy="-1" r="3.2" fill="#a8dadc"/>`).join('')}
+    <circle cx="27" cy="0" r="9" fill="#d0ebff" ${INK}/>${koalaMini(27, 1, 6)}
+    <path d="M46,-6 Q55,-4 56,1 L46,1Z" fill="#1d3557"/>`,
+  train: `<path d="M-56,-22 h96 q18,2 20,22 v14 h-116z" fill="#ffc917" ${INK}/><rect x="-56" y="4" width="116" height="6" fill="#1d3a8a"/>
+    ${windowRow([-50, -32, -14], -16)}<rect x="4" y="-17" width="20" height="14" rx="3" fill="#d0ebff" ${INK}/>${koalaMini(14, -9, 6)}
+    <path d="M42,-18 q12,4 14,16 h-14z" fill="#d0ebff" ${INK}/>${wheels([-40, -20, 20, 40], 18)}`,
+  seatrain: `<circle cx="-30" cy="-34" r="4" fill="none" stroke="#74c0fc" stroke-width="2"/><circle cx="-14" cy="-40" r="3" fill="none" stroke="#74c0fc" stroke-width="2"/><circle cx="4" cy="-33" r="5" fill="none" stroke="#74c0fc" stroke-width="2"/>
+    <path d="M-58,-18 L18,-18 Q48,-16 62,10 L62,16 L-58,16Z" fill="#f8f9fa" ${INK}/><path d="M40,-12 Q56,-2 62,10 L62,16 L40,16Z" fill="#ffd43b"/>
+    <rect x="-58" y="5" width="98" height="6" fill="#1b2a6b"/>${windowRow([-50, -34, -18], -12, 12, 10)}
+    <rect x="-2" y="-13" width="18" height="12" rx="3" fill="#d0ebff" ${INK}/>${koalaMini(7, -6, 5.5)}${wheels([-42, -22, 18, 38], 18, 5)}`,
+  tube: `<path d="M-56,16 L-56,-8 Q-56,-26 -38,-26 L38,-26 Q56,-26 56,-8 L56,16Z" fill="#e03131" ${INK}/><rect x="-56" y="-2" width="112" height="6" fill="#1971c2"/>
+    ${windowRow([-46, -22, 22], -18, 16, 12)}<rect x="-2" y="-19" width="18" height="14" rx="3" fill="#d0ebff" ${INK}/>${koalaMini(7, -11, 6)}
+    <circle cx="-30" cy="9" r="5" fill="none" stroke="#e03131" stroke-width="2.5"/><rect x="-36" y="7.5" width="12" height="3" fill="#1971c2"/>${wheels([-36, -16, 16, 36], 18, 5)}`,
+  fast_train: `<path d="M-58,-16 L24,-16 Q52,-14 62,12 L62,16 L-58,16Z" fill="#fff" ${INK}/><path d="M-58,2 L50,2 Q58,8 62,12 L62,16 L-58,16Z" fill="#6741d9"/>
+    <path d="M30,-12 Q48,-8 56,4 L34,4Z" fill="#343a40"/>${windowRow([-50, -34, -18], -10, 12, 9)}
+    <rect x="-2" y="-12" width="18" height="12" rx="3" fill="#d0ebff" ${INK}/>${koalaMini(7, -5, 5.5)}${wheels([-42, -22, 18, 38], 18, 5)}`,
+  mountain_train: `<g transform="rotate(-12)"><rect x="-56" y="-26" width="112" height="40" rx="6" fill="#c92a2a" ${INK}/><path d="M-56,-26 h112 v-6 q-56,-8 -112,0z" fill="#fff" ${INK}/>
+    ${windowRow([-48, -26, 18, 36], -18, 16, 14)}<rect x="-4" y="-19" width="18" height="16" rx="3" fill="#d0ebff" ${INK}/>${koalaMini(5, -10, 6)}
+    <rect x="-56" y="4" width="112" height="5" fill="#ffd43b"/><path d="M-62,24 h124" stroke="#495057" stroke-width="4" stroke-dasharray="4 4"/>${wheels([-38, 38], 18, 7)}</g>`,
 };
-onEnter.route = () => { renderRoute(); if (RT.pos === 0) say('route_start'); };
+// Landmarks for each place, ~80 across
+const PINS = {
+  house: `<path d="M-30,-2 L0,-30 L30,-2Z" fill="#e8590c" ${INK}/><rect x="-24" y="-4" width="48" height="34" fill="#ffd43b" ${INK}/><rect x="-6" y="10" width="12" height="20" fill="#8d5524" ${INK}/>
+    <rect x="-19" y="2" width="10" height="9" fill="#d0ebff" ${INK}/><rect x="9" y="2" width="10" height="9" fill="#d0ebff" ${INK}/>`,
+  supertree: `<path d="M-6,32 L6,32 L18,-10 L-18,-10Z" fill="#7048e8" ${INK}/><ellipse cx="0" cy="-14" rx="32" ry="11" fill="#f06595" ${INK}/>
+    ${[-22, -11, 0, 11, 22].map((x, i) => `<circle cx="${x}" cy="${-14 + (i % 2 ? 3 : -2)}" r="2.6" fill="#fff3bf"/>`).join('')}<path d="M-12,8 L12,8 M-9,20 L9,20" stroke="#b197fc" stroke-width="2.5"/>`,
+  bike: `<circle cx="-18" cy="16" r="12" fill="none" stroke="#264653" stroke-width="4"/><circle cx="22" cy="16" r="12" fill="none" stroke="#264653" stroke-width="4"/>
+    <rect x="-34" y="-12" width="30" height="22" rx="4" fill="#40c057" ${INK}/>${koalaMini(-25, -15, 6)}<circle cx="-12" cy="-18" r="6" fill="#f8cfa5" ${INK}/>
+    <path d="M-4,10 L8,-8 L22,16 M8,-8 L4,-22 M-2,-22 h12" fill="none" stroke="#264653" stroke-width="4" stroke-linecap="round"/>`,
+  bigben: `<rect x="-11" y="-14" width="22" height="46" fill="#d4a373" ${INK}/><path d="M-13,-14 L0,-38 L13,-14Z" fill="#495057" ${INK}/>
+    <circle cx="0" cy="-2" r="8" fill="#fff" ${INK}/><path d="M0,-2 L0,-7 M0,-2 L4,1" stroke="#264653" stroke-width="2"/><path d="M-11,14 h22 M-11,22 h22" stroke="#a47148" stroke-width="2"/>`,
+  dino: `<path d="M-30,20 Q-34,0 -14,-4 Q4,-6 12,-14 Q16,-30 24,-32 Q34,-32 32,-24 Q26,-22 22,-12 Q20,4 8,10 L10,22 L2,22 L0,12 L-14,12 L-14,22 L-22,22 L-22,12 Q-28,16 -36,14Z" fill="#69db7c" ${INK}/>
+    <circle cx="26" cy="-27" r="2" fill="#222"/>`,
+  eiffel: `<path d="M0,-36 L5,-12 L12,8 L20,30 L10,30 Q0,14 -10,30 L-20,30 L-12,8 L-5,-12Z" fill="#a47148" ${INK}/><path d="M-9,-2 h18 M-15,14 h30" stroke="#6f4518" stroke-width="3"/>`,
+  bear: `<circle cx="-18" cy="-18" r="10" fill="#8d5524" ${INK}/><circle cx="18" cy="-18" r="10" fill="#8d5524" ${INK}/><circle cx="0" cy="0" r="26" fill="#a0522d" ${INK}/>
+    <ellipse cx="0" cy="9" rx="12" ry="9" fill="#deb887"/><ellipse cx="0" cy="5" rx="5" ry="4" fill="#222"/><circle cx="-9" cy="-6" r="3" fill="#222"/><circle cx="9" cy="-6" r="3" fill="#222"/>`,
+  mountain: `<path d="M-36,28 L-6,-30 L24,28Z" fill="#868e96" ${INK}/><path d="M-6,-30 L-16,-10 L-10,-14 L-4,-8 L2,-14 L4,-12Z" fill="#fff"/><path d="M4,28 L22,-8 L40,28Z" fill="#adb5bd" ${INK}/>
+    <path d="M22,-8 L16,4 L22,0 L28,4Z" fill="#fff"/>`,
+  heart: `<path d="M0,-10 C0,-30 -30,-30 -30,-8 C-30,8 0,20 0,30 C0,20 30,8 30,-8 C30,-30 0,-30 0,-10Z" fill="#f06595" ${INK}/>`,
+};
+const REPLAY_ICON = `<path d="M-26,0 A26,26 0 1 1 -8,24" fill="none" stroke="#264653" stroke-width="8" stroke-linecap="round"/><path d="M-40,-4 L-26,14 L-12,-4Z" fill="#264653"/>`;
+
+// The trip, in order. off = where the landmark sits from the dot, in screen pixels (so close cities don't overlap)
+const ROUTE = [
+  { name: 'Sydney', pin: 'house', ll: [151.2, -33.9], off: [0, -70], fact: 'fact_home' },
+  { veh: 'plane', clip: 'plane', name: 'Singapore', pin: 'supertree', ll: [103.8, 1.35], at: 'at_singapore', off: [-70, -50], fact: 'fact_singapore' },
+  { veh: 'plane', clip: 'plane', name: 'Amsterdam', pin: 'mum', ll: [4.9, 52.37], at: 'at_amsterdam', mum: true, off: [30, -80], fact: 'fact_amsterdam' },
+  { veh: 'train', clip: 'train', name: 'Eindhoven', pin: 'bike', ll: [5.47, 51.44], at: 'at_eindhoven', off: [85, 10], fact: 'fact_eindhoven' },
+  { veh: 'seatrain', clip: 'seatrain', name: 'London', pin: 'bigben', ll: [-0.13, 51.5], at: 'at_london', off: [-10, -85], fact: 'fact_london' },
+  { veh: 'tube', clip: 'tube', name: 'Oxford', pin: 'dino', ll: [-1.26, 51.75], at: 'at_oxford', off: [-85, 20], fact: 'fact_oxford' },
+  { veh: 'seatrain', clip: 'seatrain', name: 'Paris', pin: 'eiffel', ll: [2.35, 48.86], at: 'at_paris', off: [-70, 55], fact: 'fact_paris' },
+  { veh: 'fast_train', clip: 'fast_train', name: 'Bern', pin: 'bear', ll: [7.45, 46.95], at: 'at_bern', off: [80, -40], fact: 'fact_bern' },
+  { veh: 'mountain_train', clip: 'mountain_train', name: 'Mountains', pin: 'mountain', ll: [7.84, 46.2], at: 'at_mountains', off: [55, 70], fact: 'fact_mountains' },
+  { veh: 'train', clip: 'train', name: 'Bern', pin: 'bear', ll: [7.45, 46.95], at: 'at_bern_again', off: [80, -40], fact: 'fact_bern_again' },
+  { veh: 'plane', clip: 'plane', name: 'Singapore', pin: 'supertree', ll: [103.8, 1.35], at: 'at_singapore', off: [-70, -50], fact: 'fact_singapore_again' },
+  { veh: 'plane', clip: 'plane', name: 'Sydney', pin: 'house', ll: [151.2, -33.9], at: 'at_home', off: [0, -70], fact: 'fact_home_again' },
+];
+const ROUTE_FACTS = {
+  fact_home: 'This is home, Sydney! Our big trip starts here.',
+  fact_singapore: 'Singapore is near the equator, so it is hot all year. The Supertrees light up at night!',
+  fact_amsterdam: 'Mum meets us at the airport in Amsterdam! The Netherlands has more bikes than people.',
+  fact_eindhoven: 'In Eindhoven we ride a cargo bike along the river.',
+  fact_london: 'The Eurostar goes through a tunnel under the sea. The tunnel is 50 kilometres long!',
+  fact_oxford: 'The museum in Oxford has real dinosaur bones, and a Dodo.',
+  fact_paris: 'Paris has the Eiffel Tower. It is 330 metres tall!',
+  fact_bern: 'Bern is the capital of Switzerland. Real bears live in a park by the river.',
+  fact_mountains: 'The Matterhorn is 4,478 metres tall. Time for snow!',
+  fact_bern_again: 'Back to Bern. Next stop: the airport, and a long flight!',
+  fact_singapore_again: 'Back in Singapore! The Botanic Gardens have treehouses and water play.',
+  fact_home_again: 'Home again! What a big adventure!',
+};
+let routeKid = 'luisa'; // whose map it is (Orlando's shows distances and facts)
+const RT = { pos: { luisa: store.get('route_pos', 0), orlando: store.get('route_pos_orlando', 0) }, moving: false, view: null, anim: 0 };
+const routeSvg = document.getElementById('worldmap'), routeEl = document.getElementById('route');
+const stopXY = s => [MAPX(s.ll[0]), MAPY(s.ll[1])];
+const kmBetween = (a, b) => { // great-circle distance
+  const r = Math.PI / 180, [lo1, la1] = a.ll, [lo2, la2] = b.ll;
+  const h = Math.sin((la2 - la1) * r / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin((lo2 - lo1) * r / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+};
+const kmTo = i => ROUTE.slice(1, i + 1).reduce((n, s, j) => n + kmBetween(ROUTE[j], s), 0);
+// The line for each leg: flights arc high, trains gently
+function legPath(i) {
+  const [x1, y1] = stopXY(ROUTE[i - 1]), [x2, y2] = stopXY(ROUTE[i]), dx = x2 - x1, dy = y2 - y1;
+  const bend = ROUTE[i].veh === 'plane' ? .28 : .12, d = Math.hypot(dx, dy) || 1;
+  const sgn = dx >= 0 ? -1 : 1; // bulge upwards
+  return `M${x1},${y1} Q${(x1 + x2) / 2 + sgn * dy / d * d * bend},${(y1 + y2) / 2 - sgn * dx / d * d * bend} ${x2},${y2}`;
+}
+// Draw the whole map once; landmarks, labels, Koala and the vehicle get re-sized whenever the camera moves
+function buildMap() {
+  const land = LAND.map(blob).join(' '), lakes = LAKES.map(blob).join(' ');
+  const waves = [[70, -15], [88, -30], [60, -35], [125, -20], [95, 5], [-12, 45], [20, -40], [160, -10], [3, 54.5]]
+    .map(([lo, la]) => `<path d="M${MAPX(lo) - 14},${MAPY(la)} q7,-6 14,0 t14,0" fill="none" stroke="#e7f5ff" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`).join('');
+  const whale = `<g transform="translate(${MAPX(75)},${MAPY(-22)}) scale(1.4)"><path d="M-40,0 Q-36,-24 0,-22 Q34,-20 40,4 Q20,18 -16,14 L-30,22 L-28,10 Q-38,8 -40,0Z" fill="#4c6ef5" stroke="#264653" stroke-width="2.5"/>
+    <path d="M-20,8 Q0,14 30,6" fill="none" stroke="#bac8ff" stroke-width="3"/><circle cx="24" cy="-6" r="3" fill="#222"/><path d="M8,-24 q-6,-14 -12,-10 M8,-24 q4,-14 12,-8" fill="none" stroke="#74c0fc" stroke-width="3" stroke-linecap="round"/></g>`;
+  const fish = (lo, la, s, c) => `<g transform="translate(${MAPX(lo)},${MAPY(la)}) scale(${s})"><path d="M-10,0 Q0,-8 10,0 Q0,8 -10,0Z M-10,0 L-16,-6 L-16,6Z" fill="${c}" stroke="#264653" stroke-width="1.2"/><circle cx="5" cy="-1" r="1.3" fill="#222"/></g>`;
+  const legs = ROUTE.slice(1).map((s, j) => `<path class="leg" data-i="${j + 1}" d="${legPath(j + 1)}" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`).join('');
+  const seen = new Set();
+  const pins = ROUTE.map((s, i) => {
+    const dot = `<circle class="dot" data-i="${i}" cx="${stopXY(s)[0]}" cy="${stopXY(s)[1]}" r="1" fill="#fff" stroke="#264653"/>`;
+    if (seen.has(s.name)) return dot;
+    seen.add(s.name);
+    const art = s.pin === 'mum'
+      ? `<clipPath id="mumclip"><circle r="38"/></clipPath><image class="mumimg" href="photos/mum.jpg" x="-48" y="-44" width="96" height="96" clip-path="url(#mumclip)" preserveAspectRatio="xMidYMid slice"/>`
+      : PINS[s.pin];
+    return dot + `<g class="pin" data-name="${s.name}"><path class="tail" fill="none" stroke="#264653" stroke-width="2.5" stroke-dasharray="5 5" vector-effect="non-scaling-stroke" opacity=".6"/>
+      <g class="badge"><circle r="44" fill="#fff" stroke="${RAINBOW[i % 7]}" stroke-width="7"/>${art}
+      <text class="label" y="66" text-anchor="middle">${s.name}</text></g></g>`;
+  }).join('');
+  routeSvg.innerHTML = `<defs><linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a5d8ff"/><stop offset="1" stop-color="#74c0fc"/></linearGradient></defs>
+    <rect x="-2000" y="-2000" width="7000" height="6000" fill="url(#sea)"/>${waves}${whale}${fish(-2.5, 50.3, .5, '#ffd43b')}${fish(1, 50.6, .4, '#ff922b')}${fish(90, 0, 2, '#ff922b')}${fish(150, -45, 2.5, '#ffd43b')}
+    <path d="${land}" fill="none" stroke="#e7f5ff" stroke-width="9" vector-effect="non-scaling-stroke"/><path d="${land}" fill="#a9e34b" stroke="#5c940d" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+    <path d="${lakes}" fill="#8fd0fb" stroke="#5c940d" stroke-width="2" vector-effect="non-scaling-stroke"/>
+    <g id="legs">${legs}</g><g id="pins">${pins}</g><g id="traveller"></g>`;
+  // Looked up once: placeArt() runs on every animation frame
+  RT.pins = [...routeSvg.querySelectorAll('.pin')].map(g => ({ g, s: ROUTE.find(r => r.name === g.dataset.name),
+    badge: g.querySelector('.badge'), label: g.querySelector('.label'), tail: g.querySelector('.tail') }));
+  RT.dots = [...routeSvg.querySelectorAll('.dot')];
+  // Tap a place: Luisa hears its name, Orlando gets its fact
+  RT.pins.forEach(({ g, s, badge }) => g.addEventListener('pointerdown', e => {
+    e.stopPropagation();
+    if (RT.moving) return;
+    sfx('pop'); floatUp(routeEl, ...centreOf(badge), '⭐', 3, 'spark');
+    if (routeKid === 'orlando') { showFact(s); say(s.fact); } else say(s.at || 'st_home');
+  }));
+  // No photo of Mum (e.g. on the public website): a heart instead
+  const im = new Image();
+  im.onerror = () => routeSvg.querySelectorAll('.mumimg').forEach(e => e.outerHTML = PINS.heart);
+  im.src = 'photos/mum.jpg';
+}
+// Camera: a viewBox that fits the given world points into the space between the top bar and the bottom
+// (the big button, plus Orlando's fact panel), leaving padPx around them for the landmarks
+function fitView(pts, padPx, minW) {
+  const W = routeSvg.clientWidth || innerWidth, H = routeSvg.clientHeight || innerHeight;
+  const top = 90, bottom = routeKid === 'orlando' ? 430 : 270;
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const availW = Math.max(100, W - 2 * padPx), availH = Math.max(100, H - top - bottom - 2 * padPx);
+  const k = Math.max((x1 - x0) / availW, (y1 - y0) / availH, minW / W); // world units per pixel
+  const cyp = (top + H - bottom) / 2;
+  return { x: (x0 + x1) / 2 - W / 2 * k, y: (y0 + y1) / 2 - cyp * k, w: W * k, h: H * k };
+}
+const legView = i => fitView([stopXY(ROUTE[i - 1]), stopXY(ROUTE[i])], 140, 130);
+function idleView() { // where Koala is now, and the next place
+  const p = RT.pos[routeKid];
+  return p < ROUTE.length - 1 ? legView(p + 1) : fitView(ROUTE.map(stopXY), 60, 200);
+}
+// Re-size everything that should stay the same size on screen
+function placeArt() {
+  const v = RT.view, u = v.w / (routeSvg.clientWidth || innerWidth); // world units per screen pixel
+  const big = routeKid === 'orlando' ? 1.1 : 1;
+  // Zoomed out, Europe's places sit on top of each other: only where Koala is and where she's going stay big
+  const p = RT.pos[routeKid], active = [ROUTE[p].name, (ROUTE[p + 1] || ROUTE[0]).name], zoomedIn = u < .6;
+  RT.pins.forEach(({ s, badge, label, tail }) => {
+    const [x, y] = stopXY(s), full = zoomedIn || active.includes(s.name);
+    const ox = full ? s.off[0] * u : 0, oy = full ? s.off[1] * u : -22 * u;
+    badge.setAttribute('transform', `translate(${x + ox},${y + oy}) scale(${u * (full ? .85 * big : .36)})`);
+    label.style.display = full ? '' : 'none';
+    tail.setAttribute('d', `M${x},${y} L${x + ox},${y + oy}`);
+  });
+  RT.dots.forEach(d => { d.setAttribute('r', 7 * u); d.setAttribute('stroke-width', 2.5 * u); });
+  const t = RT.trav;
+  // Koala waits beside the dot, below the landmark
+  if (t) t.el.setAttribute('transform', `translate(${t.x + (t.kind === 'koala' ? 30 * u : 0)},${t.y + (t.kind === 'koala' ? 26 * u : 0)}) rotate(${t.rot}) scale(${(t.flip ? -1 : 1) * u * t.size},${u * t.size})`);
+}
+function setView(v) { RT.view = v; routeSvg.setAttribute('viewBox', `${v.x} ${v.y} ${v.w} ${v.h}`); placeArt(); }
+function flyTo(v, ms) {
+  const a = RT.view, run = ++RT.anim, t0 = performance.now();
+  return new Promise(done => {
+    const step = now => {
+      if (run !== RT.anim) return done();
+      const k = Math.min(1, (now - t0) / ms), e = k < .5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+      // zoom out a little in the middle of a big move, like a camera
+      setView({ x: a.x + (v.x - a.x) * e, y: a.y + (v.y - a.y) * e, w: a.w + (v.w - a.w) * e, h: a.h + (v.h - a.h) * e });
+      if (k < 1) requestAnimationFrame(step); else done();
+    };
+    requestAnimationFrame(step);
+  });
+}
+// Koala (waiting at a place) or the vehicle Koala is riding
+function setTraveller(kind, x, y, rot = 0, flip = false) {
+  const g = routeSvg.querySelector('#traveller');
+  if (!RT.trav || RT.trav.kind !== kind) {
+    g.innerHTML = kind === 'koala' ? `<g>${koalaMini(0, -14, 13)}</g>` : `<g>${VEHICLES[kind]}</g>`;
+    RT.trav = { kind, el: g.firstChild, size: kind === 'koala' ? 1.6 : .95 };
+  }
+  Object.assign(RT.trav, { x, y, rot, flip });
+  placeArt();
+}
+function renderLegs() {
+  const p = RT.pos[routeKid];
+  routeSvg.querySelectorAll('.leg').forEach(l => {
+    const i = +l.dataset.i, done = i <= p, under = ROUTE[i].veh === 'seatrain';
+    l.setAttribute('stroke', done ? RAINBOW[(i - 1) % 7] : '#fff');
+    l.setAttribute('stroke-width', done ? 7 : 4);
+    l.setAttribute('stroke-dasharray', done ? (under ? '14 8' : 'none') : '2 12');
+    l.setAttribute('opacity', done || i === p + 1 ? 1 : .55);
+  });
+  routeSvg.querySelectorAll('.pin').forEach(g => {
+    const idx = ROUTE.findIndex(r => r.name === g.dataset.name);
+    g.style.opacity = idx <= p || ROUTE.slice(0, p + 1).some(r => r.name === g.dataset.name) ? 1 : .55;
+  });
+}
+const goBtn = document.getElementById('gobtn'), odo = document.getElementById('odo'), factEl = document.getElementById('fact');
+function renderRouteUI(km) {
+  const p = RT.pos[routeKid], next = ROUTE[p + 1];
+  goBtn.innerHTML = `<svg viewBox="-68 -46 136 92">${next ? VEHICLES[next.veh] : REPLAY_ICON}</svg>`;
+  goBtn.disabled = false;
+  const big = routeKid === 'orlando';
+  odo.hidden = factEl.hidden = !big;
+  if (!big) return;
+  odo.innerHTML = `<b>${Math.round(km === undefined ? kmTo(p) : km).toLocaleString()}</b> km travelled`;
+  showFact(ROUTE[p]);
+}
+function showFact(st) {
+  factEl.innerHTML = `<b>${st.name}</b> <button class="facthear">🔊</button><br>${ROUTE_FACTS[st.fact]}`;
+  factEl.querySelector('.facthear').onclick = () => say(st.fact);
+}
+function restRoute() {
+  const p = RT.pos[routeKid], [x, y] = stopXY(ROUTE[p]);
+  renderLegs(); setTraveller('koala', x, y); renderRouteUI();
+}
+goBtn.onclick = async () => {
+  if (RT.moving) return;
+  const kid = routeKid, p = RT.pos[kid];
+  if (p >= ROUTE.length - 1) { // back to the start
+    RT.pos[kid] = 0; saveRoute(); restRoute(); sfx('pop');
+    await flyTo(idleView(), 1200); say('route_start'); return;
+  }
+  const i = p + 1, leg = ROUTE[i];
+  RT.moving = true; goBtn.disabled = true;
+  await flyTo(legView(i), 900);
+  say(leg.clip);
+  // ride the vehicle along the line
+  const path = routeSvg.querySelector(`.leg[data-i="${i}"]`), L = path.getTotalLength();
+  const ms = leg.veh === 'plane' ? 4200 : 3000, t0 = performance.now(), km0 = kmTo(p), km1 = kmTo(i);
+  await new Promise(done => {
+    const step = now => {
+      if (current !== 'route') return done();
+      const k = Math.min(1, (now - t0) / ms), e = k < .5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+      const a = path.getPointAtLength(e * L), b = path.getPointAtLength(Math.min(L, e * L + 2) );
+      const c = path.getPointAtLength(Math.max(0, e * L - 2));
+      let ang = Math.atan2(b.y - c.y, b.x - c.x) * 180 / Math.PI;
+      const west = Math.abs(ang) > 90;
+      if (west) ang += 180; // keep the vehicle the right way up, facing where it goes
+      setTraveller(leg.veh, a.x, a.y, leg.veh === 'mountain_train' ? 0 : ang, west);
+      if (kid === 'orlando') odo.innerHTML = `<b>${Math.round(km0 + (km1 - km0) * e).toLocaleString()}</b> km travelled`;
+      if (k < 1) requestAnimationFrame(step); else done();
+    };
+    requestAnimationFrame(step);
+  });
+  if (current !== 'route') { RT.moving = false; return; }
+  RT.pos[kid] = i; saveRoute(); RT.moving = false;
+  restRoute(); sfx('ding');
+  const badge = routeSvg.querySelector(`.pin[data-name="${leg.name}"] .badge`);
+  floatUp(routeEl, ...centreOf(badge), leg.mum ? '💖' : '⭐', 5, 'spark');
+  if (i === ROUTE.length - 1) toast('🎉');
+  await say(kid === 'orlando' ? [leg.at, leg.fact] : leg.mum ? [leg.at, 'mum_hug'] : leg.at);
+  if (current === 'route' && !RT.moving) flyTo(idleView(), 1100);
+};
+function saveRoute() { store.set('route_pos', RT.pos.luisa); store.set('route_pos_orlando', RT.pos.orlando); }
+// Each child's tile opens their own map
+document.querySelectorAll('[data-route]').forEach(b => b.addEventListener('click', () => { routeKid = b.dataset.route; go('route'); }));
+holdButton(document.getElementById('routeBack'), BACK_HOLD_MS, () => go(routeKid));
+let mapBuilt = false;
+onEnter.route = async () => {
+  if (!mapBuilt) { buildMap(); mapBuilt = true; }
+  routeEl.classList.toggle('orl', routeKid === 'orlando');
+  RT.moving = false; RT.trav = null;
+  setView(fitView(ROUTE.map(stopXY), 40, 200)); // start on the whole trip, then zoom to where we are
+  restRoute();
+  await wait(500);
+  await flyTo(idleView(), 1500);
+  if (RT.pos[routeKid] === 0 && current === 'route') say(routeKid === 'orlando' ? ['route_start', 'fact_home'] : 'route_start');
+};
+onLeave.route = () => { RT.anim++; };
+addEventListener('resize', () => { if (current === 'route' && RT.view && !RT.moving) setView(idleView()); });
+
+// Orlando's stop facts can be recorded or read by the robot voice
+CLIPS.push(['Trip Map (Orlando)', Object.entries(ROUTE_FACTS)]); Object.assign(CLIP_TEXT, ROUTE_FACTS);
 
 /* ============ VIDEOS (Luisa's tablet app only) ============ */
 // The luisa-tablet build has a native "Videos" plugin that lists a folder on the SD card.

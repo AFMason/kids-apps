@@ -237,11 +237,11 @@ Luisa hears these in her games: on the story page where Mum meets everyone at th
 
 | File name | Say (in your own words) | Where she hears it |
 |---|---|---|
-| mum_hello | Hi Luisa! It's Mum! I love you so much. | "Message from Mum" button |
-| mum_soon | I'm in the Netherlands, and I can't wait to see you at the airport! | after the hello |
-| mum_hug | I'm so happy to see you! Big hug! | the Mum page, the Choo Choo Map at Amsterdam, and when the koala sees Mum |
-| mum_night | Night night, my darling. Sleep on the big plane, and when you wake up, I'll be there. | Plane Practice bedtime |
-| mum_brave | You are so brave! Mum is proud of you. | Plane Practice landing |
+| mum_hello | Hello Luisa! It's Mummy. I miss you. | "Message from Mum" button |
+| mum_soon | You are going on a plane with Daddy and Orlando and Luisa and Rachel, and I can't wait to see you at the airport! | after the hello |
+| mum_hug | Hello Luisa! Hello Koala! Cuddles! | the Mum page, the Choo Choo Map at Amsterdam, and when the koala sees Mum |
+| mum_night | It's time to have a sleep on the plane. Good night, sleep tight. I love you. | Plane Practice bedtime |
+| mum_brave | The plane's going to make a big bump when it lands. Good job, Luisa! | Plane Practice landing |
 
 Optional: **a photo of Sarah** (a smiley face, square-ish) saved as `photos/mum.jpg`. It replaces the 👩 picture in all the games.
 

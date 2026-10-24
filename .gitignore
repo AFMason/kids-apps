@@ -14,3 +14,6 @@ local.properties
 books/luisa/
 books/orlando/
 books/both/
+
+# Sarah's original WhatsApp voice notes (converted copies are audio/mum_*.wav)
+audio/sarah/

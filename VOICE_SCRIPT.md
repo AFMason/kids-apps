@@ -192,8 +192,51 @@ Act the feelings out a bit: a sad voice for sad, a whisper for scared.
 | fs_tired | Koala is tired on the big plane. Give Koala a teddy! |
 | fs_tired_ok | Night night, Koala. |
 | fs_cross | No more biscuits! Koala is cross! Let's take a big breath. |
-| fs_cross_ok | Ahhh. Koala feels better. |
+| fs_cross_ok | Ahhh. Koala feels calm now. |
 | fs_seemum | Look! It's Mum! Koala is so excited! |
+
+### Koala Feelings: new (October 25)
+| Key | Say |
+|---|---|
+| feel_surprised | Koala feels surprised! Oh! |
+| feel_silly | Koala feels silly! Hee hee! |
+| feel_proud | Koala feels proud! |
+| feel_calm | Koala feels calm. Ahhh. |
+| feel_worried | Koala feels worried. |
+| feel_loved | Koala feels loved! |
+| feel_shy | Koala feels shy. |
+| fs_teddy | Oh no, where is Teddy? Koala is worried. Help Koala find Teddy! |
+| fs_teddy_ok | There's Teddy! Koala feels better. |
+| fs_present | Surprise! A present for Koala! Tap to open it! |
+| fs_present_ok | A new hat! Koala is so excited! |
+| fs_shy | Koala meets new friends. Koala feels shy. Let's wave hello! |
+| fs_shy_ok | Hello, friends! Koala feels happy. |
+| fs_silly | Koala put a banana on her head! Koala feels silly! |
+| fs_silly_ok | Hee hee hee! Silly Koala! |
+| fs_climb | Koala climbed the big hill all by herself! |
+| fs_climb_ok | Koala feels proud! Well done, Koala! |
+| how_koala | How does Koala feel? Find the face! |
+| look_again | Hmm, look again! |
+| breathe_start | Let's breathe with Koala. Watch the balloon. |
+| breathe_in | Breathe in… (slow, gentle) |
+| breathe_out | And breathe out… |
+
+## Trip Map (Orlando)
+Orlando can read these himself, so they're the lowest priority. Tap a place on his map to hear one.
+| Key | Say |
+|---|---|
+| fact_home | This is home, Sydney! Our big trip starts here. |
+| fact_singapore | Singapore is near the equator, so it is hot all year. The Supertrees light up at night! |
+| fact_amsterdam | Mum meets us at the airport in Amsterdam! The Netherlands has more bikes than people. |
+| fact_eindhoven | In Eindhoven we ride a cargo bike along the river. |
+| fact_london | The Eurostar goes through a tunnel under the sea. The tunnel is 50 kilometres long! |
+| fact_oxford | The museum in Oxford has real dinosaur bones, and a Dodo. |
+| fact_paris | Paris has the Eiffel Tower. It is 330 metres tall! |
+| fact_bern | Bern is the capital of Switzerland. Real bears live in a park by the river. |
+| fact_mountains | The Matterhorn is 4,478 metres tall. Time for snow! |
+| fact_bern_again | Back to Bern. Next stop: the airport, and a long flight! |
+| fact_singapore_again | Back in Singapore! The Botanic Gardens have treehouses and water play. |
+| fact_home_again | Home again! What a big adventure! |
 
 ## Rainbow Count
 "Let's count the" + "koalas" is stitched, then she taps and hears "1, 2, 3…" (your existing numbers).

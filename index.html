@@ -2175,10 +2175,10 @@ function showPage(dir) {
     });
     pagebox.appendChild(t);
   }
-  // 🔊: Luisa's pages when a grown-up has recorded them (and they play by themselves);
-  // Orlando's whenever there are words (recorded voice, else the robot voice)
+  // 🔊: Luisa's pages when a grown-up has recorded them (and they play by themselves).
+  // Orlando reads his pages himself: no page read-aloud, just tap a word he's stuck on.
   const key = pageKey(book, pageNo), recorded = hasClip(key);
-  readBtn.hidden = !(recorded || (big && p.text));
+  readBtn.hidden = big || !recorded;
   if (recorded && !big) say(key);
 }
 function sayWord(el, tok) {

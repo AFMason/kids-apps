@@ -52,6 +52,7 @@
   .mini button { border: none; border-radius: 50%; width: 64px; height: 64px; font-size: 30px; background: #f1f3f5; }
   .mini .rec { background: #ffe3e3; }
   .mini .rec.live { background: #ff6b6b; animation: pulse 1s infinite alternate; }
+  .mini .live:not(.rec), .card .icon.live { background: #ffe066; border-radius: 50%; }
   @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.12); } }
   .slot { width: 100%; background: #fff; border-radius: 24px; padding: 16px 20px; box-shadow: 0 4px 12px rgba(0,0,0,.08); display: flex; align-items: center; gap: 14px; border-left: 12px solid #3d8bfd; }
   .slot.grown { border-left-color: #43aa8b; }
@@ -337,26 +338,48 @@ function pickVoice() {
 }
 if (speechWin && speechWin.speechSynthesis.addEventListener) { pickVoice(); speechWin.speechSynthesis.addEventListener('voiceschanged', pickVoice); }
 const voiceKey = t => t.toLowerCase().replace(/[^a-z0-9' ]/g, '').replace(/\s+/g, ' ').trim();
-let voices = {}; // voiceKey → blob, recorded by Mum or Dad in Grown-ups → Voices
-async function loadVoices() { voices = {}; for (const v of await idbAll('voices')) voices[v.key] = v.blob; }
-let sayToken = 0, playing = null;
+let voices = {}; // voiceKey → blob URL, recorded by Mum or Dad in Grown-ups → Voices
+async function loadVoices() {
+  Object.values(voices).forEach(u => URL.revokeObjectURL(u)); voices = {};
+  for (const v of await idbAll('voices')) voices[v.key] = URL.createObjectURL(v.blob);
+}
+// One player for every clip: a new clip (or the robot voice) always stops the last one, so taps never pile up
+const player = new Audio();
+let sayToken = 0, playDone = null, playingBtn = null;
+function clearBtn() {
+  if (!playingBtn) return;
+  playingBtn.textContent = playingBtn.dataset.icon; playingBtn.classList.remove('live'); playingBtn = null;
+}
 function stopTalking() {
   sayToken++;
-  if (playing) { playing.pause(); playing = null; }
+  if (!player.paused) player.pause();
+  if (playDone) { const d = playDone; playDone = null; d(); }
+  clearBtn();
   if (speechWin) speechWin.speechSynthesis.cancel();
 }
-function playBlob(blob) {
+function playUrl(url) {
   return new Promise(done => {
-    const a = new Audio(URL.createObjectURL(blob)); playing = a;
-    a.onended = a.onerror = () => { URL.revokeObjectURL(a.src); done(); };
-    a.play().catch(done);
+    playDone = done;
+    player.onended = player.onerror = () => { if (playDone === done) { playDone = null; clearBtn(); done(); } };
+    player.src = url;
+    player.play().catch(player.onended);
   });
+}
+// ▶ buttons: the button shows ⏹️ straight away; tapping it again stops the clip
+async function playClip(id, btn) {
+  const again = btn && playingBtn === btn;
+  stopTalking();
+  if (again || !id) return;
+  const token = sayToken;
+  if (btn) { btn.dataset.icon = btn.dataset.icon || btn.textContent; btn.textContent = '⏹️'; btn.classList.add('live'); playingBtn = btn; }
+  const url = await blobUrl(id);
+  if (token === sayToken && url) await playUrl(url);
 }
 // say(text, onWord): resolves when finished. onWord(charIndex) highlights words where the voice supports it.
 function say(text, onWord) {
   stopTalking();
   const token = sayToken, rec = voices[voiceKey(text)];
-  if (rec) return playBlob(rec);
+  if (rec) return playUrl(rec);
   if (!speechWin) return Promise.resolve();
   return new Promise(done => {
     const U = speechWin.SpeechSynthesisUtterance, u = new U(text);
@@ -613,7 +636,7 @@ function renderTalk() {
     const icon = el('button', { className: 'icon', textContent: p.icon }); icon.onclick = () => say(p.say);
     const mini = el('div', { className: 'mini' });
     mini.append(micButton(async blob => { entry.clips[p.key] = await putBlob(blob); await saveEntry(); renderTalk(); say('Got it!'); }));
-    if (entry.clips[p.key]) { const pl = el('button', { textContent: '▶️' }); pl.onclick = async () => playBlob(await getBlob(entry.clips[p.key])); mini.append(pl); }
+    if (entry.clips[p.key]) { const pl = el('button', { textContent: '▶️' }); pl.onclick = () => playClip(entry.clips[p.key], pl); mini.append(pl); blobUrl(entry.clips[p.key]); }
     card.append(icon, el('div', { className: 'word', textContent: p.word }), mini);
     box.append(card);
   }
@@ -624,10 +647,11 @@ function renderPick() {
   for (const p of WORDS.prompts) {
     if (!entry.clips[p.key]) continue;
     const card = el('div', { className: 'card' + (entry.best === p.key ? ' best' : '') });
-    const pl = el('button', { className: 'icon', textContent: p.icon }); pl.onclick = async () => playBlob(await getBlob(entry.clips[p.key]));
+    blobUrl(entry.clips[p.key]); // load ahead so ▶ starts straight away
+    const play = el('button', { textContent: '▶️' }); play.onclick = () => playClip(entry.clips[p.key], play);
+    const pl = el('button', { className: 'icon', textContent: p.icon }); pl.onclick = play.onclick;
     const star = el('button', { textContent: entry.best === p.key ? '⭐' : '☆' });
     star.onclick = async () => { entry.best = p.key; await saveEntry(); renderPick(); say('That one is the best!'); };
-    const play = el('button', { textContent: '▶️' }); play.onclick = pl.onclick;
     card.append(pl, el('div', { className: 'mini' }, [play, star])); box.append(card);
   }
   const area = $('#pickArea'); area.innerHTML = '';
@@ -772,7 +796,7 @@ onEnter.book = async () => {
     const t = el('div', { className: 'bigtext', innerHTML: writeHtml(e) }); card.append(t);
     const row = el('div', { className: 'mini' });
     const best = e.clips[e.best] || Object.values(e.clips)[0];
-    if (best) { const b = el('button', { textContent: '▶️' }); b.onclick = async () => playBlob(await getBlob(best)); row.append(b); }
+    if (best) { const b = el('button', { textContent: '▶️' }); b.onclick = () => playClip(best, b); row.append(b); }
     const hear = el('button', { textContent: '🔊' }); hear.onclick = () => say(plainText(e)); row.append(hear);
     card.append(row);
     for (const id of e.photos) card.append(el('img', { src: await blobUrl(id) }));
@@ -1142,7 +1166,7 @@ async function pVoices(body) {
     tr.append(el('td', { textContent: text }));
     const mic = micButton(async blob => { await idbPut('voices', { key, blob, text }); await loadVoices(); renderParent(); toast('Saved'); });
     mic.className = 'pbtn'; td.append(mic);
-    if (voices[key]) td.append(pbtn('▶', () => playBlob(voices[key])), pbtn('🗑', async () => { await idbDel('voices', key); await loadVoices(); renderParent(); }, 'warn'));
+    if (voices[key]) td.append(pbtn('▶', () => { stopTalking(); playUrl(voices[key]); }), pbtn('🗑', async () => { await idbDel('voices', key); await loadVoices(); renderParent(); }, 'warn'));
     else td.append(pbtn('🤖', () => say(text)));
     tr.append(td); tbl.append(tr);
   }

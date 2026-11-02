@@ -13,6 +13,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(SpeechPlugin.class);
+        registerPlugin(FilesPlugin.class);
         super.onCreate(savedInstanceState);
         // Back button does nothing, so Orlando stays in the app
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {

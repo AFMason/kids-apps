@@ -1,0 +1,30 @@
+{
+  "_about": "NSW Foundation Style models. y: 0 = head line, 1 = dotted middle line, 2 = baseline, 3 = tail line. Angles in degrees on screen: 0 = 3 o'clock, -90 = 12 o'clock, 90 = 6 o'clock. Going anticlockwise means the angle goes down. Each stroke is a list of segments: [\"arc\", cx, cy, rx, ry, fromDeg, toDeg] or [\"line\", x1, y1, x2, y2].",
+  "families": [
+    {
+      "key": "round", "name": "Round letters", "icon": "🟠", "letters": "cadgoqs",
+      "move": "Start at two o'clock and go anticlockwise.",
+      "words": ["dog", "dad", "sad", "add", "cod", "gas", "odd", "cog"]
+    },
+    { "key": "downup", "name": "Down, up and over", "icon": "🌈", "letters": "rnmhbp", "move": "Straight down, back up, and over.", "words": [] },
+    { "key": "straight", "name": "Straight and hook", "icon": "🪝", "letters": "iltjuy", "move": "Down, then flick or hook.", "words": [] },
+    { "key": "diagonal", "name": "Slides", "icon": "⛷️", "letters": "vwxkz", "move": "Slanted lines.", "words": [] },
+    { "key": "odd", "name": "Odd ones", "icon": "🎩", "letters": "ef", "move": "Special letters.", "words": [] }
+  ],
+  "letters": {
+    "c": { "w": 0.95, "say": "Start at two o'clock. Go up and around, and stop at four o'clock.",
+      "strokes": [[["arc", 0.5, 1.5, 0.45, 0.5, -40, -320]]] },
+    "a": { "w": 1.05, "say": "Start at two o'clock. Go around, all the way, then up and straight down.",
+      "strokes": [[["arc", 0.5, 1.5, 0.45, 0.5, -30, -360], ["line", 0.95, 1.5, 0.95, 1.0], ["line", 0.95, 1.0, 0.95, 2.0]]] },
+    "d": { "w": 1.05, "say": "Start at two o'clock. Go around, all the way, then up high, and straight down.",
+      "strokes": [[["arc", 0.5, 1.5, 0.45, 0.5, -30, -360], ["line", 0.95, 1.5, 0.95, 0.0], ["line", 0.95, 0.0, 0.95, 2.0]]] },
+    "g": { "w": 1.05, "say": "Start at two o'clock. Go around, all the way, then up, down into the basement, and hook.",
+      "strokes": [[["arc", 0.5, 1.5, 0.45, 0.5, -30, -360], ["line", 0.95, 1.5, 0.95, 1.0], ["line", 0.95, 1.0, 0.95, 2.6], ["arc", 0.6, 2.6, 0.35, 0.3, 0, 180]]] },
+    "o": { "w": 1.0, "say": "Start at two o'clock. Go up and around, all the way, and join up.",
+      "strokes": [[["arc", 0.5, 1.5, 0.45, 0.5, -30, -395]]] },
+    "q": { "w": 1.15, "say": "Start at two o'clock. Go around, all the way, then up, down into the basement, and flick.",
+      "strokes": [[["arc", 0.5, 1.5, 0.45, 0.5, -30, -360], ["line", 0.95, 1.5, 0.95, 1.0], ["line", 0.95, 1.0, 0.95, 2.9], ["line", 0.95, 2.9, 1.12, 2.72]]] },
+    "s": { "w": 0.95, "say": "Start at two o'clock. Go up and around, slide across, and around the other way.",
+      "strokes": [[["arc", 0.5, 1.25, 0.36, 0.25, -25, -270], ["arc", 0.5, 1.75, 0.4, 0.25, -90, 160]]] }
+  }
+}

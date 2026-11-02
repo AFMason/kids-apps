@@ -16,6 +16,7 @@ Custom offline apps for Orlando's Samsung Galaxy tablet, built as web apps, wrap
 | `sam-the-sheep.html` | Sleep trainer nightlight, clock and alarm: red at night, green in the morning. |
 | `luisa-tablet/` | Luisa's tablet (old SM-T350): her games from `index.html` plus offline videos from the SD card. |
 | `orlando-tablet/` | Orlando's tablet (Galaxy Tab S8): his games and books from `index.html`, with a native robot voice. |
+| `travel-school.html` + `travel-school/` | Travel School for Orlando's Europe trip (Year 1 Term 4): daily recount journal and Letter Lab. Content is JSON in `travel-school/`. |
 | `make-books.py` / `.bat` | Converts PDFs, EPUBs, StoryWeaver zips and picture folders in `books/` into the app's bookshelf (`books/shelf`). |
 | `get-videos.bat` | Downloads YouTube links as tablet-friendly MP4s for Luisa's tablet. |
 | `README.md` | This guide. |
@@ -237,7 +238,20 @@ Thumbnail crop boxes for each category are in `VB`.
 - **Robot voice**: Android's WebView has no `speechSynthesis`, so `SpeechPlugin` (Android text-to-speech, Australian English if installed) stands in for it. That covers tap-a-word, 🔊 on a page, and any voice line that hasn't been recorded.
 - **Lock-in** works like Luisa's: it pins itself (confirm once), Back does nothing, and system bars are hidden. Unpin: hold Back + Recents.
 - **Install over Wi‑Fi**: Wireless debugging → *Pair device with pairing code*, then `adb pair <ip>:<pairing-port>` and `adb connect <ip>:<port>`. `adb mdns services` shows the connect port. Then `adb install -r orlando-tablet/android/app/build/outputs/apk/debug/app-debug.apk`.
+- **Signing**: the build signs with `kids-debug.keystore` at the repo root (synced by OneDrive, git-ignored), so both laptops can update the installed app. If an install fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, the APK was signed with a different key: back up the app's data first (`adb exec-out run-as au.mason.orlando.kids tar cf - app_webview > backup.tar`), uninstall, install, then restore (`adb exec-in run-as au.mason.orlando.kids tar xf - < backup.tar`) before opening the app.
 - If Gradle says "SDK location not found", create `android/local.properties` with `sdk.dir=C:/Users/<you>/AppData/Local/Android/Sdk`. It's git-ignored, so each project needs one.
+
+## Travel School: app notes
+
+`travel-school.html` is Orlando's learning page for the Europe trip (26 Oct – 22 Nov 2026), opened from the 🎒 **Travel School** tile on his menu. It's learning, so it isn't timed. Everything stays on the tablet: journal entries, photos and recordings are in IndexedDB (`travel-school`), progress in `localStorage` (`travel-school`).
+
+- **🎤 My Day** (recount): *talk it* (record Who / Where / When / What / Feeling) → *pick the best sentence* (⭐ a recording, then build it with word tiles 🧩, or a grown-up types it ⌨️ as a model) → *write it on paper* with a drawing → *snap it* 📷. The photo goes into his Travel Book and earns the country stamp. Variants, picked by a grown-up: shared writing (his first and last sentences, grown-up scribes the middle), postcard (with 📮 "posted" tracking per country), draw-and-label. Word-builder scaffolds fade from week 3; the daily goal grows from 1 sentence to 2–3 by week 4.
+- **✍️ Letters** (Letter Lab, NSW Foundation Style): watch → trace → dots → start dot → blank → small, then two words, then "Now on paper!" with a snap. Checking looks at the start point, direction and stroke order (not neatness); a miss replays the model and after two tries it moves on anyway. With a stylus, touches are ignored (palm rejection). Only the round family (c a d g o q s) has stroke models so far: add the others to `travel-school/letters.json` (coordinates are explained at the top of the file) and their family tile switches on.
+- **📖 My Book**: every day's page with his sentence, recordings and photos, plus his letter pages.
+- **Grown-ups**: hold ⚙️ for 3 seconds. *Today*: location (Auto follows `travel-school/trip.json`), today's recount type, "paper done" without a photo, and how much games time a snapped page unlocks (default +10 min, once a day). *Progress*, *Letters* (mark 📓 secure on paper, 🔁 bring a letter back), *Words* (add tiles), *Voices* (record your voice for any line; it replaces the robot voice, e.g. "thing" vs "think"), *Export & print*: save the Travel Book for his teacher (one HTML file, with photos and optionally his recordings) to **Downloads/Orlando Travel School**, print it or "Save as PDF", and print A4 sheets (3-line paper, round letters, recount frame, postcards).
+- **Native bits**: `FilesPlugin` (save to Downloads, Android print). Printing leaves the pinned app, so confirm "Pin" again afterwards. First use asks for the microphone and camera: allow both.
+- **Update after editing**: `npm run sync` in `orlando-tablet/` (copies `travel-school.html` and `travel-school/`), then rebuild and install.
+- Still to build (spec order): Number Trail, Sound Quest, Story Lantern, Water Wise, Story Stage, the trip map.
 
 ## Screen time limits
 

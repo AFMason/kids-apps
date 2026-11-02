@@ -16,6 +16,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Both laptops sign with the same debug key (kids-debug.keystore at the repo root, synced by OneDrive,
+    // not in git), so either can update the app on the tablet without uninstalling it
+    def sharedKey = rootProject.file('../../kids-debug.keystore')
+    if (sharedKey.exists()) {
+        signingConfigs {
+            debug {
+                storeFile sharedKey
+                storePassword 'android'
+                keyAlias 'androiddebugkey'
+                keyPassword 'android'
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false

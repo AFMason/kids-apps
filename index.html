@@ -343,6 +343,7 @@
     <button class="big tile6" data-route="orlando"><span class="emoji">🗺️</span>Trip Map</button>
     <button class="big tile5" data-go="builder"><span class="emoji">🦾</span>Robot Builder</button>
     <button class="big tile9" data-shelf="orlando"><span class="emoji">📚</span>Books</button>
+    <button class="big tile8" data-go="school"><span class="emoji">🎒</span>Travel School</button>
   </div>
   <button class="gear" id="orlandoGear" hidden><span class="fill"></span>⚙️</button>
 </section>
@@ -464,6 +465,12 @@
 <section id="builder" class="screen">
   <div class="topbar"><button class="back" data-go="orlando">🏠</button></div>
   <iframe id="builderFrame" class="gameframe" title="Robot Builder"></iframe>
+</section>
+
+<!-- TRAVEL SCHOOL (its own page, travel-school.html, in a frame). Learning, so not timed. -->
+<section id="school" class="screen">
+  <div class="topbar"><button class="back" data-go="orlando">🏠</button></div>
+  <iframe id="schoolFrame" class="gameframe" title="Travel School" allow="microphone; camera; autoplay"></iframe>
 </section>
 
 <!-- SNAKE MATHS (its own page, snake-maths.html, in a frame) -->
@@ -1146,6 +1153,13 @@ onEnter.builder = () => { const f = document.getElementById('builderFrame'); if 
 /* ============ SNAKE MATHS (Orlando) ============ */
 // Loaded on first visit; it keeps its own level and progress in localStorage ('snake-maths')
 onEnter.snake = () => { const f = document.getElementById('snakeFrame'); if (!f.src) f.src = 'snake-maths.html'; };
+// Travel School keeps its journal, photos and recordings in IndexedDB ('travel-school')
+onEnter.school = () => { const f = document.getElementById('schoolFrame'); if (!f.src) f.src = 'travel-school.html'; };
+// A snapped paper page in Travel School can unlock extra games time for today (set in its grown-up area)
+addEventListener('message', e => {
+  if (e.origin !== location.origin || !e.data || e.data.type !== 'travel-school-unlock') return;
+  rollDay(); add2(tl.bonus, 'orlando', 'games', Math.min(60, +e.data.minutes || 0) * 60); saveTL();
+});
 
 /* ============ CODER ROBOT (Orlando) ============ */
 // Levels 1-6: arrow blocks (up/down/left/right). Levels 7-10: forward + turn left/right (robot starts facing right).

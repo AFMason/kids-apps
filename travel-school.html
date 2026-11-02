@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Travel School</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; font-family: "Comic Sans MS", "Chalkboard SE", system-ui, sans-serif;
+    user-select: none; -webkit-user-select: none; touch-action: manipulation; background: #fff8ec; color: #333; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .screen { position: fixed; inset: 0; display: none; flex-direction: column; align-items: center; overflow-y: auto; padding: 16px 16px 100px; }
+  .screen.active { display: flex; }
+  .head { width: 100%; display: flex; align-items: center; gap: 16px; padding-left: 96px; min-height: 80px; } /* 🏠 from the games page sits top left */
+  .head h1 { margin: 0; font-size: 38px; flex: 1; }
+  .round { border: none; border-radius: 50%; width: 72px; height: 72px; font-size: 34px; background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,.15); flex: none; }
+  .round:active, .big:active, .chip:active { transform: translateY(3px); }
+  .row { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; padding: 12px; }
+  .big { border: none; border-radius: 28px; font-size: 30px; padding: 22px 30px; color: #fff; box-shadow: 0 7px 0 rgba(0,0,0,.18); min-width: 220px; min-height: 80px; }
+  .big .emoji { display: block; font-size: 80px; line-height: 1.1; }
+  .big.small { min-width: 0; font-size: 26px; padding: 14px 24px; }
+  .big:disabled { background: #c9c3b8 !important; opacity: .7; }
+  .c1 { background: #3d8bfd; } .c2 { background: #ff9f1c; } .c3 { background: #2ec4b6; } .c4 { background: #8e6cff; } .c5 { background: #ef476f; } .c6 { background: #43aa8b; }
+  .gear { position: fixed; bottom: 16px; right: 16px; border: none; background: none; font-size: 34px; opacity: .45; overflow: hidden; border-radius: 50%; width: 64px; height: 64px; z-index: 30; }
+  .gear .fill { position: absolute; left: 0; bottom: 0; width: 100%; height: 0; background: rgba(0,0,0,.15); }
+  .say { font-size: 30px; }
+  .w.on { background: #ffe066; border-radius: 6px; }
+  .readable .w { padding: 0 2px; }
+
+  /* Passport strip */
+  .passport { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin: 8px 0 4px; }
+  .pp { background: #fff; border-radius: 20px; padding: 8px 14px; box-shadow: 0 3px 8px rgba(0,0,0,.1); display: flex; align-items: center; gap: 8px; font-size: 24px; border: 3px solid transparent; }
+  .pp .flag { font-size: 40px; }
+  .pp.here { border-color: #ffd43b; }
+  .pp b { min-width: 34px; height: 34px; border-radius: 50%; display: inline-grid; place-items: center; color: #fff; font-size: 20px; }
+
+  /* Recount steps */
+  .steps { display: flex; gap: 10px; }
+  .step { width: 64px; height: 64px; border-radius: 50%; border: 4px solid #ddd; background: #fff; font-size: 30px; display: grid; place-items: center; }
+  .step.on { border-color: #3d8bfd; box-shadow: 0 0 0 4px #cfe2ff; }
+  .step.done { background: #d3f9d8; border-color: #51cf66; }
+  .panel { display: none; width: 100%; max-width: 1100px; flex-direction: column; align-items: center; gap: 14px; }
+  .panel.on { display: flex; }
+  .banner { font-size: 26px; background: #fff3bf; border-radius: 16px; padding: 6px 18px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; width: 100%; }
+  .card { background: #fff; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,.1); padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; border: 4px solid transparent; }
+  .card .icon { font-size: 64px; line-height: 1; border: none; background: none; }
+  .card .word { font-size: 26px; }
+  .card.got { border-color: #51cf66; }
+  .card.best { border-color: #ffd43b; background: #fff9db; }
+  .mini { display: flex; gap: 10px; }
+  .mini button { border: none; border-radius: 50%; width: 64px; height: 64px; font-size: 30px; background: #f1f3f5; }
+  .mini .rec { background: #ffe3e3; }
+  .mini .rec.live { background: #ff6b6b; animation: pulse 1s infinite alternate; }
+  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.12); } }
+  .slot { width: 100%; background: #fff; border-radius: 24px; padding: 16px 20px; box-shadow: 0 4px 12px rgba(0,0,0,.08); display: flex; align-items: center; gap: 14px; border-left: 12px solid #3d8bfd; }
+  .slot.grown { border-left-color: #43aa8b; }
+  .slot .who { font-size: 34px; flex: none; }
+  .slot .text { flex: 1; font-size: 34px; min-height: 48px; font-family: system-ui, sans-serif; }
+  .slot .text:empty::before { content: "…"; color: #bbb; }
+  .bigtext { font-family: system-ui, sans-serif; font-size: 46px; line-height: 1.5; background: #fff; border-radius: 24px; padding: 20px 28px; box-shadow: 0 4px 12px rgba(0,0,0,.08); width: 100%; }
+  .bigtext .mine { color: #1c5fd4; } .bigtext .theirs { color: #2b8a3e; }
+  .goal { font-size: 28px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  .goal span { background: #fff; padding: 8px 16px; border-radius: 16px; }
+  .thumbs { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .thumbs img { height: 160px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,.2); }
+
+  /* Chips (word tiles) */
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .chip { border: none; border-radius: 16px; padding: 12px 18px; font-size: 26px; min-height: 64px; min-width: 64px; background: #fff; box-shadow: 0 3px 0 rgba(0,0,0,.15); font-family: system-ui, sans-serif; }
+  .chip.sel { background: #ffd43b; }
+  .grp { width: 100%; display: flex; gap: 12px; align-items: flex-start; }
+  .grp > b { flex: none; width: 90px; font-size: 20px; color: #888; padding-top: 18px; text-align: right; }
+  .g-then .chip, .g-join .chip { background: #d0ebff; }
+  .g-start .chip { background: #e5dbff; } .g-feel .chip { background: #ffe8cc; } .g-end .chip { background: #ffd8a8; font-weight: bold; }
+
+  /* Overlays */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; z-index: 50; }
+  .overlay.on { display: flex; }
+  .sheet { background: #fff8ec; border-radius: 28px; padding: 20px; width: min(1100px, 96vw); max-height: 94vh; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; align-items: center; }
+  .line { width: 100%; min-height: 90px; background: #fff; border-radius: 18px; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border: 3px dashed #ced4da; }
+  .check { display: flex; gap: 14px; font-size: 22px; flex-wrap: wrap; justify-content: center; }
+  .check span { background: #fff; border-radius: 14px; padding: 6px 12px; opacity: .45; }
+  .check span.ok { opacity: 1; background: #d3f9d8; }
+  textarea, input[type=text], select { font: 28px system-ui, sans-serif; border-radius: 14px; border: 2px solid #ced4da; padding: 10px 14px; width: 100%; user-select: text; -webkit-user-select: text; }
+  #stampBox { flex-direction: column; color: #fff; text-align: center; }
+  .stamp { width: 300px; height: 300px; border-radius: 50%; border: 12px dashed #fff; display: grid; place-items: center; font-size: 150px; animation: thump .6s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes thump { from { transform: scale(2.5) rotate(-30deg); opacity: 0; } to { transform: none; opacity: 1; } }
+  #stampBox h2 { font-size: 44px; margin: 20px 0 8px; } #stampBox p { font-size: 30px; margin: 0 0 20px; }
+  #cropCanvas { touch-action: none; max-width: 100%; background: #222; border-radius: 12px; }
+
+  /* Travel Book */
+  .entry { background: #fff; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,.08); padding: 18px 22px; width: 100%; max-width: 1000px; display: flex; flex-direction: column; gap: 10px; }
+  .entry h3 { margin: 0; font-size: 28px; display: flex; gap: 12px; align-items: center; }
+  .entry .bigtext { box-shadow: none; padding: 0; font-size: 34px; }
+  .entry img { max-height: 320px; max-width: 100%; border-radius: 12px; }
+  .entry .stampmark { margin-left: auto; font-size: 40px; }
+
+  /* Letter Lab */
+  #trace, #wordtrace { padding: 0; overflow: hidden; }
+  .tbar { position: absolute; top: 12px; left: 108px; right: 12px; display: flex; align-items: center; gap: 14px; z-index: 5; }
+  .tbar .letter { font: bold 56px system-ui, sans-serif; width: 80px; text-align: center; }
+  .dots { display: flex; gap: 8px; flex: 1; }
+  .dots i { width: 26px; height: 26px; border-radius: 50%; background: #e9ecef; }
+  .dots i.done { background: #51cf66; } .dots i.on { background: #3d8bfd; }
+  .tcanvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+  .praise { position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%); font-size: 140px; pointer-events: none; display: none; z-index: 6; }
+  .praise.on { display: block; animation: thump .6s; }
+  .fam { min-width: 260px; }
+  .fam .letters { display: block; font: 44px system-ui, sans-serif; letter-spacing: 6px; }
+  .lgrid { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .lgrid button { width: 110px; height: 110px; border-radius: 24px; border: none; background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,.12); font: 64px system-ui, sans-serif; position: relative; }
+  .lgrid button i { position: absolute; top: 4px; right: 8px; font-size: 22px; font-style: normal; }
+
+  /* Grown-ups */
+  #parent { background: #f1f3f5; font-family: system-ui, sans-serif; user-select: text; }
+  #parent .head h1 { font-family: system-ui, sans-serif; font-size: 30px; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 6px 0 14px; }
+  .tabs button { border: none; border-radius: 14px; padding: 12px 18px; font-size: 20px; background: #fff; }
+  .tabs button.on { background: #3d8bfd; color: #fff; }
+  .pbox { background: #fff; border-radius: 18px; padding: 16px 20px; width: 100%; max-width: 1000px; margin-bottom: 14px; font-size: 19px; }
+  .pbox h2 { margin: 0 0 10px; font-size: 22px; }
+  .pbox table { border-collapse: collapse; width: 100%; }
+  .pbox td, .pbox th { padding: 6px 8px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
+  .pbtn { border: none; border-radius: 12px; padding: 10px 16px; font-size: 18px; background: #e7f5ff; margin: 3px; min-height: 48px; }
+  .pbtn.on { background: #3d8bfd; color: #fff; }
+  .pbtn.warn { background: #ffe3e3; }
+  .pnote { color: #666; font-size: 16px; margin: 6px 0; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 14px 24px; border-radius: 16px; font: 20px system-ui, sans-serif; z-index: 60; display: none; max-width: 90vw; }
+  .toast.on { display: block; }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<section id="home" class="screen active">
+  <div class="head"><h1>🎒 Travel School</h1><button class="round" data-replay>🔊</button></div>
+  <div class="passport" id="passport"></div>
+  <div class="row">
+    <button class="big c1" data-go="recount" data-label="My Day"><span class="emoji">🎤</span>My Day</button>
+    <button class="big c4" data-go="letters" data-label="Letters"><span class="emoji">✍️</span>Letters</button>
+    <button class="big c2" data-go="book" data-label="My Travel Book"><span class="emoji">📖</span>My Book</button>
+  </div>
+  <button class="gear" id="gear"><span class="fill"></span>⚙️</button>
+</section>
+
+<!-- MY DAY (recount): talk it → best sentence → paper → snap it -->
+<section id="recount" class="screen">
+  <div class="head">
+    <button class="round" data-go="home">⬅️</button>
+    <div class="steps" id="steps">
+      <button class="step" data-step="talk">🎤</button><button class="step" data-step="pick">⭐</button>
+      <button class="step" data-step="write">✏️</button><button class="step" data-step="snap">📷</button>
+    </div>
+    <span style="flex:1"></span><button class="round" data-replay>🔊</button>
+  </div>
+  <div class="banner" id="variantBanner" hidden></div>
+
+  <div class="panel" data-panel="talk">
+    <div class="cards" id="promptCards"></div>
+    <button class="big c3" data-next="pick">Next ▶️</button>
+  </div>
+
+  <div class="panel" data-panel="pick">
+    <div class="cards" id="clipCards"></div>
+    <div id="pickArea" style="width:100%;display:flex;flex-direction:column;gap:14px;align-items:center"></div>
+    <button class="big c3" data-next="write">Next ▶️</button>
+  </div>
+
+  <div class="panel" data-panel="write">
+    <div class="goal" id="goal"></div>
+    <div class="bigtext readable" id="writeText"></div>
+    <div class="row">
+      <button class="round" id="readWrite">🔊</button>
+    </div>
+    <div class="goal"><span>📓 ✏️ 🖍️</span><span>Capital letter</span><span>Finger spaces</span><span>Full stop</span></div>
+    <button class="big c2" data-next="snap"><span class="emoji">✅</span>I did it!</button>
+  </div>
+
+  <div class="panel" data-panel="snap">
+    <button class="big c5" id="snapBtn"><span class="emoji">📷</span>Snap my page</button>
+    <div class="thumbs" id="snapThumbs"></div>
+    <div class="row" id="doneRow" hidden>
+      <button class="big small c6" id="postedBtn" hidden>📮 I posted it!</button>
+      <button class="big small c2" data-go="book">📖 My Book</button>
+      <button class="big small c1" data-go="home">🏠 Home</button>
+    </div>
+  </div>
+</section>
+
+<!-- TRAVEL BOOK -->
+<section id="book" class="screen">
+  <div class="head"><button class="round" data-go="home">⬅️</button><h1>📖 My Travel Book</h1></div>
+  <div id="bookList" style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center"></div>
+</section>
+
+<!-- LETTER LAB: families -->
+<section id="letters" class="screen">
+  <div class="head"><button class="round" data-go="home">⬅️</button><h1>✍️ Letters</h1><button class="round" data-replay>🔊</button></div>
+  <button class="big c4" id="todayLetters"><span class="emoji">⭐</span><span id="todayLabel">Today</span></button>
+  <div class="row" id="families"></div>
+  <div class="lgrid" id="letterGrid"></div>
+</section>
+
+<!-- LETTER LAB: trace one letter -->
+<section id="trace" class="screen">
+  <canvas class="tcanvas" id="traceCanvas"></canvas>
+  <div class="tbar">
+    <button class="round" id="traceBack">⬅️</button>
+    <span class="letter" id="traceLetter"></span>
+    <div class="dots" id="traceDots"></div>
+    <button class="round" id="traceWatch">👀</button>
+    <button class="round" id="traceClear">🧽</button>
+    <button class="round" id="traceSkip">⏭️</button>
+  </div>
+  <div class="praise" id="praise">⭐</div>
+</section>
+
+<!-- LETTER LAB: now on paper -->
+<section id="paper" class="screen">
+  <div class="head"><button class="round" data-go="letters">⬅️</button><h1>📓 Now on paper!</h1><button class="round" data-replay>🔊</button></div>
+  <div class="bigtext" id="paperLetters" style="text-align:center;font-size:90px;letter-spacing:30px"></div>
+  <div class="goal"><span>1️⃣ A row of each letter</span><span>2️⃣ ⭕ Circle your best one</span><span>3️⃣ 📷 Snap it</span></div>
+  <button class="big c5" id="paperSnap"><span class="emoji">📷</span>Snap my page</button>
+  <div class="thumbs" id="paperThumbs"></div>
+</section>
+
+<!-- GROWN-UPS (hold ⚙️ for 3 s) -->
+<section id="parent" class="screen">
+  <div class="head"><button class="round" data-go="home">⬅️</button><h1>Grown-ups</h1></div>
+  <div class="tabs" id="ptabs">
+    <button data-tab="today" class="on">Today</button><button data-tab="progress">Progress</button><button data-tab="letters">Letters</button>
+    <button data-tab="words">Words</button><button data-tab="voices">Voices</button><button data-tab="export">Export &amp; print</button>
+  </div>
+  <div id="pbody" style="width:100%;display:flex;flex-direction:column;align-items:center"></div>
+</section>
+
+<!-- Word builder -->
+<div class="overlay" id="builder"><div class="sheet">
+  <div style="display:flex;gap:12px;width:100%;align-items:center">
+    <div class="line" id="bLine"></div>
+    <div style="display:flex;flex-direction:column;gap:8px"><button class="round" id="bRead">🔊</button><button class="round" id="bUndo">⌫</button></div>
+  </div>
+  <div class="check" id="bCheck"></div>
+  <div id="bGroups" style="width:100%;display:flex;flex-direction:column;gap:10px"></div>
+  <div class="row"><button class="big small c4" id="bType">⌨️ Type a word</button><button class="big small c3" id="bDone">✅ Done</button></div>
+</div></div>
+
+<!-- Typing box (grown-up types, or Orlando types a word) -->
+<div class="overlay" id="typeBox"><div class="sheet">
+  <h2 id="typeTitle" style="margin:0;font-size:30px"></h2>
+  <textarea id="typeText" rows="3"></textarea>
+  <div class="row"><button class="big small c5" id="typeCancel">✖️</button><button class="big small c3" id="typeOk">✅ OK</button></div>
+</div></div>
+
+<!-- Crop a photo of a paper page -->
+<div class="overlay" id="crop"><div class="sheet">
+  <canvas id="cropCanvas"></canvas>
+  <div class="row"><button class="big small c4" id="cropRotate">🔄</button><button class="big small c5" id="cropAgain">📷 Again</button><button class="big small c3" id="cropOk">✅ Keep it</button></div>
+</div></div>
+
+<!-- Stamp celebration -->
+<div class="overlay" id="stampBox">
+  <div class="stamp" id="stampFlag"></div>
+  <h2 id="stampTitle"></h2><p id="stampSub"></p>
+  <button class="big c3" id="stampOk">🎉 Yay!</button>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="camera" accept="image/*" capture="environment" hidden>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const el = (tag, props = {}, kids = []) => { const e = Object.assign(document.createElement(tag), props); for (const k of [].concat(kids)) if (k != null) e.append(k); return e; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+function toast(msg, ms = 2500) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), ms); }
+
+/* ============ STORAGE ============ */
+// Small settings and progress in localStorage; recordings, photos and journal entries in IndexedDB
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+const S = Object.assign({ location: '', variant: {}, unlock: 10, unlocked: {}, extraWords: [], letters: {}, stamps: [] }, store.get('travel-school', {}));
+const save = () => store.set('travel-school', S);
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+let dbp;
+function db() {
+  return dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('travel-school', 1);
+    r.onupgradeneeded = () => { const d = r.result; for (const [n, k] of [['entries', 'id'], ['blobs', 'id'], ['voices', 'key'], ['snaps', 'id']]) d.createObjectStore(n, { keyPath: k }); };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+}
+async function tx(name, mode, fn) {
+  const d = await db();
+  return new Promise((res, rej) => {
+    const t = d.transaction(name, mode); let out;
+    const r = fn(t.objectStore(name)); if (r) r.onsuccess = () => { out = r.result; };
+    t.oncomplete = () => res(out); t.onerror = () => rej(t.error);
+  });
+}
+const idbPut = (n, v) => tx(n, 'readwrite', s => s.put(v));
+const idbGet = (n, k) => tx(n, 'readonly', s => s.get(k));
+const idbAll = n => tx(n, 'readonly', s => s.getAll());
+const idbDel = (n, k) => tx(n, 'readwrite', s => s.delete(k));
+async function putBlob(blob) { const id = uid(); await idbPut('blobs', { id, blob }); return id; }
+async function getBlob(id) { const r = id && await idbGet('blobs', id); return r ? r.blob : null; }
+const urls = {};
+async function blobUrl(id) { if (urls[id]) return urls[id]; const b = await getBlob(id); return b ? (urls[id] = URL.createObjectURL(b)) : ''; }
+
+/* ============ CONTENT + DATES ============ */
+let TRIP, WORDS, LETTERS;
+function dayKey(d = new Date()) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+const today = () => dayKey();
+function tripWeek() { // week 1–4 of the trip; scaffolds fade and goals grow with it
+  const n = Math.floor((Date.parse(today()) - Date.parse(TRIP.start)) / (7 * 864e5)) + 1;
+  return Math.max(1, Math.min(4, n));
+}
+function leg(d = today()) { return TRIP.legs.find(l => d >= l.from && d <= l.to); }
+function here() { return S.location || (leg() || {}).country || 'AU'; }
+const C = code => TRIP.countries[code] || TRIP.countries.AU;
+function niceDate(d) { return new Date(d + 'T12:00').toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' }); }
+
+/* ============ SPEECH: grown-up recording, else the device voice ============ */
+// Android's WebView has no speechSynthesis. In the tablet app the games page around this frame has a stand-in, so borrow it.
+const speechWin = 'speechSynthesis' in window ? window : (parent !== window && parent.speechSynthesis ? parent : null);
+let voice = null;
+function pickVoice() {
+  const vs = speechWin && speechWin.speechSynthesis.getVoices ? speechWin.speechSynthesis.getVoices() : [];
+  voice = vs.find(v => /en[-_]AU/i.test(v.lang)) || vs.find(v => /en[-_]GB/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang)) || null;
+}
+if (speechWin && speechWin.speechSynthesis.addEventListener) { pickVoice(); speechWin.speechSynthesis.addEventListener('voiceschanged', pickVoice); }
+const voiceKey = t => t.toLowerCase().replace(/[^a-z0-9' ]/g, '').replace(/\s+/g, ' ').trim();
+let voices = {}; // voiceKey → blob, recorded by Mum or Dad in Grown-ups → Voices
+async function loadVoices() { voices = {}; for (const v of await idbAll('voices')) voices[v.key] = v.blob; }
+let sayToken = 0, playing = null;
+function stopTalking() {
+  sayToken++;
+  if (playing) { playing.pause(); playing = null; }
+  if (speechWin) speechWin.speechSynthesis.cancel();
+}
+function playBlob(blob) {
+  return new Promise(done => {
+    const a = new Audio(URL.createObjectURL(blob)); playing = a;
+    a.onended = a.onerror = () => { URL.revokeObjectURL(a.src); done(); };
+    a.play().catch(done);
+  });
+}
+// say(text, onWord): resolves when finished. onWord(charIndex) highlights words where the voice supports it.
+function say(text, onWord) {
+  stopTalking();
+  const token = sayToken, rec = voices[voiceKey(text)];
+  if (rec) return playBlob(rec);
+  if (!speechWin) return Promise.resolve();
+  return new Promise(done => {
+    const U = speechWin.SpeechSynthesisUtterance, u = new U(text);
+    u.rate = 0.9; u.pitch = 1.05; u.lang = 'en-AU'; if (voice) u.voice = voice;
+    u.onboundary = e => { if (token === sayToken && onWord) onWord(e.charIndex); };
+    u.onend = u.onerror = () => done();
+    speechWin.speechSynthesis.speak(u);
+    setTimeout(done, 1500 + text.length * 120); // never hang if the engine forgets to call back
+  });
+}
+// Wrap an element's text in tappable words; readAloud() highlights each as it's spoken
+function makeReadable(box, text) {
+  box.innerHTML = ''; let i = 0;
+  for (const part of text.split(/(\s+)/)) {
+    if (/^\s+$/.test(part) || !part) { box.append(part); i += part.length; continue; }
+    const w = el('span', { className: 'w', textContent: part }); w.dataset.i = i;
+    box.append(w); i += part.length;
+  }
+  box.dataset.text = text;
+}
+function readAloud(box) {
+  const ws = [...box.querySelectorAll('.w')];
+  const off = () => ws.forEach(w => w.classList.remove('on'));
+  return say(box.dataset.text || box.textContent, ci => {
+    off(); const w = ws.filter(w => +w.dataset.i <= ci).pop(); if (w) w.classList.add('on');
+  }).then(off);
+}
+document.addEventListener('click', e => {
+  const w = e.target.closest('.readable .w');
+  if (w) say(w.textContent.replace(/[^\w']/g, ''));
+});
+
+/* ============ RECORDING ============ */
+let recorder = null;
+async function startRecording() {
+  stopTalking();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || '';
+  const r = new MediaRecorder(stream, mime ? { mimeType: mime } : {}), chunks = [];
+  r.ondataavailable = e => e.data.size && chunks.push(e.data);
+  r.done = new Promise(res => { r.onstop = () => { stream.getTracks().forEach(t => t.stop()); res(new Blob(chunks, { type: r.mimeType || 'audio/webm' })); }; });
+  r.start(); recorder = r;
+  return r;
+}
+// A mic button: tap to start, tap to stop. onBlob(blob) gets the recording.
+function micButton(onBlob) {
+  const b = el('button', { className: 'rec', textContent: '🎙️' });
+  b.onclick = async e => {
+    e.stopPropagation();
+    if (recorder && recorder.state === 'recording') {
+      const r = recorder; recorder = null; r.stop(); b.classList.remove('live'); b.textContent = '🎙️';
+      onBlob(await r.done); return;
+    }
+    try { await startRecording(); b.classList.add('live'); b.textContent = '⏹️'; }
+    catch (err) { toast('🎙️ The microphone is off. A grown-up can allow it in Settings → Apps → Orlando → Permissions.', 5000); }
+  };
+  return b;
+}
+
+/* ============ NATIVE: save to Downloads, print (Android print also saves PDFs) ============ */
+const Cap = window.Capacitor || (parent !== window ? parent.Capacitor : null);
+const hasFiles = !!(Cap && Cap.PluginHeaders && Cap.PluginHeaders.some(h => h.name === 'Files'));
+function blobToB64(blob) { return new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result.split(',')[1]); f.readAsDataURL(blob); }); }
+function blobToDataUrl(blob) { return new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(blob); }); }
+async function saveFile(name, content, mime) {
+  const blob = content instanceof Blob ? content : new Blob([content], { type: mime });
+  if (!hasFiles) {
+    const a = el('a', { href: URL.createObjectURL(blob), download: name }); document.body.append(a); a.click(); a.remove();
+    return 'Downloads';
+  }
+  const b64 = await blobToB64(blob), CH = 1 << 20; // the bridge is happier with ~1 MB pieces
+  let r = await Cap.nativePromise('Files', 'save', { name, mime, data: b64.slice(0, CH) });
+  for (let i = CH; i < b64.length; i += CH) await Cap.nativePromise('Files', 'save', { uri: r.uri, data: b64.slice(i, i + CH), append: true });
+  return r.path;
+}
+async function printHtml(html, name) {
+  if (hasFiles) return Cap.nativePromise('Files', 'print', { html, name });
+  const w = window.open('', '_blank'); if (!w) return toast('Allow pop-ups to print');
+  w.document.write(html); w.document.close(); setTimeout(() => w.print(), 600);
+}
+
+/* ============ PHOTOS of paper pages: camera → crop → saved ============ */
+const camera = $('#camera');
+function snapPhoto() {
+  return new Promise(resolve => {
+    camera.value = '';
+    camera.onchange = async () => {
+      const f = camera.files[0]; if (!f) return resolve(null);
+      resolve(await cropPhoto(f));
+    };
+    camera.click();
+  });
+}
+function loadImage(blob) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(blob); }); }
+// Simple manual crop: drag the four corners, rotate in 90° steps. Saves a JPEG up to 1600 px.
+async function cropPhoto(file) {
+  let img = await loadImage(file), rot = 0;
+  const cv = $('#cropCanvas'), ov = $('#crop'), ctx = cv.getContext('2d');
+  let box, drag = -1, scale = 1;
+  const src = () => { // the photo, rotated, as a canvas
+    const c = document.createElement('canvas'), q = rot % 2;
+    c.width = q ? img.height : img.width; c.height = q ? img.width : img.height;
+    const x = c.getContext('2d'); x.translate(c.width / 2, c.height / 2); x.rotate(rot * Math.PI / 2); x.drawImage(img, -img.width / 2, -img.height / 2);
+    return c;
+  };
+  let base;
+  const layout = () => {
+    base = src();
+    const maxW = Math.min(1000, innerWidth * .9), maxH = innerHeight * .68;
+    scale = Math.min(maxW / base.width, maxH / base.height);
+    cv.width = base.width * scale; cv.height = base.height * scale;
+    const m = .04; box = [cv.width * m, cv.height * m, cv.width * (1 - m), cv.height * (1 - m)];
+    draw();
+  };
+  const draw = () => {
+    ctx.drawImage(base, 0, 0, cv.width, cv.height);
+    ctx.fillStyle = 'rgba(0,0,0,.5)'; const [x1, y1, x2, y2] = box;
+    ctx.fillRect(0, 0, cv.width, y1); ctx.fillRect(0, y2, cv.width, cv.height - y2); ctx.fillRect(0, y1, x1, y2 - y1); ctx.fillRect(x2, y1, cv.width - x2, y2 - y1);
+    ctx.strokeStyle = '#ffd43b'; ctx.lineWidth = 4; ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+    ctx.fillStyle = '#ffd43b'; for (const [x, y] of corners()) { ctx.beginPath(); ctx.arc(x, y, 18, 0, 7); ctx.fill(); }
+  };
+  const corners = () => [[box[0], box[1]], [box[2], box[1]], [box[0], box[3]], [box[2], box[3]]];
+  const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+  cv.onpointerdown = e => { const [x, y] = pos(e); drag = corners().findIndex(([cx, cy]) => Math.hypot(cx - x, cy - y) < 60); if (drag >= 0) cv.setPointerCapture(e.pointerId); };
+  cv.onpointermove = e => {
+    if (drag < 0) return; const [x, y] = pos(e);
+    if (drag % 2 === 0) box[0] = Math.min(x, box[2] - 60); else box[2] = Math.max(x, box[0] + 60);
+    if (drag < 2) box[1] = Math.min(y, box[3] - 60); else box[3] = Math.max(y, box[1] + 60);
+    box = box.map((v, i) => Math.max(0, Math.min(v, i % 2 ? cv.height : cv.width))); draw();
+  };
+  cv.onpointerup = () => { drag = -1; };
+  layout(); ov.classList.add('on');
+  return new Promise(resolve => {
+    $('#cropRotate').onclick = () => { rot = (rot + 1) % 4; layout(); };
+    $('#cropAgain').onclick = () => { ov.classList.remove('on'); URL.revokeObjectURL(img.src); resolve(snapPhoto()); };
+    $('#cropOk').onclick = () => {
+      const [x1, y1, x2, y2] = box.map(v => v / scale), w = x2 - x1, h = y2 - y1, k = Math.min(1, 1600 / Math.max(w, h));
+      const out = document.createElement('canvas'); out.width = w * k; out.height = h * k;
+      out.getContext('2d').drawImage(base, x1, y1, w, h, 0, 0, out.width, out.height);
+      ov.classList.remove('on'); URL.revokeObjectURL(img.src);
+      out.toBlob(resolve, 'image/jpeg', .85);
+    };
+  });
+}
+
+/* ============ STAMPS (country passport) ============ */
+const ROUTE = ['SG', 'NL', 'UK', 'FR', 'CH', 'AU'];
+function renderPassport() {
+  const box = $('#passport'); box.innerHTML = '';
+  for (const code of ROUTE) {
+    const n = S.stamps.filter(s => s.c === code).length, c = C(code);
+    box.append(el('div', { className: 'pp' + (code === here() ? ' here' : ''), innerHTML: `<span class="flag">${c.flag}</span><b style="background:${c.colour}">${n}</b>` }));
+  }
+}
+// One stamp per thing (ref), in the country we're in today. A recount stamp can also unlock extra game time.
+function award(ref, kind) {
+  if (S.stamps.some(s => s.ref === ref)) return Promise.resolve(false);
+  const code = here(), c = C(code);
+  S.stamps.push({ ref, kind, c: code, date: today() });
+  let sub = kind === 'postcard' ? 'Postcard from ' + (c.short || c.name) + '!' : kind === 'letters' ? 'Letter Lab stamp!' : 'Travel Book stamp!';
+  if (kind !== 'letters' && S.unlock && !S.unlocked[today()] && parent !== window) {
+    S.unlocked[today()] = true;
+    parent.postMessage({ type: 'travel-school-unlock', minutes: S.unlock }, '*');
+    sub += ` 🎮 +${S.unlock} min games unlocked!`;
+  }
+  save();
+  $('#stampFlag').textContent = c.flag; $('#stampFlag').style.background = c.colour;
+  $('#stampTitle').textContent = 'A ' + (c.short || c.name) + ' stamp!'; $('#stampSub').textContent = sub;
+  $('#stampBox').classList.add('on');
+  say(`Wow! You earned a ${c.short || c.name} stamp! ${sub.replace(/[^\w !'+]/gu, '')}`);
+  return new Promise(r => { $('#stampOk').onclick = () => { $('#stampBox').classList.remove('on'); stopTalking(); r(true); }; });
+}
+
+/* ============ NAVIGATION ============ */
+const onEnter = {}, intro = {};
+let current = 'home';
+function go(id) {
+  stopTalking();
+  if (recorder && recorder.state === 'recording') recorder.stop();
+  $$('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  current = id;
+  (onEnter[id] || (() => {}))();
+  if (intro[id]) setTimeout(() => current === id && say(typeof intro[id] === 'function' ? intro[id]() : intro[id]), 250);
+}
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-go]'); if (g) { if (g.dataset.label && current === 'home') say(g.dataset.label); go(g.dataset.go); return; }
+  if (e.target.closest('[data-replay]') && intro[current]) say(typeof intro[current] === 'function' ? intro[current]() : intro[current]);
+});
+
+// Grown-ups: hold ⚙️ for 3 seconds (not a maths question: he'd solve it)
+(function holdGate() {
+  const g = $('#gear'), fill = g.querySelector('.fill'); let t0 = 0, raf = 0;
+  const stop = () => { cancelAnimationFrame(raf); fill.style.height = '0'; t0 = 0; };
+  g.addEventListener('pointerdown', e => {
+    e.preventDefault(); t0 = performance.now();
+    const tick = () => { const p = (performance.now() - t0) / 3000; fill.style.height = Math.min(100, p * 100) + '%'; if (p >= 1) { stop(); go('parent'); } else raf = requestAnimationFrame(tick); };
+    raf = requestAnimationFrame(tick);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => g.addEventListener(ev, stop));
+})();
+
+/* ============ HOME ============ */
+intro.home = () => `Hi Orlando! We're in ${C(here()).short || C(here()).name}. What shall we do?`;
+onEnter.home = renderPassport;
+
+/* ============ MY DAY: recount ============ */
+const VARIANTS = {
+  normal: { icon: '✏️', name: 'Write day' },
+  shared: { icon: '🤝', name: 'Shared writing day' },
+  postcard: { icon: '💌', name: 'Postcard day' },
+  labels: { icon: '🏷️', name: 'Draw and label day' },
+};
+let entry = null, stepNow = 'talk';
+async function todayEntry() {
+  const id = today();
+  let e = await idbGet('entries', id);
+  if (!e) e = { id, date: id, country: here(), clips: {}, best: '', parts: { main: '', first: '', middle: '', last: '', to: '', labels: [] }, photos: [], paperOverride: false, posted: false };
+  e.variant = S.variant[id] || e.variant || 'normal';
+  return e;
+}
+const saveEntry = () => idbPut('entries', entry);
+function goalText() { return { 1: '1 sentence', 2: '1 sentence', 3: '1 or 2 sentences', 4: '2 or 3 sentences' }[tripWeek()]; }
+onEnter.recount = async () => {
+  entry = await todayEntry();
+  const v = VARIANTS[entry.variant];
+  $('#variantBanner').hidden = entry.variant === 'normal';
+  $('#variantBanner').textContent = v.icon + ' ' + v.name;
+  const done = entry.photos.length || entry.paperOverride;
+  showStep(done ? 'snap' : entry.parts.main || entry.parts.first || entry.parts.labels.length ? 'write' : Object.keys(entry.clips).length ? 'pick' : 'talk', true);
+};
+const stepSay = {
+  talk: () => entry.variant === 'postcard' ? "Postcard day! Let's think about what to tell them. Tap a picture to hear the question, then tap the microphone and talk." : 'Tell me about your day! Tap a picture to hear the question. Then tap the microphone and talk.',
+  pick: () => entry.variant === 'labels' ? 'Pick some words to label your drawing.' : entry.variant === 'shared' ? "Let's plan. You choose the first and last sentences. A grown-up writes the middle." : 'Listen to your recordings. Which bit is the best? Tap the star. Then make your sentence.',
+  write: () => entry.variant === 'labels' ? 'Now draw your day in your book, and write these labels.' : entry.variant === 'postcard' ? 'Now write your postcard! Take your time.' : 'Now write it in your book, and draw a picture. Capital letter, finger spaces, full stop!',
+  snap: () => entry.photos.length || entry.paperOverride ? 'Your page is in your Travel Book!' : 'Take a photo of your page. Tap the camera!',
+};
+intro.recount = () => stepSay[stepNow]();
+function showStep(s, quiet) {
+  stepNow = s;
+  const order = ['talk', 'pick', 'write', 'snap'], at = order.indexOf(s);
+  $$('#steps .step').forEach((b, i) => { b.classList.toggle('on', i === at); b.classList.toggle('done', i < at); });
+  $$('#recount .panel').forEach(p => p.classList.toggle('on', p.dataset.panel === s));
+  ({ talk: renderTalk, pick: renderPick, write: renderWrite, snap: renderSnap })[s]();
+  if (!quiet) say(stepSay[s]());
+}
+$('#steps').addEventListener('click', e => { const b = e.target.closest('[data-step]'); if (b) showStep(b.dataset.step); });
+$$('[data-next]').forEach(b => b.onclick = () => showStep(b.dataset.next));
+
+function renderTalk() {
+  const box = $('#promptCards'); box.innerHTML = '';
+  for (const p of WORDS.prompts) {
+    const card = el('div', { className: 'card' + (entry.clips[p.key] ? ' got' : '') });
+    const icon = el('button', { className: 'icon', textContent: p.icon }); icon.onclick = () => say(p.say);
+    const mini = el('div', { className: 'mini' });
+    mini.append(micButton(async blob => { entry.clips[p.key] = await putBlob(blob); await saveEntry(); renderTalk(); say('Got it!'); }));
+    if (entry.clips[p.key]) { const pl = el('button', { textContent: '▶️' }); pl.onclick = async () => playBlob(await getBlob(entry.clips[p.key])); mini.append(pl); }
+    card.append(icon, el('div', { className: 'word', textContent: p.word }), mini);
+    box.append(card);
+  }
+}
+
+function renderPick() {
+  const box = $('#clipCards'); box.innerHTML = '';
+  for (const p of WORDS.prompts) {
+    if (!entry.clips[p.key]) continue;
+    const card = el('div', { className: 'card' + (entry.best === p.key ? ' best' : '') });
+    const pl = el('button', { className: 'icon', textContent: p.icon }); pl.onclick = async () => playBlob(await getBlob(entry.clips[p.key]));
+    const star = el('button', { textContent: entry.best === p.key ? '⭐' : '☆' });
+    star.onclick = async () => { entry.best = p.key; await saveEntry(); renderPick(); say('That one is the best!'); };
+    const play = el('button', { textContent: '▶️' }); play.onclick = pl.onclick;
+    card.append(pl, el('div', { className: 'mini' }, [play, star])); box.append(card);
+  }
+  const area = $('#pickArea'); area.innerHTML = '';
+  const v = entry.variant;
+  if (v === 'labels') return renderLabelPicker(area);
+  if (v === 'postcard') {
+    const to = el('div', { className: 'chips' });
+    for (const name of WORDS.postcardTo) {
+      const b = el('button', { className: 'chip' + (entry.parts.to === name ? ' sel' : ''), textContent: '💌 ' + name });
+      b.onclick = async () => { entry.parts.to = name; await saveEntry(); renderPick(); say('Dear ' + name); }; to.append(b);
+    }
+    const other = el('button', { className: 'chip', textContent: '⌨️' });
+    other.onclick = async () => { const t = await typeIt('Who is the postcard to?', entry.parts.to); if (t != null) { entry.parts.to = t; await saveEntry(); renderPick(); } };
+    to.append(other); area.append(to);
+  }
+  if (v === 'shared') {
+    area.append(slot('first', '✏️', 'My first sentence'), slot('middle', '🧑', 'Grown-up writes the middle', true), slot('last', '✏️', 'My last sentence'));
+  } else area.append(slot('main', '✏️', v === 'postcard' ? 'What I want to tell them' : 'My best sentence'));
+}
+// A sentence slot: Orlando builds it with word tiles, or a grown-up types it as a model to copy
+function slot(key, who, title, grownUp) {
+  const s = el('div', { className: 'slot' + (grownUp ? ' grown' : '') });
+  const text = el('div', { className: 'text readable' }); makeReadable(text, entry.parts[key]);
+  const btns = el('div', { className: 'mini' });
+  const hear = el('button', { textContent: '🔊' }); hear.onclick = () => entry.parts[key] ? readAloud(text) : say(title);
+  if (!grownUp) { const b = el('button', { textContent: '🧩' }); b.onclick = async () => { const t = await buildSentence(entry.parts[key]); if (t != null) { entry.parts[key] = t; await saveEntry(); renderPick(); } }; btns.append(b); }
+  const k = el('button', { textContent: '⌨️' }); k.onclick = async () => { const t = await typeIt(grownUp ? 'Grown-up: type what Orlando says' : 'Grown-up: type the sentence for Orlando to copy', entry.parts[key]); if (t != null) { entry.parts[key] = t; await saveEntry(); renderPick(); } };
+  btns.append(hear, k);
+  s.append(el('span', { className: 'who', textContent: who }), text, btns);
+  return s;
+}
+function renderLabelPicker(area) {
+  const sel = entry.parts.labels;
+  area.append(el('div', { className: 'banner', textContent: `🏷️ ${sel.length} / 5` }));
+  const chips = el('div', { className: 'chips' });
+  const words = [...wordsIn('trip'), ...wordsIn('sounds'), ...sel.filter(w => !wordsIn('trip').includes(w) && !wordsIn('sounds').includes(w))];
+  for (const w of words) {
+    const b = el('button', { className: 'chip' + (sel.includes(w) ? ' sel' : ''), textContent: w });
+    b.onclick = async () => {
+      if (sel.includes(w)) sel.splice(sel.indexOf(w), 1); else if (sel.length < 5) sel.push(w); else return say('Five labels is plenty!');
+      say(w); await saveEntry(); renderPick();
+    };
+    chips.append(b);
+  }
+  const add = el('button', { className: 'chip', textContent: '⌨️' });
+  add.onclick = async () => { const t = await typeIt('Type a label word'); if (t && sel.length < 5) { sel.push(t.trim()); await saveEntry(); renderPick(); } };
+  chips.append(add); area.append(chips);
+}
+
+function writeHtml(e) { // the text Orlando copies onto paper (also used in the Travel Book)
+  const p = e.parts;
+  if (e.variant === 'labels') return p.labels.map(esc).join(' · ');
+  if (e.variant === 'shared') return [p.first && `<span class="mine">${esc(p.first)}</span>`, p.middle && `<span class="theirs">${esc(p.middle)}</span>`, p.last && `<span class="mine">${esc(p.last)}</span>`].filter(Boolean).join(' ');
+  if (e.variant === 'postcard') return (p.to ? `Dear ${esc(p.to)},<br>` : '') + esc(p.main) + '<br>From Orlando';
+  return esc(p.main);
+}
+function plainText(e) { const d = el('div', { innerHTML: writeHtml(e).replace(/<br>/g, ' ') }); return d.textContent; }
+function renderWrite() {
+  const goal = $('#goal'), v = entry.variant;
+  goal.innerHTML = v === 'labels' ? '<span>🖍️ Draw your day</span><span>🏷️ Write the labels</span>'
+    : v === 'shared' ? '<span class="mine">✏️ You write the blue sentences</span><span>🧑 Grown-up writes the green</span>'
+    : v === 'postcard' ? '<span>💌 Write your postcard</span><span>🖍️ Draw a picture</span>'
+    : `<span>🎯 Today: ${goalText()}</span><span>🖍️ + a drawing</span>`;
+  const box = $('#writeText');
+  if (v === 'normal') makeReadable(box, entry.parts.main); else box.innerHTML = writeHtml(entry);
+  box.dataset.text = plainText(entry);
+  if (!box.dataset.text.trim()) box.innerHTML = '<span style="color:#aaa">⭐ ⬅️</span>';
+}
+$('#readWrite').onclick = () => { const b = $('#writeText'); b.querySelector('.w') ? readAloud(b) : say(b.dataset.text || ''); };
+
+async function renderSnap() {
+  const th = $('#snapThumbs'); th.innerHTML = '';
+  for (const id of entry.photos) th.append(el('img', { src: await blobUrl(id) }));
+  const done = entry.photos.length > 0 || entry.paperOverride;
+  $('#doneRow').hidden = !done;
+  $('#snapBtn').querySelector('.emoji').textContent = done ? '➕' : '📷';
+  $('#postedBtn').hidden = entry.variant !== 'postcard';
+  $('#postedBtn').textContent = entry.posted ? '📮 Posted ✅' : '📮 I posted it!';
+}
+$('#snapBtn').onclick = async () => {
+  const blob = await snapPhoto(); if (!blob) return;
+  entry.photos.push(await putBlob(blob)); entry.country = entry.country || here(); await saveEntry();
+  await renderSnap();
+  await award('recount-' + entry.id, 'recount');
+  say(stepSay.snap());
+};
+$('#postedBtn').onclick = async () => {
+  entry.posted = !entry.posted; await saveEntry(); renderSnap();
+  if (entry.posted) award('postcard-' + entry.id, 'postcard');
+};
+
+/* Word tile builder */
+function wordsIn(key) {
+  const g = WORDS.groups.find(g => g.key === key) || { words: [] };
+  return [...g.words, ...S.extraWords.filter(w => w.group === key).map(w => w.word)];
+}
+const joinTiles = t => t.reduce((s, w) => s + (/^[.,!?]$/.test(w) || !s ? '' : ' ') + w, '');
+function splitTiles(text) { return (text || '').match(/[.,!?]|[^\s.,!?]+/g) || []; }
+function buildSentence(text) {
+  const ov = $('#builder'); let tiles = splitTiles(text);
+  const week = tripWeek(), groups = $('#bGroups'); groups.innerHTML = '';
+  for (const g of WORDS.groups) {
+    if (g.fadeWeek && week >= g.fadeWeek) continue; // scaffolds fade over the trip
+    const row = el('div', { className: 'grp g-' + g.key }, [el('b', { textContent: g.label })]);
+    const chips = el('div', { className: 'chips', style: 'justify-content:flex-start' });
+    for (const w of wordsIn(g.key)) { const b = el('button', { className: 'chip', textContent: w }); b.onclick = () => { tiles.push(...splitTiles(w)); /^[.,!?]$/.test(w) || say(w); draw(); }; chips.append(b); }
+    row.append(chips); groups.append(row);
+  }
+  const draw = () => {
+    const line = $('#bLine'); line.innerHTML = '';
+    tiles.forEach((w, i) => { const b = el('button', { className: 'chip sel', textContent: w }); b.onclick = () => { tiles.splice(i, 1); draw(); }; line.append(b); });
+    const t = joinTiles(tiles), joins = WORDS.connectives.filter(c => new RegExp('\\b' + c + '\\b', 'i').test(t));
+    $('#bCheck').innerHTML = `<span class="${/^[A-Z]/.test(t) ? 'ok' : ''}">🔠 Capital</span><span class="${/[.!?]$/.test(t) ? 'ok' : ''}">⏺️ Full stop</span><span class="${joins.length ? 'ok' : ''}">🔗 ${joins.length ? joins.join(', ') : 'joining words'}</span>`;
+  };
+  draw(); ov.classList.add('on');
+  return new Promise(resolve => {
+    $('#bUndo').onclick = () => { tiles.pop(); draw(); };
+    $('#bRead').onclick = () => say(joinTiles(tiles));
+    $('#bType').onclick = async () => { const t = await typeIt('Type a word'); if (t) { tiles.push(...splitTiles(t)); draw(); } };
+    $('#bDone').onclick = () => { ov.classList.remove('on'); resolve(joinTiles(tiles)); };
+  });
+}
+function typeIt(title, value = '') {
+  const ov = $('#typeBox'), ta = $('#typeText');
+  $('#typeTitle').textContent = title; ta.value = value || ''; ov.classList.add('on'); setTimeout(() => ta.focus(), 50);
+  return new Promise(resolve => {
+    $('#typeOk').onclick = () => { ov.classList.remove('on'); resolve(ta.value.trim()); };
+    $('#typeCancel').onclick = () => { ov.classList.remove('on'); resolve(null); };
+  });
+}
+
+/* ============ TRAVEL BOOK ============ */
+onEnter.book = async () => {
+  const list = $('#bookList'); list.innerHTML = '';
+  const entries = (await idbAll('entries')).filter(e => e.photos.length || e.paperOverride || plainText(e).trim()).sort((a, b) => b.date.localeCompare(a.date));
+  const snaps = (await idbAll('snaps')).sort((a, b) => b.date.localeCompare(a.date));
+  if (!entries.length && !snaps.length) list.append(el('div', { className: 'say', textContent: '📖 ✨ 🎤 ➡️ ✏️ ➡️ 📷' }));
+  for (const e of entries) {
+    const c = C(e.country), card = el('div', { className: 'entry' });
+    const done = S.stamps.some(s => s.ref === 'recount-' + e.id);
+    card.append(el('h3', { innerHTML: `${c.flag} ${esc(niceDate(e.date))} ${e.variant !== 'normal' ? VARIANTS[e.variant].icon : ''}<span class="stampmark">${done ? '🏅' : ''}${e.posted ? '📮' : ''}</span>` }));
+    const t = el('div', { className: 'bigtext', innerHTML: writeHtml(e) }); card.append(t);
+    const row = el('div', { className: 'mini' });
+    const best = e.clips[e.best] || Object.values(e.clips)[0];
+    if (best) { const b = el('button', { textContent: '▶️' }); b.onclick = async () => playBlob(await getBlob(best)); row.append(b); }
+    const hear = el('button', { textContent: '🔊' }); hear.onclick = () => say(plainText(e)); row.append(hear);
+    card.append(row);
+    for (const id of e.photos) card.append(el('img', { src: await blobUrl(id) }));
+    list.append(card);
+  }
+  for (const s of snaps) {
+    const card = el('div', { className: 'entry' });
+    card.append(el('h3', { innerHTML: `${C(s.country).flag} ${esc(niceDate(s.date))} ✍️ <span style="font-family:system-ui">${esc(s.letters)}</span>` }));
+    card.append(el('img', { src: await blobUrl(s.photo) })); list.append(card);
+  }
+};
+intro.book = 'Your Travel Book! Tap play to hear yourself.';
+
+/* ============ LETTER LAB ============ */
+// Letters are drawn on 3-line guides: y 0 head line, 1 dotted middle, 2 baseline, 3 tail line (see travel-school/letters.json)
+function sampleStroke(stroke, step = .02) {
+  const pts = [];
+  for (const seg of stroke) {
+    if (seg[0] === 'line') {
+      const [, x1, y1, x2, y2] = seg, n = Math.max(2, Math.ceil(Math.hypot(x2 - x1, y2 - y1) / step));
+      for (let i = 0; i <= n; i++) pts.push([x1 + (x2 - x1) * i / n, y1 + (y2 - y1) * i / n]);
+    } else {
+      const [, cx, cy, rx, ry, a0, a1] = seg, n = Math.max(4, Math.ceil(Math.abs(a1 - a0) * Math.PI / 180 * Math.max(rx, ry) / step));
+      for (let i = 0; i <= n; i++) { const a = (a0 + (a1 - a0) * i / n) * Math.PI / 180; pts.push([cx + rx * Math.cos(a), cy + ry * Math.sin(a)]); }
+    }
+  }
+  return pts;
+}
+function resample(pts, n) {
+  if (pts.length < 2) return Array(n).fill(pts[0] || [0, 0]);
+  const d = [0]; for (let i = 1; i < pts.length; i++) d.push(d[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const L = d[d.length - 1] || 1, out = []; let j = 0;
+  for (let k = 0; k < n; k++) {
+    const t = L * k / (n - 1); while (j < d.length - 2 && d[j + 1] < t) j++;
+    const f = (t - d[j]) / ((d[j + 1] - d[j]) || 1);
+    out.push([pts[j][0] + (pts[j + 1][0] - pts[j][0]) * f, pts[j][1] + (pts[j + 1][1] - pts[j][1]) * f]);
+  }
+  return out;
+}
+const meanDist = (a, b) => a.reduce((s, p, i) => s + Math.hypot(p[0] - b[i][0], p[1] - b[i][1]), 0) / a.length;
+// Checks start point, direction and stroke order, not neatness. Returns 'ok', 'start', 'direction' or 'shape'.
+function checkLetter(user, model, tol) {
+  let strokes = user.filter(s => s.length > 2);
+  if (!strokes.length) return 'shape';
+  while (strokes.length > model.length) { const [a, b] = strokes.splice(-2); strokes.push(a.concat(b)); } // lifting mid-letter is OK at six
+  if (strokes.length < model.length) return 'shape';
+  for (let i = 0; i < model.length; i++) {
+    const u = resample(strokes[i], 40), m = resample(model[i], 40);
+    const fwd = meanDist(u, m), rev = meanDist(u, [...m].reverse());
+    if (fwd > tol) return rev < tol * 1.2 && rev < fwd * .7 ? 'direction' : 'shape';
+    if (Math.hypot(u[0][0] - m[0][0], u[0][1] - m[0][1]) > tol * 1.4) return 'start';
+  }
+  return 'ok';
+}
+const STAGES = ['watch', 'solid', 'dotted', 'dot', 'blank', 'small'];
+const L = ch => S.letters[ch] || (S.letters[ch] = { seen: 0, goodDays: [], stylus: false, paper: false, flag: false });
+function letterStatus(ch) { const l = L(ch); return l.paper ? 'paper' : l.stylus ? 'stylus' : l.seen ? 'learning' : 'new'; }
+const STATUS_ICON = { new: '', learning: '🌱', stylus: '✍️', paper: '📓' };
+function familyOf(ch) { return LETTERS.families.find(f => f.letters.includes(ch)); }
+function ready(f) { return [...f.letters].every(ch => LETTERS.letters[ch]); }
+// Today's letters: flagged by a grown-up first, then ones not yet secure, then rotate through the rest
+function todaysSet() {
+  const f = LETTERS.families.find(ready), list = [...f.letters];
+  const dayN = Math.floor(Date.parse(today()) / 864e5);
+  const score = ch => (L(ch).flag ? 0 : 10) + (L(ch).stylus ? 10 : 0) + L(ch).seen + ((list.indexOf(ch) - dayN % list.length + list.length) % list.length) / 10;
+  return { family: f, letters: list.sort((a, b) => score(a) - score(b)).slice(0, 3) };
+}
+intro.letters = () => `Letter Lab! Today: ${todaysSet().letters.join(', ')}. Tap the star to start.`;
+onEnter.letters = () => {
+  const t = todaysSet(); $('#todayLabel').innerHTML = `<span style="font:56px system-ui;letter-spacing:12px">${t.letters.join(' ')}</span>`;
+  const fams = $('#families'); fams.innerHTML = '';
+  for (const f of LETTERS.families) {
+    const b = el('button', { className: 'big small fam c3', disabled: !ready(f), innerHTML: `${f.icon}<span class="letters">${f.letters}</span>` });
+    b.onclick = () => { say(f.name + '. ' + f.move); showGrid(f); };
+    fams.append(b);
+  }
+  showGrid(t.family);
+};
+function showGrid(f) {
+  const g = $('#letterGrid'); g.innerHTML = '';
+  for (const ch of f.letters) {
+    const b = el('button', { innerHTML: `${ch}<i>${STATUS_ICON[letterStatus(ch)]}${L(ch).flag ? '🔁' : ''}</i>` });
+    b.onclick = () => startSession({ family: f, letters: [ch], words: [] });
+    g.append(b);
+  }
+}
+$('#todayLetters').onclick = () => { const t = todaysSet(); startSession({ family: t.family, letters: t.letters, words: pickWords(t.family) }); };
+function pickWords(f) { if (!f.words.length) return []; const n = Math.floor(Date.parse(today()) / 864e5) * 2; return [f.words[n % f.words.length], f.words[(n + 1) % f.words.length]]; }
+
+// One session: each letter through the stages, then a couple of words, then "Now on paper!"
+let sess = null;
+function startSession(s) { sess = Object.assign({ i: 0, w: -1 }, s); startLetter(); }
+const cv = $('#traceCanvas'), cx2 = cv.getContext('2d');
+let T = null; // the letter being traced
+function startLetter() {
+  const ch = sess.letters[sess.i];
+  T = { ch, def: LETTERS.letters[ch], stage: 0, tries: 0, ink: [], live: null, firstTry: true };
+  T.model = T.def.strokes.map(s => sampleStroke(s));
+  L(ch).seen++; save();
+  $('#traceLetter').textContent = ch;
+  go('trace'); sizeCanvas(); runStage();
+}
+function sizeCanvas() {
+  const dpr = devicePixelRatio || 1; cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+  cx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function geom() { // unit size and origin for the 3-line guide
+  const W = innerWidth, H = innerHeight - 110, small = STAGES[T.stage] === 'small';
+  const words = T.word, w = words ? T.word.w : T.def.w;
+  let U = Math.min(H / 3.4, (W - 120) / (w + .6)); if (small) U *= .55;
+  return { U, ox: (W - w * U) / 2, oy: 110 + (H - 3 * U) / 2 };
+}
+const toPx = (g, [x, y]) => [g.ox + x * g.U, g.oy + y * g.U];
+function drawGuides(g) {
+  const W = innerWidth, y = k => g.oy + k * g.U;
+  cx2.clearRect(0, 0, W, innerHeight);
+  cx2.lineWidth = 3;
+  [[0, '#cfd8e3', []], [1, '#9db4cf', [14, 12]], [2, '#5c7ea8', []], [3, '#cfd8e3', []]].forEach(([k, col, dash]) => {
+    cx2.strokeStyle = col; cx2.setLineDash(dash); cx2.beginPath(); cx2.moveTo(40, y(k)); cx2.lineTo(W - 40, y(k)); cx2.stroke();
+  });
+  cx2.setLineDash([]);
+}
+function path(g, pts, upto = pts.length) { cx2.beginPath(); pts.slice(0, upto).forEach((p, i) => { const [x, y] = toPx(g, p); i ? cx2.lineTo(x, y) : cx2.moveTo(x, y); }); }
+function drawArrow(g, pts) { // small arrow showing which way to go, a little way along the stroke
+  const i = Math.min(pts.length - 1, Math.floor(pts.length * .12)), [x0, y0] = toPx(g, pts[Math.max(0, i - 3)]), [x1, y1] = toPx(g, pts[i]);
+  const a = Math.atan2(y1 - y0, x1 - x0), s = g.U * .14, nx = Math.cos(a + Math.PI / 2) * g.U * .2, ny = Math.sin(a + Math.PI / 2) * g.U * .2;
+  cx2.fillStyle = '#ff922b'; cx2.beginPath();
+  cx2.moveTo(x1 - nx + Math.cos(a) * s, y1 - ny + Math.sin(a) * s);
+  cx2.lineTo(x1 - nx + Math.cos(a + 2.5) * s, y1 - ny + Math.sin(a + 2.5) * s);
+  cx2.lineTo(x1 - nx + Math.cos(a - 2.5) * s, y1 - ny + Math.sin(a - 2.5) * s); cx2.fill();
+}
+function drawModel(g, models, mode) {
+  cx2.lineCap = cx2.lineJoin = 'round';
+  models.forEach((pts, k) => {
+    if (mode === 'solid' || mode === 'dotted') {
+      cx2.strokeStyle = mode === 'solid' ? '#dee2e6' : '#adb5bd'; cx2.lineWidth = mode === 'solid' ? g.U * .2 : g.U * .06;
+      cx2.setLineDash(mode === 'dotted' ? [g.U * .02, g.U * .12] : []); path(g, pts); cx2.stroke(); cx2.setLineDash([]);
+      if (mode === 'solid') drawArrow(g, pts);
+    }
+    if (mode !== 'blank' && mode !== 'small') {
+      const [x, y] = toPx(g, pts[0]); cx2.fillStyle = '#40c057'; cx2.beginPath(); cx2.arc(x, y, Math.max(12, g.U * .08), 0, 7); cx2.fill();
+      if (models.length > 1 && !T.word) { cx2.fillStyle = '#fff'; cx2.font = `bold ${g.U * .1}px system-ui`; cx2.textAlign = 'center'; cx2.textBaseline = 'middle'; cx2.fillText(k + 1, x, y); }
+    }
+  });
+}
+function drawInk(g) {
+  cx2.strokeStyle = '#1c5fd4'; cx2.lineWidth = Math.max(6, g.U * .1); cx2.lineCap = cx2.lineJoin = 'round';
+  for (const s of T.ink.concat(T.live ? [T.live] : [])) path(g, s), cx2.stroke();
+}
+function models() { return T.word ? T.word.models : T.model; }
+function redraw() {
+  const g = geom(), st = STAGES[T.stage];
+  drawGuides(g);
+  drawModel(g, models(), T.word ? 'dotted' : st);
+  drawInk(g);
+}
+function renderDots() {
+  const d = $('#traceDots'); d.innerHTML = '';
+  if (T.word) return;
+  STAGES.forEach((s, i) => d.append(el('i', { className: i < T.stage ? 'done' : i === T.stage ? 'on' : '' })));
+}
+async function watch() { // animated model: green dot, moving pencil, read-aloud pathway
+  const g = geom(), my = T; T.busy = true;
+  const talk = say(T.def.say);
+  for (const pts of T.model) {
+    for (let i = 2; i <= pts.length; i += 3) {
+      if (T !== my) return;
+      drawGuides(g); drawModel(g, T.model, 'dotted');
+      cx2.strokeStyle = '#ff6b6b'; cx2.lineWidth = g.U * .12; cx2.lineCap = 'round'; path(g, pts, i); cx2.stroke();
+      const [x, y] = toPx(g, pts[i - 1]); cx2.fillStyle = '#ff922b'; cx2.beginPath(); cx2.arc(x, y, g.U * .07, 0, 7); cx2.fill();
+      await sleep(16);
+    }
+  }
+  await Promise.race([talk, sleep(1500)]);
+  if (T === my) { T.busy = false; redraw(); }
+}
+async function runStage() {
+  T.ink = []; T.tries = 0; renderDots();
+  if (STAGES[T.stage] === 'watch') { await watch(); T.stage++; return runStage(); }
+  redraw();
+  const st = STAGES[T.stage];
+  say(st === 'solid' ? 'Your turn. Trace it! Start at the green dot.' : st === 'dotted' ? 'Now trace the dots.' : st === 'dot' ? 'Just the green dot now. You can do it!' : st === 'blank' ? 'All by yourself!' : 'Now a little one, like in your book.');
+}
+// Pen or finger. Once a stylus has been used, touches are ignored (palm rejection).
+let penSeen = false, activeId = null, checkTimer = 0;
+const unitPt = e => { const g = geom(), r = cv.getBoundingClientRect(); return [(e.clientX - r.left - g.ox) / g.U, (e.clientY - r.top - g.oy) / g.U]; };
+cv.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'pen') penSeen = true;
+  if ((penSeen && e.pointerType === 'touch') || activeId !== null || T.busy) return;
+  activeId = e.pointerId; clearTimeout(checkTimer);
+  T.live = [unitPt(e)]; redraw();
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+});
+cv.addEventListener('pointermove', e => {
+  if (e.pointerId !== activeId || !T.live) return;
+  for (const ev of e.getCoalescedEvents ? e.getCoalescedEvents() : [e]) T.live.push(unitPt(ev));
+  redraw();
+});
+const penUp = e => {
+  if (e.pointerId !== activeId || !T.live) return;
+  activeId = null; if (T.live.length > 2) T.ink.push(T.live); T.live = null; redraw();
+  clearTimeout(checkTimer); checkTimer = setTimeout(T.word ? checkWord : judge, 900);
+};
+cv.addEventListener('pointerup', penUp); cv.addEventListener('pointercancel', penUp);
+
+async function judge() {
+  const st = STAGES[T.stage], tol = st === 'blank' || st === 'small' ? .42 : .36;
+  const r = checkLetter(T.ink, T.model, tol);
+  if (r === 'ok') {
+    if (T.tries === 0 && (st === 'blank' || st === 'small')) {
+      const l = L(T.ch); if (!l.goodDays.includes(today())) l.goodDays.push(today());
+      if (st === 'small' && l.goodDays.length >= 2) l.stylus = true; // secure on stylus: first-time passes on two different days
+      save();
+    }
+    return pass(['Great start!', 'Beautiful!', 'Yes! Just right.', 'Super letter!', 'You got it!'][Math.floor(Math.random() * 5)]);
+  }
+  T.tries++;
+  if (T.tries >= 2) return pass('Good try! Let’s keep going.'); // never block: show it again, then move on
+  await say(r === 'start' ? 'Start at the green dot. Watch me.' : r === 'direction' ? 'Go the other way round. Watch me.' : "Let's watch it again.");
+  await watch(); T.ink = []; redraw();
+}
+async function pass(msg) {
+  const p = $('#praise'); p.textContent = T.tries ? '👍' : '⭐'; p.classList.remove('on'); void p.offsetWidth; p.classList.add('on');
+  await Promise.race([say(msg), sleep(1800)]); p.classList.remove('on');
+  if (T.word) return nextWord();
+  if (++T.stage < STAGES.length) return runStage();
+  if (++sess.i < sess.letters.length) return startLetter();
+  nextWord();
+}
+// Words: trace a dotted word; accepted when most of it is covered (or ✓ after a go)
+function wordModel(word) {
+  let x = 0; const models = [];
+  for (const ch of word) {
+    const d = LETTERS.letters[ch]; if (!d) { x += .6; continue; }
+    for (const s of d.strokes) models.push(sampleStroke(s).map(([px, py]) => [px + x, py]));
+    x += d.w + .3;
+  }
+  return { text: word, w: x - .3, models };
+}
+function nextWord() {
+  if (++sess.w >= sess.words.length) return toPaper();
+  const word = sess.words[sess.w];
+  T = { ch: word, word: wordModel(word), stage: 0, ink: [], live: null, tries: 0 };
+  $('#traceLetter').textContent = '✏️'; renderDots(); redraw();
+  say(`Now a word. ${word}. Trace it!`);
+}
+function checkWord() {
+  const g = geom(), pts = T.word.models.flat().filter((_, i) => i % 3 === 0), ink = T.ink.flat();
+  const hit = pts.filter(p => ink.some(q => Math.hypot(p[0] - q[0], p[1] - q[1]) < .35)).length / pts.length;
+  if (hit > .6) pass(`${T.word.text}! Well done.`);
+}
+$('#traceWatch').onclick = () => { if (T.word) say(T.word.text); else { T.ink = []; watch(); } };
+$('#traceClear').onclick = () => { T.ink = []; redraw(); };
+$('#traceSkip').onclick = () => { if (T.word) return pass('OK!'); T.tries = 2; pass('OK, next one!'); };
+$('#traceBack').onclick = () => { T = { ...T }; go('letters'); };
+addEventListener('resize', () => { if (current === 'trace') { sizeCanvas(); redraw(); } });
+
+function toPaper() { sess.done = true; go('paper'); }
+intro.paper = () => `Now on paper! Write a row of each letter: ${sess.letters.join(', ')}. Then circle your best one. Then snap it.`;
+onEnter.paper = async () => {
+  $('#paperLetters').textContent = sess ? sess.letters.join(' ') : '';
+  const th = $('#paperThumbs'); th.innerHTML = '';
+  for (const s of (await idbAll('snaps')).filter(s => s.date === today())) th.append(el('img', { src: await blobUrl(s.photo) }));
+};
+$('#paperSnap').onclick = async () => {
+  const blob = await snapPhoto(); if (!blob) return;
+  const id = uid(); await idbPut('snaps', { id, date: today(), country: here(), family: sess.family.key, letters: sess.letters.join(' '), photo: await putBlob(blob) });
+  await onEnter.paper();
+  await award(`letters-${today()}-${sess.family.key}`, 'letters');
+};
+
+/* ============ GROWN-UPS ============ */
+let ptab = 'today';
+$('#ptabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; ptab = b.dataset.tab; $$('#ptabs button').forEach(x => x.classList.toggle('on', x === b)); renderParent(); });
+onEnter.parent = renderParent;
+const pbox = (title, html) => el('div', { className: 'pbox', innerHTML: (title ? `<h2>${title}</h2>` : '') + (html || '') });
+const pbtn = (label, fn, cls = '') => { const b = el('button', { className: 'pbtn ' + cls, textContent: label }); b.onclick = fn; return b; };
+async function renderParent() {
+  const body = $('#pbody'); body.innerHTML = '';
+  const tab = { today: pToday, progress: pProgress, letters: pLetters, words: pWords, voices: pVoices, export: pExport }[ptab];
+  await tab(body);
+}
+async function pToday(body) {
+  const e = await todayEntry();
+  const loc = pbox('Where are we?', `<p class="pnote">Stamps and greetings use this. Auto follows the itinerary (${esc((leg() || {}).place || 'home')} today).</p>`);
+  const sel = el('select'); sel.append(el('option', { value: '', textContent: 'Auto' }));
+  for (const [k, c] of Object.entries(TRIP.countries)) sel.append(el('option', { value: k, textContent: c.flag + ' ' + c.name, selected: S.location === k }));
+  sel.onchange = () => { S.location = sel.value; save(); }; loc.append(sel); body.append(loc);
+
+  const v = pbox("Today's recount", `<p class="pnote">Week ${tripWeek()} of the trip · goal: ${goalText()} on paper. Scaffolds in the word builder fade from week 3.</p>`);
+  for (const [k, x] of Object.entries(VARIANTS)) v.append(pbtn(x.icon + ' ' + x.name, () => { S.variant[today()] = k; save(); renderParent(); }, e.variant === k ? 'on' : ''));
+  const paperDone = e.photos.length ? `✅ ${e.photos.length} photo(s) of today's page` : e.paperOverride ? '✅ Paper done (marked by a grown-up)' : '⬜ No paper page yet';
+  v.append(el('p', { textContent: paperDone }));
+  if (!e.photos.length && !e.paperOverride) v.append(pbtn('Mark paper done (no photo) and give the stamp', async () => { e.paperOverride = true; await idbPut('entries', e); await award('recount-' + e.id, 'recount'); renderParent(); }));
+  body.append(v);
+
+  const u = pbox('Paper unlocks game time', '<p class="pnote">When today’s paper page is snapped, add this much to his games time (once a day).</p>');
+  for (const m of [0, 10, 15, 20]) u.append(pbtn(m ? `+${m} min` : 'Off', () => { S.unlock = m; save(); renderParent(); }, S.unlock === m ? 'on' : ''));
+  body.append(u);
+  body.append(pbox('Tips', '<p class="pnote">About 10 minutes, same time each day. His choice of pen, and a sticker to finish. Fine-motor practice counts too: drawing what he saw, Lego, playdough, stickers, card games, colouring, threading.</p>'));
+}
+async function pProgress(body) {
+  const entries = (await idbAll('entries')).sort((a, b) => a.date.localeCompare(b.date));
+  const paper = entries.filter(e => e.photos.length || e.paperOverride);
+  const counts = {}; for (const s of S.stamps) counts[s.c] = (counts[s.c] || 0) + 1;
+  const posted = {}; for (const e of entries) if (e.posted) posted[e.country] = (posted[e.country] || 0) + 1;
+  const joins = {}; for (const e of entries) for (const c of WORDS.connectives) if (new RegExp('\\b' + c + '\\b', 'i').test(plainText(e))) joins[c] = (joins[c] || 0) + 1;
+  body.append(pbox('Recounts', `<p>${entries.length} days talked about · ${paper.length} paper pages · ${entries.filter(e => e.variant === 'postcard').length} postcards (${Object.values(posted).reduce((a, b) => a + b, 0)} posted)</p>`));
+  body.append(pbox('Stamps', ROUTE.map(c => `${C(c).flag} ${counts[c] || 0}` + (posted[c] ? ` (📮 ${posted[c]})` : '')).join(' &nbsp; ')));
+  body.append(pbox('Joining words used', Object.keys(joins).length ? Object.entries(joins).map(([k, n]) => `${k} ×${n}`).join(', ') : '<span class="pnote">None yet</span>'));
+  const t = pbox('Days');
+  const tbl = el('table', { innerHTML: '<tr><th>Date</th><th>Where</th><th>Type</th><th>Paper</th><th>Sentence</th></tr>' });
+  for (const e of entries) tbl.append(el('tr', { innerHTML: `<td>${e.date}</td><td>${C(e.country).flag}</td><td>${VARIANTS[e.variant].icon}</td><td>${e.photos.length ? '📷' : e.paperOverride ? '✅' : ''}</td><td>${esc(plainText(e))}</td>` }));
+  t.append(tbl); body.append(t);
+}
+async function pLetters(body) {
+  const box = pbox('Letter formation', '<p class="pnote">🌱 learning · ✍️ secure on stylus (first-try passes on two days) · 📓 secure on paper (you confirm from his photos). 🔁 brings a letter back next session.</p>');
+  const tbl = el('table'); tbl.append(el('tr', { innerHTML: '<th>Letter</th><th>Status</th><th>Practised</th><th></th>' }));
+  for (const f of LETTERS.families) for (const ch of f.letters) {
+    const l = L(ch), tr = el('tr', { innerHTML: `<td style="font-size:30px">${ch}</td><td>${STATUS_ICON[letterStatus(ch)] || '—'} ${letterStatus(ch)}</td><td>${l.seen}×</td>` });
+    const td = el('td');
+    td.append(pbtn('📓 paper ✓', () => { l.paper = !l.paper; save(); renderParent(); }, l.paper ? 'on' : ''), pbtn('🔁 another go', () => { l.flag = !l.flag; save(); renderParent(); }, l.flag ? 'on' : ''));
+    if (!ready(f)) td.append(el('span', { className: 'pnote', textContent: ' (family coming soon)' }));
+    tr.append(td); tbl.append(tr);
+  }
+  box.append(tbl); body.append(box);
+  const snaps = (await idbAll('snaps')).sort((a, b) => a.date.localeCompare(b.date));
+  const ph = pbox('Paper pages', snaps.length ? '' : '<span class="pnote">None yet</span>');
+  for (const s of snaps) { const im = el('img', { src: await blobUrl(s.photo), style: 'height:140px;margin:4px;border-radius:8px', title: s.date + ' ' + s.letters }); ph.append(im); }
+  body.append(ph);
+}
+async function pWords(body) {
+  const box = pbox('Add words', '<p class="pnote">Added words appear as tiles in the word builder (and as label choices).</p>');
+  const inp = el('input', { type: 'text', placeholder: 'e.g. Rijksmuseum' });
+  const grp = el('select'); for (const g of WORDS.groups.filter(g => !['end'].includes(g.key))) grp.append(el('option', { value: g.key, textContent: g.label, selected: g.key === 'trip' }));
+  box.append(inp, grp, pbtn('Add', () => { const w = inp.value.trim(); if (!w) return; S.extraWords.push({ word: w, group: grp.value }); save(); renderParent(); }));
+  body.append(box);
+  const list = pbox('Your words', S.extraWords.length ? '' : '<span class="pnote">None yet</span>');
+  S.extraWords.forEach((w, i) => list.append(pbtn(`${w.word} (${w.group}) ✖`, () => { S.extraWords.splice(i, 1); save(); renderParent(); }, 'warn')));
+  body.append(list);
+}
+async function pVoices(body) {
+  body.append(pbox('Your voice', '<p class="pnote">Record your own voice for any line. It plays instead of the robot voice. Use it wherever pronunciation matters, e.g. "thing" vs "think".</p>'));
+  const lines = [...WORDS.prompts.map(p => p.say), ...Object.entries(LETTERS.letters).map(([, d]) => d.say), ...wordsIn('sounds')];
+  const box = pbox('Lines'); const tbl = el('table');
+  for (const text of lines) {
+    const key = voiceKey(text), tr = el('tr'), td = el('td');
+    tr.append(el('td', { textContent: text }));
+    const mic = micButton(async blob => { await idbPut('voices', { key, blob, text }); await loadVoices(); renderParent(); toast('Saved'); });
+    mic.className = 'pbtn'; td.append(mic);
+    if (voices[key]) td.append(pbtn('▶', () => playBlob(voices[key])), pbtn('🗑', async () => { await idbDel('voices', key); await loadVoices(); renderParent(); }, 'warn'));
+    else td.append(pbtn('🤖', () => say(text)));
+    tr.append(td); tbl.append(tr);
+  }
+  box.append(tbl); body.append(box);
+}
+
+/* ============ EXPORT + PRINTABLES ============ */
+async function pExport(body) {
+  const tb = pbox('Travel Book for his teacher', `<p class="pnote">One HTML file with every day's page, photos of his paper pages and postcards, his letter pages and a progress summary. ${hasFiles ? 'Saved to Downloads/Orlando Travel School.' : ''} Print → "Save as PDF" makes a PDF.</p>`);
+  let withAudio = true;
+  const aud = pbtn('🎤 Include his voice recordings', () => { withAudio = !withAudio; aud.classList.toggle('on', withAudio); }, 'on');
+  tb.append(aud, el('br'),
+    pbtn('💾 Save Travel Book', () => run(async () => toast('Saved: ' + await saveFile(`Orlando Travel Book ${today()}.html`, await travelBookHtml(withAudio), 'text/html'), 5000))),
+    pbtn('🖨️ Print / PDF', () => run(async () => printHtml(await travelBookHtml(false), 'Orlando Travel Book'))),
+    pbtn('💾 Progress summary only', () => run(async () => toast('Saved: ' + await saveFile(`Orlando progress ${today()}.html`, await summaryHtml(), 'text/html'), 5000))));
+  body.append(tb);
+  const pr = pbox('Printable sheets (A4)', '<p class="pnote">Print when there is a printer (friends, hotels), or save the PDF for later.</p>');
+  for (const [label, fn] of [['3-line paper', sheetLines], ['Round letters practice', () => sheetFamily('round')], ['Recount frame', sheetRecount], ['Postcard planner', sheetPostcard]]) {
+    pr.append(el('div', {}, [el('b', { textContent: label + ' ' }), pbtn('🖨️ Print / PDF', () => run(() => printHtml(fn(), label))), pbtn('💾 Save', () => run(async () => toast('Saved: ' + await saveFile(label + '.html', fn(), 'text/html'))))]));
+  }
+  body.append(pr);
+  if (hasFiles) body.append(pbox('', '<p class="pnote">Printing leaves the pinned app for the print screen: confirm "Pin" again when you come back.</p>'));
+}
+async function run(fn) { try { toast('Working…', 60000); await fn(); } catch (e) { toast('Sorry: ' + (e && e.message || e), 6000); } }
+
+const PRINT_CSS = `@page { size: A4; margin: 12mm; } body { font-family: system-ui, sans-serif; color: #222; margin: 0; } h1 { font-size: 22pt; margin: 0 0 4mm; } h2 { font-size: 16pt; margin: 6mm 0 2mm; }
+  .pg { page-break-after: always; } .pg:last-child { page-break-after: auto; } svg { display: block; } .note { color: #666; font-size: 10pt; }`;
+const doc = (title, inner, css = '') => `<!DOCTYPE html><html lang="en-AU"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${PRINT_CSS}${css}</style></head><body>${inner}</body></html>`;
+// One 3-line handwriting row as SVG (mm). z = zone height; head, dotted middle, baseline, tail.
+function lineRow(z, width = 186, extra = '') {
+  return `<svg width="${width}mm" height="${3 * z + 2}mm" viewBox="0 -1 ${width} ${3 * z + 2}">
+    <line x1="0" x2="${width}" y1="0" y2="0" stroke="#9fb3c8" stroke-width=".35"/>
+    <line x1="0" x2="${width}" y1="${z}" y2="${z}" stroke="#7d97b5" stroke-width=".35" stroke-dasharray="1.6 1.6"/>
+    <line x1="0" x2="${width}" y1="${2 * z}" y2="${2 * z}" stroke="#2f4f75" stroke-width=".55"/>
+    <line x1="0" x2="${width}" y1="${3 * z}" y2="${3 * z}" stroke="#c7d3df" stroke-width=".35"/>${extra}</svg>`;
+}
+function letterSvg(ch, x, z, style) { // style: model | dotted
+  const d = LETTERS.letters[ch]; if (!d) return '';
+  return d.strokes.map(s => {
+    const pts = sampleStroke(s, .04).map(([px, py]) => `${(x + px * z).toFixed(2)},${(py * z).toFixed(2)}`).join(' ');
+    const first = sampleStroke(s, .04)[0];
+    return style === 'model'
+      ? `<polyline points="${pts}" fill="none" stroke="#333" stroke-width="${z * .09}" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${x + first[0] * z}" cy="${first[1] * z}" r="${z * .1}" fill="#40c057"/>`
+      : `<polyline points="${pts}" fill="none" stroke="#999" stroke-width="${z * .05}" stroke-dasharray="${z * .02} ${z * .1}" stroke-linecap="round"/>`;
+  }).join('');
+}
+function sheetLines() {
+  const rows = Array.from({ length: 8 }, () => `<div style="margin-bottom:6mm">${lineRow(8)}</div>`).join('');
+  return doc('3-line paper', `<div class="pg"><h1>Name: ______________ &nbsp; Date: ________</h1>${rows}</div>`);
+}
+function sheetFamily(key) {
+  const f = LETTERS.families.find(f => f.key === key), z = 7;
+  let h = `<h1>${esc(f.name)} ✏️ <span class="note">${esc(f.move)} Green dot = start. Circle your best one!</span></h1>`;
+  for (const ch of f.letters) {
+    const d = LETTERS.letters[ch]; let x = 4, inner = letterSvg(ch, x, z, 'model'); x += (d.w + 1) * z;
+    while (x + d.w * z < 182) { inner += letterSvg(ch, x, z, 'dotted'); x += (d.w + .8) * z; }
+    h += `<div style="margin-bottom:3mm">${lineRow(z, 186, inner)}</div><div style="margin-bottom:5mm">${lineRow(z)}</div>`;
+  }
+  return doc(f.name, `<div class="pg">${h}</div>`);
+}
+function sheetRecount() {
+  const chips = WORDS.connectives.map(c => `<span style="border:1px solid #888;border-radius:3mm;padding:1mm 3mm;margin:1mm;display:inline-block">${c}</span>`).join('');
+  return doc('Recount frame', `<div class="pg"><h1>My Travel Recount <span class="note">Date: __________ &nbsp; Place: __________</span></h1>
+    <div style="border:2px solid #333;border-radius:4mm;height:95mm;margin-bottom:4mm;position:relative"><span class="note" style="position:absolute;left:3mm;top:2mm">Draw it 🖍️</span></div>
+    <div style="margin-bottom:3mm">${chips}</div>
+    ${['On ________ I went to', '', '', 'I felt _______ because'].map(t => `<div style="position:relative;margin-bottom:5mm">${t ? `<span style="position:absolute;left:1mm;top:9mm;font-size:13pt;color:#888">${t}</span>` : ''}${lineRow(7)}</div>`).join('')}</div>`);
+}
+function sheetPostcard() {
+  const card = `<div style="display:flex;gap:4mm;border:2px solid #333;border-radius:4mm;padding:4mm;height:122mm;margin-bottom:8mm">
+    <div style="flex:1;border:1px dashed #999;border-radius:3mm;position:relative"><span class="note" style="position:absolute;left:3mm;top:2mm">Picture 🖍️</span></div>
+    <div style="flex:1.25"><div style="text-align:right"><span style="display:inline-block;width:20mm;height:24mm;border:1px dashed #999" class="note">stamp</span></div>
+      <div style="font-size:13pt;margin:2mm 0">Dear _______________,</div>${[1, 2, 3].map(() => `<div style="margin-bottom:2mm">${lineRow(5.5, 100)}</div>`).join('')}
+      <div style="font-size:13pt">From Orlando</div></div></div>`;
+  return doc('Postcard planner', `<div class="pg">${card}${card}</div>`);
+}
+async function summaryParts() {
+  const entries = (await idbAll('entries')).sort((a, b) => a.date.localeCompare(b.date));
+  const paper = entries.filter(e => e.photos.length || e.paperOverride);
+  const counts = {}; for (const s of S.stamps) counts[s.c] = (counts[s.c] || 0) + 1;
+  const joins = {}; for (const e of entries) for (const c of WORDS.connectives) if (new RegExp('\\b' + c + '\\b', 'i').test(plainText(e))) joins[c] = (joins[c] || 0) + 1;
+  const letters = LETTERS.families.flatMap(f => [...f.letters]).filter(ch => L(ch).seen || L(ch).paper);
+  return `<h2>Progress summary</h2>
+    <p>Recounts: ${entries.length} days talked through (oral recount with who / where / when / what / feeling), ${paper.length} written on paper, ${entries.filter(e => e.variant === 'postcard').length} postcards, ${entries.filter(e => e.variant === 'shared').length} shared-writing days.</p>
+    <p>Joining words in his sentences: ${Object.entries(joins).map(([k, n]) => `${k} (${n})`).join(', ') || '—'}.</p>
+    <p>Stamps: ${ROUTE.filter(c => counts[c]).map(c => `${C(c).name} ${counts[c]}`).join(', ') || '—'}.</p>
+    <p>Letter formation (NSW Foundation Style): ${letters.map(ch => `<b>${ch}</b> ${letterStatus(ch)}`).join(', ') || '—'}.</p>`;
+}
+async function summaryHtml() { return doc('Orlando progress', `<h1>Orlando's Travel School</h1>${await summaryParts()}`); }
+async function imgData(id, max = 1000) { // smaller copies keep the file a sensible size
+  const b = await getBlob(id); if (!b) return '';
+  const im = await loadImage(b), k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas');
+  c.width = im.width * k; c.height = im.height * k; c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(im.src);
+  return c.toDataURL('image/jpeg', .8);
+}
+async function travelBookHtml(withAudio) {
+  const entries = (await idbAll('entries')).filter(e => e.photos.length || e.paperOverride || plainText(e).trim()).sort((a, b) => a.date.localeCompare(b.date));
+  const snaps = (await idbAll('snaps')).sort((a, b) => a.date.localeCompare(b.date));
+  let h = `<div class="pg"><h1 style="font-size:30pt">✈️ Orlando's Travel Book</h1><p>Year 1 · Europe trip, ${niceDate(TRIP.start)} – ${niceDate(TRIP.end)}</p>
+    <p class="note">Each day: Orlando told his recount out loud (who, where, when, what happened, feelings), chose his best sentence, then wrote it on paper with a drawing. Blue = his writing, green = scribed by a parent on shared-writing days.</p>${await summaryParts()}</div>`;
+  for (const e of entries) {
+    const c = C(e.country);
+    h += `<div class="pg"><h2>${c.flag} ${esc(niceDate(e.date))} · ${esc(c.name)} ${e.variant !== 'normal' ? '· ' + VARIANTS[e.variant].name : ''}${e.posted ? ' · posted 📮' : ''}</h2>
+      <p style="font-size:18pt;line-height:1.5">${writeHtml(e).replace(/class="mine"/g, 'style="color:#1c5fd4"').replace(/class="theirs"/g, 'style="color:#2b8a3e"')}</p>`;
+    for (const id of e.photos) h += `<img src="${await imgData(id)}" style="max-width:100%;max-height:200mm;display:block;margin:3mm 0;border-radius:2mm">`;
+    if (e.paperOverride && !e.photos.length) h += '<p class="note">Written on paper (no photo).</p>';
+    if (withAudio) for (const p of WORDS.prompts) if (e.clips[p.key]) {
+      const b = await getBlob(e.clips[p.key]); if (b) h += `<div class="note">${p.icon} ${p.word} <audio controls src="${await blobToDataUrl(b)}"></audio></div>`;
+    }
+    h += '</div>';
+  }
+  if (snaps.length) {
+    h += '<div class="pg"><h2>✍️ Handwriting pages</h2><p class="note">Letter families practised on paper after stylus practice. He circled his best letter of each.</p>';
+    for (const s of snaps) h += `<p><b>${esc(niceDate(s.date))}</b>: ${esc(s.letters)}</p><img src="${await imgData(s.photo)}" style="max-width:100%;max-height:120mm;border-radius:2mm">`;
+    h += '</div>';
+  }
+  return doc("Orlando's Travel Book", h, 'audio { height: 28px; vertical-align: middle; }');
+}
+
+/* ============ START ============ */
+(async function start() {
+  const j = f => fetch('travel-school/' + f).then(r => r.json());
+  [TRIP, WORDS, LETTERS] = await Promise.all([j('trip.json'), j('words.json'), j('letters.json')]);
+  await loadVoices();
+  go('home');
+})();
+</script>
+</body>
+</html>

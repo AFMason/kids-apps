@@ -360,7 +360,7 @@ function say(text, onWord) {
   if (!speechWin) return Promise.resolve();
   return new Promise(done => {
     const U = speechWin.SpeechSynthesisUtterance, u = new U(text);
-    u.rate = 0.9; u.pitch = 1.05; u.lang = 'en-AU'; if (voice) u.voice = voice;
+    u.rate = 1; u.pitch = 1; u.lang = 'en-AU'; if (voice) u.voice = voice;
     u.onboundary = e => { if (token === sayToken && onWord) onWord(e.charIndex); };
     u.onend = u.onerror = () => done();
     speechWin.speechSynthesis.speak(u);
@@ -417,7 +417,8 @@ function micButton(onBlob) {
 }
 
 /* ============ NATIVE: save to Downloads, print (Android print also saves PDFs) ============ */
-const Cap = window.Capacitor || (parent !== window ? parent.Capacitor : null);
+// In the app this page is a frame with its own copy of the bridge, but native replies only reach the games page's copy
+const Cap = (parent !== window && parent.Capacitor) || window.Capacitor || null;
 const hasFiles = !!(Cap && Cap.PluginHeaders && Cap.PluginHeaders.some(h => h.name === 'Files'));
 function blobToB64(blob) { return new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result.split(',')[1]); f.readAsDataURL(blob); }); }
 function blobToDataUrl(blob) { return new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(blob); }); }
@@ -516,7 +517,7 @@ function award(ref, kind) {
   if (S.stamps.some(s => s.ref === ref)) return Promise.resolve(false);
   const code = here(), c = C(code);
   S.stamps.push({ ref, kind, c: code, date: today() });
-  let sub = kind === 'postcard' ? 'Postcard from ' + (c.short || c.name) + '!' : kind === 'letters' ? 'Letter Lab stamp!' : 'Travel Book stamp!';
+  let sub = kind === 'postcard' ? 'Postcard from ' + c.name + '!' : kind === 'letters' ? 'Letter Lab stamp!' : 'Travel Book stamp!';
   if (kind !== 'letters' && S.unlock && !S.unlocked[today()] && parent !== window) {
     S.unlocked[today()] = true;
     parent.postMessage({ type: 'travel-school-unlock', minutes: S.unlock }, '*');
@@ -524,9 +525,9 @@ function award(ref, kind) {
   }
   save();
   $('#stampFlag').textContent = c.flag; $('#stampFlag').style.background = c.colour;
-  $('#stampTitle').textContent = 'A ' + (c.short || c.name) + ' stamp!'; $('#stampSub').textContent = sub;
+  $('#stampTitle').textContent = 'A stamp from ' + c.name + '!'; $('#stampSub').textContent = sub;
   $('#stampBox').classList.add('on');
-  say(`Wow! You earned a ${c.short || c.name} stamp! ${sub.replace(/[^\w !'+]/gu, '')}`);
+  say(`Wow! You earned a stamp from ${c.name}! ${sub.replace(/[^\w !'+]/gu, '')}`);
   return new Promise(r => { $('#stampOk').onclick = () => { $('#stampBox').classList.remove('on'); stopTalking(); r(true); }; });
 }
 
@@ -559,7 +560,7 @@ document.addEventListener('click', e => {
 })();
 
 /* ============ HOME ============ */
-intro.home = () => `Hi Orlando! We're in ${C(here()).short || C(here()).name}. What shall we do?`;
+intro.home = () => `Hi Orlando! We're in ${C(here()).name}. What shall we do?`;
 onEnter.home = renderPassport;
 
 /* ============ MY DAY: recount ============ */
@@ -1113,7 +1114,26 @@ async function pWords(body) {
   S.extraWords.forEach((w, i) => list.append(pbtn(`${w.word} (${w.group}) ✖`, () => { S.extraWords.splice(i, 1); save(); renderParent(); }, 'warn')));
   body.append(list);
 }
+// The tablet's robot voice: every English voice the speech engine has, chosen for the whole app
+const hasSpeech = !!(Cap && Cap.PluginHeaders && Cap.PluginHeaders.some(h => h.name === 'Speech' && h.methods.some(m => m.name === 'voices')));
+const COUNTRY = { AU: '🇦🇺', GB: '🇬🇧', US: '🇺🇸', IN: '🇮🇳', NG: '🇳🇬' };
+async function voicePicker() {
+  const box = pbox('Robot voice', '<p class="pnote">Tap ▶ to hear a voice; the one you last tried is used everywhere in his app (until you pick another). ⭐ = higher quality.</p>');
+  const { voices: vs, current } = await Cap.nativePromise('Speech', 'voices', {});
+  const rank = v => (['AU', 'GB', 'US'].indexOf(v.country) + 1 || 9) * 1000 - v.quality;
+  const ok = vs.filter(v => v.offline && v.installed).sort((a, b) => rank(a) - rank(b));
+  if (!ok.length) box.append(el('p', { textContent: 'No offline English voices installed. Settings → General management → Text-to-speech → ⚙️ → Install voice data.' }));
+  for (const v of ok) {
+    box.append(pbtn(`▶ ${COUNTRY[v.country] || v.country} ${v.name.replace(/^en-\w+-x-|-local$/g, '')}${v.quality >= 400 ? ' ⭐' : ''}`, async () => {
+      await Cap.nativePromise('Speech', 'setVoice', { name: v.name });
+      await say('Hi Orlando! On Tuesday we went on a fast train to the mountains.');
+      renderParent();
+    }, v.name === current ? 'on' : ''));
+  }
+  return box;
+}
 async function pVoices(body) {
+  if (hasSpeech) body.append(await voicePicker());
   body.append(pbox('Your voice', '<p class="pnote">Record your own voice for any line. It plays instead of the robot voice. Use it wherever pronunciation matters, e.g. "thing" vs "think".</p>'));
   const lines = [...WORDS.prompts.map(p => p.say), ...Object.entries(LETTERS.letters).map(([, d]) => d.say), ...wordsIn('sounds')];
   const box = pbox('Lines'); const tbl = el('table');

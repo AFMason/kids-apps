@@ -4,7 +4,7 @@
   "countries": {
     "AU": { "name": "Australia", "flag": "🇦🇺", "colour": "#2e7d32" },
     "SG": { "name": "Singapore", "flag": "🇸🇬", "colour": "#e53935" },
-    "NL": { "name": "the Netherlands", "short": "Netherlands", "flag": "🇳🇱", "colour": "#f57c00" },
+    "NL": { "name": "the Netherlands","flag": "🇳🇱", "colour": "#f57c00" },
     "UK": { "name": "England", "flag": "🇬🇧", "colour": "#1e3a8a" },
     "FR": { "name": "France", "flag": "🇫🇷", "colour": "#3949ab" },
     "CH": { "name": "Switzerland", "flag": "🇨🇭", "colour": "#c62828" }

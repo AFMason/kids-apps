@@ -326,6 +326,7 @@
     <button class="big tile8" data-go="count"><span class="emoji">🌈</span>Rainbow Count</button>
     <button class="big tile1" data-go="dance"><span class="emoji">💃</span>Dance Party</button>
     <button class="big tile3" data-go="plane"><span class="emoji">🛫</span>Plane Practice</button>
+    <button class="big tile5" data-builder="luisa"><span class="emoji">🦾</span>Robot Builder</button>
     <button class="big tile4" data-go="videos" id="videosTile" hidden><span class="emoji">📺</span>Videos</button>
     <button class="big tile9" data-shelf="luisa"><span class="emoji">📚</span>Books</button>
   </div>
@@ -341,7 +342,7 @@
     <button class="big tile1" data-go="robot"><span class="emoji">🤖</span>Coder Robot</button>
     <button class="big tile3" data-go="snake"><span class="emoji">🐍</span>Snake Maths</button>
     <button class="big tile6" data-route="orlando"><span class="emoji">🗺️</span>Trip Map</button>
-    <button class="big tile5" data-go="builder"><span class="emoji">🦾</span>Robot Builder</button>
+    <button class="big tile5" data-builder="orlando"><span class="emoji">🦾</span>Robot Builder</button>
     <button class="big tile9" data-shelf="orlando"><span class="emoji">📚</span>Books</button>
     <button class="big tile8" data-go="school"><span class="emoji">🎒</span>Travel School</button>
   </div>
@@ -463,7 +464,7 @@
 
 <!-- ROBOT BUILDER (its own page, robot-builder_v2.html, in a frame) -->
 <section id="builder" class="screen">
-  <div class="topbar"><button class="back" data-go="orlando">🏠</button></div>
+  <div class="topbar"><button class="back" id="builderBack">🏠</button></div>
   <iframe id="builderFrame" class="gameframe" title="Robot Builder"></iframe>
 </section>
 
@@ -808,9 +809,9 @@ const KIDS = { luisa: '🦋 Luisa', orlando: '🚀 Orlando' };
 const LIMITED = ['games', 'videos']; // reading is always unlimited
 const SCREEN_CAT = { bubbles: 'games', bodyparts: 'games', travel: 'games', trip: 'games', plane: 'games', feel: 'games', count: 'games',
   dance: 'games', route: 'games', bakery: 'games', robot: 'games', snake: 'games', builder: 'games', videos: 'videos', player: 'videos' };
-const SCREEN_KID = { bakery: 'orlando', robot: 'orlando', snake: 'orlando', builder: 'orlando' }; // every other timed screen is Luisa's
+const SCREEN_KID = { bakery: 'orlando', robot: 'orlando', snake: 'orlando' }; // every other timed screen is Luisa's (map and builder: whoever opened it)
 const STEP_MIN = 5, MAX_MIN = 180, BONUS_MIN = 10; // grown-up stepper: above MAX_MIN = no limit (null)
-const kidOf = id => id === 'route' ? routeKid : SCREEN_KID[id] || 'luisa';
+const kidOf = id => id === 'route' ? routeKid : id === 'builder' ? builderKid : SCREEN_KID[id] || 'luisa';
 let tl = store.get('screen-time', {}), warned = {};
 tl.limits = Object.assign({ luisa: { games: 10, videos: 10 }, orlando: { games: 10, videos: 10 } }, tl.limits);
 tl.used = tl.used || {}; tl.bonus = tl.bonus || {};
@@ -846,8 +847,8 @@ function timeGate(id) {
 }
 function markLocked(kid) {
   rollDay();
-  document.querySelectorAll(`#${kid} [data-go], #${kid} [data-route]`).forEach(b => {
-    const cat = SCREEN_CAT[b.dataset.go || 'route'];
+  document.querySelectorAll(`#${kid} [data-go], #${kid} [data-route], #${kid} [data-builder]`).forEach(b => {
+    const cat = SCREEN_CAT[b.dataset.go || (b.dataset.builder ? 'builder' : 'route')];
     b.classList.toggle('locked', !!cat && leftSec(kid, cat) <= 0);
   });
 }
@@ -1149,6 +1150,10 @@ onEnter.bakery = () => { K.streak = 0; say('bakery_welcome').then(newOrder); };
 /* ============ ROBOT BUILDER (Orlando) ============ */
 // Loaded on first visit; it keeps its own robots in localStorage
 onEnter.builder = () => { const f = document.getElementById('builderFrame'); if (!f.src) f.src = 'robot-builder_v2.html'; };
+// Both kids have a Robot Builder tile: 🏠 and the games clock follow whoever opened it
+let builderKid = 'orlando';
+document.querySelectorAll('[data-builder]').forEach(b => b.addEventListener('click', () => { builderKid = b.dataset.builder; go('builder'); }));
+document.getElementById('builderBack').addEventListener('click', () => go(builderKid));
 
 /* ============ SNAKE MATHS (Orlando) ============ */
 // Loaded on first visit; it keeps its own level and progress in localStorage ('snake-maths')

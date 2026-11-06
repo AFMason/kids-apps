@@ -21,6 +21,8 @@
       "words": ["train", "plane", "tram", "bus", "boat", "bike", "canal", "bridge", "castle", "museum", "park", "beach", "lake", "mountain", "snow", "river", "windmill", "tower", "market", "hotel", "airport", "station", "Grandma", "Grandpa", "chocolate", "cheese", "pancakes", "chips"] },
     { "key": "sounds", "label": "Sounds",
       "words": ["duck", "clock", "truck", "snack", "black", "thing", "long", "song", "swing", "think", "pink", "drink", "thank", "queen", "quick", "quack", "quilt"] },
+    { "key": "new", "label": "New",
+      "words": [] },
     { "key": "end", "label": "End",
       "words": [".", "!"] }
   ],

@@ -94,8 +94,15 @@
   .entry { background: #fff; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,.08); padding: 18px 22px; width: 100%; max-width: 1000px; display: flex; flex-direction: column; gap: 10px; }
   .entry h3 { margin: 0; font-size: 28px; display: flex; gap: 12px; align-items: center; }
   .entry .bigtext { box-shadow: none; padding: 0; font-size: 34px; }
-  .entry img { max-height: 320px; max-width: 100%; border-radius: 12px; }
+  .entry img { max-height: 70vh; max-width: 100%; width: auto; height: auto; align-self: center; object-fit: contain; border-radius: 12px; }
   .entry .stampmark { margin-left: auto; font-size: 40px; }
+  .booklist { width: 100%; max-width: 1100px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+  .daycard { border: none; text-align: left; background: #fff; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,.08); padding: 14px; display: flex; gap: 14px; align-items: center; min-height: 140px; }
+  .daycard .thumb { width: 110px; height: 110px; flex: none; border-radius: 14px; object-fit: cover; background: #f1f3f5; display: grid; place-items: center; font-size: 48px; }
+  .daycard b { display: block; font-size: 24px; }
+  .daycard .snip { font: 20px system-ui, sans-serif; color: #555; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .daypill { border: none; border-radius: 20px; background: #fff; font-size: 24px; padding: 10px 18px; min-height: 64px; box-shadow: 0 4px 10px rgba(0,0,0,.15); flex: none; }
+  #photoView img { max-width: 96vw; max-height: 94vh; object-fit: contain; border-radius: 8px; }
 
   /* Letter Lab */
   #trace, #wordtrace { padding: 0; overflow: hidden; }
@@ -149,6 +156,7 @@
 <section id="recount" class="screen">
   <div class="head">
     <button class="round" data-go="home">⬅️</button>
+    <button class="daypill" id="dayBtn">📅</button>
     <div class="steps" id="steps">
       <button class="step" data-step="talk">🎤</button><button class="step" data-step="pick">⭐</button>
       <button class="step" data-step="write">✏️</button><button class="step" data-step="snap">📷</button>
@@ -172,6 +180,7 @@
     <div class="goal" id="goal"></div>
     <div class="bigtext readable" id="writeText"></div>
     <div class="row">
+      <button class="round" id="writeBest">⭐</button>
       <button class="round" id="readWrite">🔊</button>
     </div>
     <div class="goal"><span>📓 ✏️ 🖍️</span><span>Capital letter</span><span>Finger spaces</span><span>Full stop</span></div>
@@ -189,10 +198,14 @@
   </div>
 </section>
 
-<!-- TRAVEL BOOK -->
+<!-- TRAVEL BOOK: a card per day; tap one to open that day -->
 <section id="book" class="screen">
   <div class="head"><button class="round" data-go="home">⬅️</button><h1>📖 My Travel Book</h1></div>
-  <div id="bookList" style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center"></div>
+  <div id="bookList" class="booklist"></div>
+</section>
+<section id="day" class="screen">
+  <div class="head"><button class="round" data-go="book">⬅️</button><h1 id="dayTitle"></h1></div>
+  <div id="dayBody" style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center"></div>
 </section>
 
 <!-- LETTER LAB: families -->
@@ -259,6 +272,16 @@
   <canvas id="cropCanvas"></canvas>
   <div class="row"><button class="big small c4" id="cropRotate">🔄</button><button class="big small c5" id="cropAgain">📷 Again</button><button class="big small c3" id="cropOk">✅ Keep it</button></div>
 </div></div>
+
+<!-- Which day My Day is about -->
+<div class="overlay" id="dayPick"><div class="sheet">
+  <h2 style="margin:0;font-size:34px">📅</h2>
+  <div class="row" id="dayList"></div>
+  <button class="big small c5" id="dayClose">✖️</button>
+</div></div>
+
+<!-- A photo, full screen (tap to close) -->
+<div class="overlay" id="photoView"><img id="photoBig" alt=""></div>
 
 <!-- Stamp celebration -->
 <div class="overlay" id="stampBox">
@@ -535,10 +558,11 @@ function renderPassport() {
     box.append(el('div', { className: 'pp' + (code === here() ? ' here' : ''), innerHTML: `<span class="flag">${c.flag}</span><b style="background:${c.colour}">${n}</b>` }));
   }
 }
-// One stamp per thing (ref), in the country we're in today. A recount stamp can also unlock extra game time.
-function award(ref, kind) {
+// One stamp per thing (ref), for the country of that day (today's, unless a recount is about an earlier day).
+// A stamp can also unlock extra game time today.
+function award(ref, kind, code = here()) {
   if (S.stamps.some(s => s.ref === ref)) return Promise.resolve(false);
-  const code = here(), c = C(code);
+  const c = C(code);
   S.stamps.push({ ref, kind, c: code, date: today() });
   let sub = kind === 'postcard' ? 'Postcard from ' + c.name + '!' : kind === 'letters' ? 'Letter Lab stamp!' : 'Travel Book stamp!';
   if (kind !== 'letters' && S.unlock && !S.unlocked[today()] && parent !== window) {
@@ -584,7 +608,7 @@ document.addEventListener('click', e => {
 
 /* ============ HOME ============ */
 intro.home = () => `Hi Orlando! We're in ${C(here()).name}. What shall we do?`;
-onEnter.home = renderPassport;
+onEnter.home = () => { recDate = null; renderPassport(); };
 
 /* ============ MY DAY: recount ============ */
 const VARIANTS = {
@@ -594,17 +618,43 @@ const VARIANTS = {
   labels: { icon: '🏷️', name: 'Draw and label day' },
 };
 let entry = null, stepNow = 'talk';
-async function todayEntry() {
-  const id = today();
+// Which day My Day is about: today unless one is picked with 📅 (often it's yesterday's adventures)
+let recDate = null;
+const dayOf = () => recDate || today();
+function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return dayKey(d); }
+function countryOn(d) { return d === today() ? here() : (leg(d) || {}).country || here(); }
+function dayWord(d) {
+  if (d === today()) return 'Today';
+  if (d === daysAgo(1)) return 'Yesterday';
+  return new Date(d + 'T12:00').toLocaleDateString('en-AU', { weekday: 'long' });
+}
+async function dayEntry(id = dayOf()) {
   let e = await idbGet('entries', id);
-  if (!e) e = { id, date: id, country: here(), clips: {}, best: '', parts: { main: '', first: '', middle: '', last: '', to: '', labels: [] }, photos: [], paperOverride: false, posted: false };
+  if (!e) e = { id, date: id, country: countryOn(id), clips: {}, best: '', parts: { main: '', first: '', middle: '', last: '', to: '', labels: [] }, photos: [], paperOverride: false, posted: false };
   e.variant = S.variant[id] || e.variant || 'normal';
   return e;
 }
 const saveEntry = () => idbPut('entries', entry);
 function goalText() { return { 1: '1 sentence', 2: '1 sentence', 3: '1 or 2 sentences', 4: '2 or 3 sentences' }[tripWeek()]; }
+const entryDone = e => e.photos.length > 0 || e.paperOverride;
+// 📅 Today / Yesterday / Monday …: up to 10 days back, not before the trip started
+$('#dayBtn').onclick = async () => {
+  const list = $('#dayList'); list.innerHTML = '';
+  const have = {}; for (const e of await idbAll('entries')) have[e.id] = e;
+  for (let n = 0; n < 10; n++) {
+    const d = daysAgo(n); if (n > 1 && d < TRIP.start) break;
+    const c = C(countryOn(d)), e = have[d];
+    const b = el('button', { className: 'big small c1' + (d === dayOf() ? ' c6' : ''),
+      innerHTML: `${c.flag} ${dayWord(d)}<br><span style="font-size:18px">${new Date(d + 'T12:00').toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })} ${e && entryDone(e) ? '✅' : e ? '🎤' : ''}</span>` });
+    b.onclick = async () => { $('#dayPick').classList.remove('on'); recDate = d === today() ? null : d; await onEnter.recount(); say(stepSay[stepNow]()); };
+    list.append(b);
+  }
+  $('#dayPick').classList.add('on'); say('Which day shall we talk about?');
+};
+$('#dayClose').onclick = () => $('#dayPick').classList.remove('on');
 onEnter.recount = async () => {
-  entry = await todayEntry();
+  entry = await dayEntry();
+  $('#dayBtn').textContent = '📅 ' + dayWord(entry.id);
   const v = VARIANTS[entry.variant];
   $('#variantBanner').hidden = entry.variant === 'normal';
   $('#variantBanner').textContent = v.icon + ' ' + v.name;
@@ -612,7 +662,7 @@ onEnter.recount = async () => {
   showStep(done ? 'snap' : entry.parts.main || entry.parts.first || entry.parts.labels.length ? 'write' : Object.keys(entry.clips).length ? 'pick' : 'talk', true);
 };
 const stepSay = {
-  talk: () => entry.variant === 'postcard' ? "Postcard day! Let's think about what to tell them. Tap a picture to hear the question, then tap the microphone and talk." : 'Tell me about your day! Tap a picture to hear the question. Then tap the microphone and talk.',
+  talk: () => entry.variant === 'postcard' ? "Postcard day! Let's think about what to tell them. Tap a picture to hear the question, then tap the microphone and talk." : `Tell me about ${entry.id === today() ? 'your day' : dayWord(entry.id)}! Tap a picture to hear the question. Then tap the microphone and talk.`,
   pick: () => entry.variant === 'labels' ? 'Pick some words to label your drawing.' : entry.variant === 'shared' ? "Let's plan. You choose the first and last sentences. A grown-up writes the middle." : 'Listen to your recordings. Which bit is the best? Tap the star. Then make your sentence.',
   write: () => entry.variant === 'labels' ? 'Now draw your day in your book, and write these labels.' : entry.variant === 'postcard' ? 'Now write your postcard! Take your time.' : 'Now write it in your book, and draw a picture. Capital letter, finger spaces, full stop!',
   snap: () => entry.photos.length || entry.paperOverride ? 'Your page is in your Travel Book!' : 'Take a photo of your page. Tap the camera!',
@@ -678,7 +728,7 @@ function slot(key, who, title, grownUp) {
   const btns = el('div', { className: 'mini' });
   const hear = el('button', { textContent: '🔊' }); hear.onclick = () => entry.parts[key] ? readAloud(text) : say(title);
   if (!grownUp) { const b = el('button', { textContent: '🧩' }); b.onclick = async () => { const t = await buildSentence(entry.parts[key]); if (t != null) { entry.parts[key] = t; await saveEntry(); renderPick(); } }; btns.append(b); }
-  const k = el('button', { textContent: '⌨️' }); k.onclick = async () => { const t = await typeIt(grownUp ? 'Grown-up: type what Orlando says' : 'Grown-up: type the sentence for Orlando to copy', entry.parts[key]); if (t != null) { entry.parts[key] = t; await saveEntry(); renderPick(); } };
+  const k = el('button', { textContent: '⌨️' }); k.onclick = async () => { const t = await typeIt(grownUp ? 'Grown-up: type what Orlando says' : 'Grown-up: type the sentence for Orlando to copy', entry.parts[key]); if (t != null) { entry.parts[key] = t; learnWords(t); await saveEntry(); renderPick(); } };
   btns.append(hear, k);
   s.append(el('span', { className: 'who', textContent: who }), text, btns);
   return s;
@@ -697,7 +747,7 @@ function renderLabelPicker(area) {
     chips.append(b);
   }
   const add = el('button', { className: 'chip', textContent: '⌨️' });
-  add.onclick = async () => { const t = await typeIt('Type a label word'); if (t && sel.length < 5) { sel.push(t.trim()); await saveEntry(); renderPick(); } };
+  add.onclick = async () => { const t = await typeIt('Type a label word'); if (t && sel.length < 5) { sel.push(t.trim()); learnWords(t); await saveEntry(); renderPick(); } };
   chips.append(add); area.append(chips);
 }
 
@@ -711,6 +761,7 @@ function writeHtml(e) { // the text Orlando copies onto paper (also used in the 
 function plainText(e) { const d = el('div', { innerHTML: writeHtml(e).replace(/<br>/g, ' ') }); return d.textContent; }
 function renderWrite() {
   const goal = $('#goal'), v = entry.variant;
+  $('#writeBest').hidden = !entry.clips[entry.best];
   goal.innerHTML = v === 'labels' ? '<span>🖍️ Draw your day</span><span>🏷️ Write the labels</span>'
     : v === 'shared' ? '<span class="mine">✏️ You write the blue sentences</span><span>🧑 Grown-up writes the green</span>'
     : v === 'postcard' ? '<span>💌 Write your postcard</span><span>🖍️ Draw a picture</span>'
@@ -720,6 +771,8 @@ function renderWrite() {
   box.dataset.text = plainText(entry);
   if (!box.dataset.text.trim()) box.innerHTML = '<span style="color:#aaa">⭐ ⬅️</span>';
 }
+// ⭐ replays the recording he starred as his best bit, to hear again while he writes
+$('#writeBest').onclick = () => { const id = entry.clips[entry.best]; if (id) playClip(id, $('#writeBest')); else say('Tap a star to choose your best bit.'); };
 $('#readWrite').onclick = () => { const b = $('#writeText'); b.querySelector('.w') ? readAloud(b) : say(b.dataset.text || ''); };
 
 async function renderSnap() {
@@ -733,17 +786,29 @@ async function renderSnap() {
 }
 $('#snapBtn').onclick = async () => {
   const blob = await snapPhoto(); if (!blob) return;
-  entry.photos.push(await putBlob(blob)); entry.country = entry.country || here(); await saveEntry();
+  entry.photos.push(await putBlob(blob)); entry.country = entry.country || countryOn(entry.id); await saveEntry();
   await renderSnap();
-  await award('recount-' + entry.id, 'recount');
+  await award('recount-' + entry.id, 'recount', entry.country);
   say(stepSay.snap());
 };
 $('#postedBtn').onclick = async () => {
   entry.posted = !entry.posted; await saveEntry(); renderSnap();
-  if (entry.posted) award('postcard-' + entry.id, 'postcard');
+  if (entry.posted) award('postcard-' + entry.id, 'postcard', entry.country);
 };
 
 /* Word tile builder */
+// Words typed with ⌨️ that aren't tiles yet go into the "New" group, so next time he can tap them
+function learnWords(text) {
+  const known = new Set();
+  for (const g of WORDS.groups) for (const w of g.words) splitTiles(w).forEach(x => known.add(x.toLowerCase()));
+  for (const w of S.extraWords) known.add(w.word.toLowerCase());
+  let added = false;
+  for (const w of splitTiles(text)) {
+    if (/^[.,!?]$/.test(w) || known.has(w.toLowerCase())) continue;
+    known.add(w.toLowerCase()); S.extraWords.push({ word: w, group: 'new' }); added = true;
+  }
+  if (added) save();
+}
 function wordsIn(key) {
   const g = WORDS.groups.find(g => g.key === key) || { words: [] };
   return [...g.words, ...S.extraWords.filter(w => w.group === key).map(w => w.word)];
@@ -755,6 +820,7 @@ function buildSentence(text) {
   const week = tripWeek(), groups = $('#bGroups'); groups.innerHTML = '';
   for (const g of WORDS.groups) {
     if (g.fadeWeek && week >= g.fadeWeek) continue; // scaffolds fade over the trip
+    if (!wordsIn(g.key).length) continue;
     const row = el('div', { className: 'grp g-' + g.key }, [el('b', { textContent: g.label })]);
     const chips = el('div', { className: 'chips', style: 'justify-content:flex-start' });
     for (const w of wordsIn(g.key)) { const b = el('button', { className: 'chip', textContent: w }); b.onclick = () => { tiles.push(...splitTiles(w)); /^[.,!?]$/.test(w) || say(w); draw(); }; chips.append(b); }
@@ -770,7 +836,7 @@ function buildSentence(text) {
   return new Promise(resolve => {
     $('#bUndo').onclick = () => { tiles.pop(); draw(); };
     $('#bRead').onclick = () => say(joinTiles(tiles));
-    $('#bType').onclick = async () => { const t = await typeIt('Type a word'); if (t) { tiles.push(...splitTiles(t)); draw(); } };
+    $('#bType').onclick = async () => { const t = await typeIt('Type a word'); if (t) { tiles.push(...splitTiles(t)); learnWords(t); draw(); } };
     $('#bDone').onclick = () => { ov.classList.remove('on'); resolve(joinTiles(tiles)); };
   });
 }
@@ -783,32 +849,58 @@ function typeIt(title, value = '') {
   });
 }
 
-/* ============ TRAVEL BOOK ============ */
+/* ============ TRAVEL BOOK: a card per day, newest first; tap a card to open the day ============ */
+const shortDate = d => new Date(d + 'T12:00').toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'short' });
 onEnter.book = async () => {
   const list = $('#bookList'); list.innerHTML = '';
   const entries = (await idbAll('entries')).filter(e => e.photos.length || e.paperOverride || plainText(e).trim()).sort((a, b) => b.date.localeCompare(a.date));
   const snaps = (await idbAll('snaps')).sort((a, b) => b.date.localeCompare(a.date));
   if (!entries.length && !snaps.length) list.append(el('div', { className: 'say', textContent: '📖 ✨ 🎤 ➡️ ✏️ ➡️ 📷' }));
-  for (const e of entries) {
-    const c = C(e.country), card = el('div', { className: 'entry' });
-    const done = S.stamps.some(s => s.ref === 'recount-' + e.id);
-    card.append(el('h3', { innerHTML: `${c.flag} ${esc(niceDate(e.date))} ${e.variant !== 'normal' ? VARIANTS[e.variant].icon : ''}<span class="stampmark">${done ? '🏅' : ''}${e.posted ? '📮' : ''}</span>` }));
-    const t = el('div', { className: 'bigtext', innerHTML: writeHtml(e) }); card.append(t);
-    const row = el('div', { className: 'mini' });
-    const best = e.clips[e.best] || Object.values(e.clips)[0];
-    if (best) { const b = el('button', { textContent: '▶️' }); b.onclick = () => playClip(best, b); row.append(b); }
-    const hear = el('button', { textContent: '🔊' }); hear.onclick = () => say(plainText(e)); row.append(hear);
-    card.append(row);
-    for (const id of e.photos) card.append(el('img', { src: await blobUrl(id) }));
-    list.append(card);
-  }
-  for (const s of snaps) {
-    const card = el('div', { className: 'entry' });
-    card.append(el('h3', { innerHTML: `${C(s.country).flag} ${esc(niceDate(s.date))} ✍️ <span style="font-family:system-ui">${esc(s.letters)}</span>` }));
-    card.append(el('img', { src: await blobUrl(s.photo) })); list.append(card);
+  const items = [...entries.map(e => ({ date: e.date, e })), ...snaps.map(s => ({ date: s.date, s }))].sort((a, b) => b.date.localeCompare(a.date));
+  for (const { e, s } of items) {
+    const card = el('button', { className: 'daycard' });
+    const photo = e ? e.photos[0] : s.photo;
+    const thumb = photo ? el('img', { className: 'thumb', src: await blobUrl(photo) }) : el('span', { className: 'thumb', textContent: '🎤' });
+    const text = el('div');
+    if (e) {
+      const done = S.stamps.some(x => x.ref === 'recount-' + e.id);
+      text.innerHTML = `<b>${C(e.country).flag} ${esc(shortDate(e.date))} ${done ? '🏅' : ''}${e.posted ? '📮' : ''}</b><div class="snip">${esc(plainText(e))}</div>`;
+      card.onclick = () => openDay(e.id);
+    } else {
+      text.innerHTML = `<b>${C(s.country).flag} ${esc(shortDate(s.date))} ✍️</b><div class="snip">${esc(s.letters)}</div>`;
+      card.onclick = async () => showPhoto(await blobUrl(s.photo));
+    }
+    card.append(thumb, text); list.append(card);
   }
 };
-intro.book = 'Your Travel Book! Tap play to hear yourself.';
+intro.book = 'Your Travel Book! Tap a day to open it.';
+
+// One day: his sentence, his recordings, his photos (tap a photo to see it big)
+let dayId = null;
+function openDay(id) { dayId = id; go('day'); }
+onEnter.day = async () => {
+  const e = await idbGet('entries', dayId), body = $('#dayBody'); body.innerHTML = '';
+  if (!e) return go('book');
+  const c = C(e.country);
+  $('#dayTitle').textContent = `${c.flag} ${niceDate(e.date)}`;
+  const card = el('div', { className: 'entry' });
+  if (e.variant !== 'normal') card.append(el('div', { className: 'banner', textContent: VARIANTS[e.variant].icon + ' ' + VARIANTS[e.variant].name + (e.posted ? ' 📮' : '') }));
+  card.append(el('div', { className: 'bigtext', innerHTML: writeHtml(e) }));
+  const row = el('div', { className: 'mini' });
+  const hear = el('button', { textContent: '🔊' }); hear.onclick = () => say(plainText(e)); row.append(hear);
+  for (const p of WORDS.prompts) if (e.clips[p.key]) {
+    const b = el('button', { textContent: e.best === p.key ? '⭐' : p.icon }); b.onclick = () => playClip(e.clips[p.key], b); row.append(b);
+  }
+  card.append(row);
+  for (const id of e.photos) { const im = el('img', { src: await blobUrl(id) }); im.onclick = () => showPhoto(im.src); card.append(im); }
+  body.append(card);
+  const more = el('button', { className: 'big small c1', textContent: '✏️ Keep going on this day' });
+  more.onclick = () => { recDate = e.id === today() ? null : e.id; go('recount'); };
+  body.append(more);
+};
+intro.day = () => 'Tap the pictures to hear yourself.';
+function showPhoto(src) { $('#photoBig').src = src; $('#photoView').classList.add('on'); }
+$('#photoView').onclick = () => $('#photoView').classList.remove('on');
 
 /* ============ LETTER LAB ============ */
 // Letters are drawn on 3-line guides: y 0 head line, 1 dotted middle, 2 baseline, 3 tail line (see travel-school/letters.json)
@@ -1079,18 +1171,26 @@ async function renderParent() {
   const tab = { today: pToday, progress: pProgress, letters: pLetters, words: pWords, voices: pVoices, export: pExport }[ptab];
   await tab(body);
 }
+let pDay = null; // the day the recount box is about (today unless picked)
 async function pToday(body) {
-  const e = await todayEntry();
+  const e = await dayEntry(pDay || today());
   const loc = pbox('Where are we?', `<p class="pnote">Stamps and greetings use this. Auto follows the itinerary (${esc((leg() || {}).place || 'home')} today).</p>`);
   const sel = el('select'); sel.append(el('option', { value: '', textContent: 'Auto' }));
   for (const [k, c] of Object.entries(TRIP.countries)) sel.append(el('option', { value: k, textContent: c.flag + ' ' + c.name, selected: S.location === k }));
   sel.onchange = () => { S.location = sel.value; save(); }; loc.append(sel); body.append(loc);
 
-  const v = pbox("Today's recount", `<p class="pnote">Week ${tripWeek()} of the trip · goal: ${goalText()} on paper. Scaffolds in the word builder fade from week 3.</p>`);
-  for (const [k, x] of Object.entries(VARIANTS)) v.append(pbtn(x.icon + ' ' + x.name, () => { S.variant[today()] = k; save(); renderParent(); }, e.variant === k ? 'on' : ''));
-  const paperDone = e.photos.length ? `✅ ${e.photos.length} photo(s) of today's page` : e.paperOverride ? '✅ Paper done (marked by a grown-up)' : '⬜ No paper page yet';
+  const v = pbox('Recount', `<p class="pnote">Week ${tripWeek()} of the trip · goal: ${goalText()} on paper. Scaffolds in the word builder fade from week 3. In My Day, 📅 picks the day he's talking about.</p>`);
+  const daySel = el('select');
+  for (let n = 0; n < 10; n++) {
+    const d = daysAgo(n); if (n > 1 && d < TRIP.start) break;
+    daySel.append(el('option', { value: d, textContent: `${C(countryOn(d)).flag} ${dayWord(d)} ${d}`, selected: d === e.id }));
+  }
+  daySel.onchange = () => { pDay = daySel.value === today() ? null : daySel.value; renderParent(); };
+  v.append(daySel, el('br'));
+  for (const [k, x] of Object.entries(VARIANTS)) v.append(pbtn(x.icon + ' ' + x.name, () => { S.variant[e.id] = k; save(); renderParent(); }, e.variant === k ? 'on' : ''));
+  const paperDone = e.photos.length ? `✅ ${e.photos.length} photo(s) of the page` : e.paperOverride ? '✅ Paper done (marked by a grown-up)' : '⬜ No paper page yet';
   v.append(el('p', { textContent: paperDone }));
-  if (!e.photos.length && !e.paperOverride) v.append(pbtn('Mark paper done (no photo) and give the stamp', async () => { e.paperOverride = true; await idbPut('entries', e); await award('recount-' + e.id, 'recount'); renderParent(); }));
+  if (!e.photos.length && !e.paperOverride) v.append(pbtn('Mark paper done (no photo) and give the stamp', async () => { e.paperOverride = true; await idbPut('entries', e); await award('recount-' + e.id, 'recount', e.country); renderParent(); }));
   body.append(v);
 
   const u = pbox('Paper unlocks game time', '<p class="pnote">When today’s paper page is snapped, add this much to his games time (once a day).</p>');

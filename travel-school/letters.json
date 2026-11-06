@@ -4,7 +4,7 @@
     {
       "key": "round", "name": "Round letters", "icon": "🟠", "letters": "cadgoqs",
       "move": "Start at two o'clock and go anticlockwise.",
-      "words": ["dog", "dad", "sad", "add", "cod", "gas", "odd", "cog"]
+      "words": ["dog", "dad", "sad", "add", "cod", "gas", "odd", "cog", "good", "soda", "cocoa", "dodo", "ago", "dogs", "dads", "cogs"]
     },
     { "key": "downup", "name": "Down, up and over", "icon": "🌈", "letters": "rnmhbp", "move": "Straight down, back up, and over.", "words": [] },
     { "key": "straight", "name": "Straight and hook", "icon": "🪝", "letters": "iltjuy", "move": "Down, then flick or hook.", "words": [] },

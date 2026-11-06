@@ -333,20 +333,30 @@
   <button class="gear" id="luisaGear" hidden><span class="fill"></span>⚙️</button>
 </section>
 
-<!-- ORLANDO MENU -->
+<!-- ORLANDO MENU: his games, Luisa's games, the trip map, books and Travel School -->
 <section id="orlando" class="screen">
   <div class="topbar"><button class="back" data-go="home">🏠</button></div>
   <h1>🚀 Orlando</h1>
   <div class="row">
-    <button class="big tile2" data-go="bakery"><span class="emoji">🧁</span>Number Bakery</button>
-    <button class="big tile1" data-go="robot"><span class="emoji">🤖</span>Coder Robot</button>
-    <button class="big tile3" data-go="snake"><span class="emoji">🐍</span>Snake Maths</button>
+    <button class="big orlando" data-go="orlandoGames"><span class="emoji">🎮</span>Orlando's Games</button>
+    <button class="big luisa" data-go="luisa"><span class="emoji">🦋</span>Luisa's Games</button>
     <button class="big tile6" data-route="orlando"><span class="emoji">🗺️</span>Trip Map</button>
-    <button class="big tile5" data-builder="orlando"><span class="emoji">🦾</span>Robot Builder</button>
     <button class="big tile9" data-shelf="orlando"><span class="emoji">📚</span>Books</button>
     <button class="big tile8" data-go="school"><span class="emoji">🎒</span>Travel School</button>
   </div>
   <button class="gear" id="orlandoGear" hidden><span class="fill"></span>⚙️</button>
+</section>
+
+<!-- ORLANDO'S GAMES -->
+<section id="orlandoGames" class="screen">
+  <div class="topbar"><button class="back" data-go="orlando">🏠</button></div>
+  <h1>🎮 Orlando's Games</h1>
+  <div class="row">
+    <button class="big tile2" data-go="bakery"><span class="emoji">🧁</span>Number Bakery</button>
+    <button class="big tile1" data-go="robot"><span class="emoji">🤖</span>Coder Robot</button>
+    <button class="big tile3" data-go="snake"><span class="emoji">🐍</span>Snake Maths</button>
+    <button class="big tile5" data-builder="orlando"><span class="emoji">🦾</span>Robot Builder</button>
+  </div>
 </section>
 
 <!-- BUBBLES -->
@@ -357,7 +367,7 @@
 
 <!-- BAKERY -->
 <section id="bakery" class="screen">
-  <div class="topbar"><button class="back" data-go="orlando">🏠</button><div class="stars" id="stars">⭐ 0</div></div>
+  <div class="topbar"><button class="back" data-go="orlandoGames">🏠</button><div class="stars" id="stars">⭐ 0</div></div>
   <div class="customer">
     <div class="face" id="face">🐻</div>
     <div class="order" id="order"></div>
@@ -476,13 +486,13 @@
 
 <!-- SNAKE MATHS (its own page, snake-maths.html, in a frame) -->
 <section id="snake" class="screen">
-  <div class="topbar"><button class="back" data-go="orlando">🏠</button></div>
+  <div class="topbar"><button class="back" data-go="orlandoGames">🏠</button></div>
   <iframe id="snakeFrame" title="Snake Maths"></iframe>
 </section>
 
 <!-- CODER ROBOT -->
 <section id="robot" class="screen">
-  <div class="topbar"><button class="back" data-go="orlando">🏠</button><div class="stars" id="rstars"></div></div>
+  <div class="topbar"><button class="back" data-go="orlandoGames">🏠</button><div class="stars" id="rstars"></div></div>
   <div class="rgrid" id="rgrid"></div>
   <div class="program" id="program"></div>
   <div class="palette" id="palette"></div>
@@ -801,8 +811,9 @@ let grownupFrom = 'home';
 ['gear', 'timeupGear', 'luisaGear', 'orlandoGear'].forEach(id => holdButton(document.getElementById(id), 3000, () => { grownupFrom = current; go('grownup'); }));
 // (from the all-done screen, back goes to the child's menu: a grown-up may have just added time)
 document.getElementById('grownupBack').onclick = () => go(grownupFrom === 'timeup' ? timeupFor.kid : grownupFrom);
-onEnter.luisa = () => { say('hi_luisa'); markLocked('luisa'); };
+onEnter.luisa = () => { if (APP_KID !== 'orlando') say('hi_luisa'); markLocked(kidOf('bubbles'), 'luisa'); };
 onEnter.orlando = () => { say('hi_orlando'); markLocked('orlando'); };
+onEnter.orlandoGames = () => markLocked('orlando', 'orlandoGames');
 
 /* ============ SCREEN TIME (daily limits per child, stored on this device) ============ */
 const KIDS = { luisa: '🦋 Luisa', orlando: '🚀 Orlando' };
@@ -811,7 +822,10 @@ const SCREEN_CAT = { bubbles: 'games', bodyparts: 'games', travel: 'games', trip
   dance: 'games', route: 'games', bakery: 'games', robot: 'games', snake: 'games', builder: 'games', videos: 'videos', player: 'videos' };
 const SCREEN_KID = { bakery: 'orlando', robot: 'orlando', snake: 'orlando' }; // every other timed screen is Luisa's (map and builder: whoever opened it)
 const STEP_MIN = 5, MAX_MIN = 180, BONUS_MIN = 10; // grown-up stepper: above MAX_MIN = no limit (null)
-const kidOf = id => id === 'route' ? routeKid : id === 'builder' ? builderKid : SCREEN_KID[id] || 'luisa';
+// On Orlando's tablet everything counts as his time, Luisa's games included
+const APP_KID = document.documentElement.dataset.kid || '';
+const kidOf = id => APP_KID === 'orlando' ? 'orlando' : id === 'route' ? routeKid : id === 'builder' ? builderKid : SCREEN_KID[id] || 'luisa';
+const menuOf = kid => kid === 'orlando' ? 'orlandoGames' : kid; // where a game's 🏠 goes
 let tl = store.get('screen-time', {}), warned = {};
 tl.limits = Object.assign({ luisa: { games: 10, videos: 10 }, orlando: { games: 10, videos: 10 } }, tl.limits);
 tl.used = tl.used || {}; tl.bonus = tl.bonus || {};
@@ -845,9 +859,9 @@ function timeGate(id) {
   timeupFor = { kid: kidOf(id), cat };
   return 'timeup';
 }
-function markLocked(kid) {
+function markLocked(kid, menu = kid) {
   rollDay();
-  document.querySelectorAll(`#${kid} [data-go], #${kid} [data-route], #${kid} [data-builder]`).forEach(b => {
+  document.querySelectorAll(`#${menu} [data-go], #${menu} [data-route], #${menu} [data-builder]`).forEach(b => {
     const cat = SCREEN_CAT[b.dataset.go || (b.dataset.builder ? 'builder' : 'route')];
     b.classList.toggle('locked', !!cat && leftSec(kid, cat) <= 0);
   });
@@ -897,7 +911,7 @@ onEnter.timeup = () => {
   say('all_done');
 };
 document.getElementById('timeupRead').onclick = () => openShelf(timeupFor.kid);
-holdButton(document.getElementById('timeupBack'), BACK_HOLD_MS, () => go(timeupFor.kid));
+holdButton(document.getElementById('timeupBack'), BACK_HOLD_MS, () => go(APP_KID === 'orlando' ? 'orlando' : menuOf(timeupFor.kid)));
 
 // Grown-up settings: limits per child and category, plus "+10 min" for today
 function renderLimits() {
@@ -1153,7 +1167,7 @@ onEnter.builder = () => { const f = document.getElementById('builderFrame'); if 
 // Both kids have a Robot Builder tile: 🏠 and the games clock follow whoever opened it
 let builderKid = 'orlando';
 document.querySelectorAll('[data-builder]').forEach(b => b.addEventListener('click', () => { builderKid = b.dataset.builder; go('builder'); }));
-document.getElementById('builderBack').addEventListener('click', () => go(builderKid));
+document.getElementById('builderBack').addEventListener('click', () => go(menuOf(builderKid)));
 
 /* ============ SNAKE MATHS (Orlando) ============ */
 // Loaded on first visit; it keeps its own level and progress in localStorage ('snake-maths')
@@ -2044,6 +2058,10 @@ if (hasVideos) document.getElementById('videosTile').hidden = false;
 // Each child's tablet app opens straight to their menu, with no way back to "Who's playing?"
 // (Orlando's app marks the page <html data-kid="orlando">; Luisa's is the one with videos)
 const appKid = document.documentElement.dataset.kid || (hasVideos ? 'luisa' : '');
+if (appKid === 'orlando') { // his app has Luisa's games too: her 🏠 goes back to his page; books are all on his shelf
+  document.querySelector('#luisa .back').dataset.hold = 'orlando';
+  document.querySelector('#luisa [data-shelf]').hidden = true;
+}
 if (appKid) {
   document.querySelector(`#${appKid} .back`).hidden = true;
   document.getElementById(appKid + 'Gear').hidden = false; // the grown-up gate, since "Who's playing?" is out of reach

@@ -237,6 +237,7 @@ Thumbnail crop boxes for each category are in `VB`.
 `orlando-tablet/` is Orlando's version of the games app for his **Galaxy Tab S8 (SM-X700)**. It holds his games (Number Bakery, Coder Robot) and his Books, all bundled for offline use, with the same screen-time limits. App ID: `au.mason.orlando.kids`.
 
 - **Same page as Luisa's app**: `npm run sync` copies the root `index.html` (marked `<html data-kid="orlando">`), `audio/`, `photos/` and `books/shelf`, then runs `cap sync`. The page opens straight to his menu, hides 🏠, and puts the grown-up ⚙️ on his menu.
+- **Icon**: Orlando's own rocket drawing, redrawn by `orlando-tablet/make-icon.py` (needs Pillow). Run it to regenerate the launcher icons after tweaking colours or shapes; it also writes `icon-preview.png`.
 - **Robot voice**: Android's WebView has no `speechSynthesis`, so `SpeechPlugin` (Android text-to-speech, Australian English if installed) stands in for it. That covers tap-a-word, 🔊 on a page, and any voice line that hasn't been recorded.
 - **Lock-in** works like Luisa's: it pins itself (confirm once), Back does nothing, and system bars are hidden. Unpin: hold Back + Recents.
 - **Install over Wi‑Fi**: Wireless debugging → *Pair device with pairing code*, then `adb pair <ip>:<pairing-port>` and `adb connect <ip>:<port>`. `adb mdns services` shows the connect port. Then `adb install -r orlando-tablet/android/app/build/outputs/apk/debug/app-debug.apk`.

@@ -138,17 +138,23 @@
       <select id="sSound"><option value="baa">Baa-baa tune</option><option value="chime">Gentle chime</option></select>
     </label>
     <label>Night brightness <input type="range" id="sDim" min="15" max="100" step="5"></label>
+    <label>White noise at night <input type="checkbox" id="sNoise"></label>
+    <label>Noise volume <input type="range" id="sNoiseVol" min="5" max="100" step="5"></label>
+    <label>Noise tone (darker ↔ brighter) <input type="range" id="sNoiseTone" min="-6" max="6" step="1"></label>
     <label>24-hour clock <input type="checkbox" id="s24"></label>
     <label>Show clock at night <input type="checkbox" id="sNightClock"></label>
     <div class="row"><button id="bTest">🔔 Test alarm</button><button id="bPreview">Preview day/night</button></div>
     <div class="row"><button id="bClose" class="primary">Done</button></div>
-    <div class="hint">Open this screen by holding the top-right corner for 3 seconds. Tap Sam to stop a ringing alarm.</div>
+    <div class="hint">Open this screen by holding the top-right corner for 3 seconds. Tap Sam to stop a ringing alarm.
+      White noise fades in over 20 s when Sam goes to sleep and fades out over 30 s when he wakes (or the alarm rings).
+      "Preview day/night" lets you hear it now.</div>
   </div>
 </div>
 
 <script>
 (() => {
-  const DEF = { tz: '', whiteDay: false, night: '19:00', day: '07:00', alarmOn: false, alarm: '07:00', sound: 'baa', dim: 55, h24: false, nightClock: true };
+  const DEF = { tz: '', whiteDay: false, night: '19:00', day: '07:00', alarmOn: false, alarm: '07:00', sound: 'baa', dim: 55, h24: false, nightClock: true,
+    noiseOn: true, noiseVol: 50, noiseTone: 0 };
   let cfg = { ...DEF };
   try { cfg = { ...DEF, ...JSON.parse(localStorage.getItem('sam-settings') || '{}') }; } catch (e) {}
   const save = () => { try { localStorage.setItem('sam-settings', JSON.stringify(cfg)); } catch (e) {} };
@@ -200,6 +206,8 @@
     $('alarmBadge').textContent = [cfg.tz ? `🌏 ${CITIES[cfg.tz]} time` : '', cfg.alarmOn ? `⏰ ${fmt(cfg.alarm)}` : '']
       .filter(Boolean).join('  ·  ');
 
+    setNoise(night && cfg.noiseOn && !ringing);
+
     const key = now.day + cfg.alarm;
     const hhmm = `${String(now.h).padStart(2, '0')}:${m}`;
     if (cfg.alarmOn && hhmm === cfg.alarm && lastAlarmKey !== key) { lastAlarmKey = key; startAlarm(); }
@@ -230,6 +238,65 @@
       baa(t + 2.3); baa(t + 3.1);
     }
   }
+  // ---- white noise while Sam sleeps ----
+  // Noise shaped to the spectrum of our 6 Nov bedroom recording (the "Matched Noise" artifact): a warm, low hum
+  // around 300–600 Hz with very little hiss above 2 kHz. 1/6-octave power in dB, 121 log-spaced points, 20 Hz – 20 kHz.
+  const CURVE = [-13.3,-13.3,-18.9,-18.9,-18.8,-18.8,-18.8,-18.8,-20.7,-20.9,-21.2,-22.6,-22.2,-21.5,-22.4,-25.3,-27.0,-24.9,-22.5,-21.4,-18.8,-19.4,-21.6,-24.3,-26.5,-31.4,-30.8,-28.9,-27.1,-27.2,-28.6,-26.8,-24.9,-22.6,-21.7,-20.8,-18.9,-15.9,-12.7,-8.2,-7.4,-11.1,-15.6,-13.3,-9.9,-8.9,-7.5,-6.2,-4.1,-3.2,-2.6,-0.3,0.0,-1.2,-1.1,-0.3,-0.3,-2.4,-7.0,-11.8,-10.4,-8.1,-7.9,-9.4,-11.2,-12.2,-12.9,-14.4,-16.0,-17.9,-20.9,-21.1,-21.4,-23.7,-25.9,-30.6,-33.7,-33.6,-34.0,-34.3,-37.2,-39.0,-38.6,-35.6,-32.7,-33.7,-37.1,-38.7,-36.2,-34.4,-37.0,-44.1,-45.8,-45.8,-45.6,-46.2,-50.0,-55.8,-55.6,-55.1,-55.7,-58.4,-61.3,-58.9,-58.5,-59.3,-58.6,-58.2,-61.0,-67.0,-69.0,-73.8,-77.4,-81.1,-84.6,-86.6,-87.9,-85.1,-84.3,-84.5,-86.2];
+  const F0 = 20, F1 = 20000, NP = CURVE.length, LR = Math.log(F1 / F0);
+  function curveAt(f) {
+    if (f <= F0) return CURVE[0]; if (f >= F1) return CURVE[NP - 1];
+    const p = Math.log(f / F0) / LR * (NP - 1), i = Math.floor(p), t = p - i; return CURVE[i] * (1 - t) + CURVE[i + 1] * t;
+  }
+  function ifft(re, im) { // in-place radix-2 inverse FFT (unscaled)
+    const n = re.length;
+    for (let i = 1, j = 0; i < n; i++) { let b = n >> 1; for (; j & b; b >>= 1) j ^= b; j ^= b;
+      if (i < j) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
+    for (let len = 2; len <= n; len <<= 1) {
+      const a = 2 * Math.PI / len, wr = Math.cos(a), wi = Math.sin(a), h = len >> 1;
+      for (let i = 0; i < n; i += len) { let cr = 1, ci = 0;
+        for (let k = 0; k < h; k++) { const u = i + k, v = u + h, xr = re[v] * cr - im[v] * ci, xi = re[v] * ci + im[v] * cr;
+          re[v] = re[u] - xr; im[v] = im[u] - xi; re[u] += xr; im[u] += xi; const t = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = t; } }
+    }
+  }
+  // Random phases on the target spectrum: a circular buffer, so it loops with no seam
+  function noiseChannel(N, sr) {
+    const re = new Float64Array(N), im = new Float64Array(N);
+    for (let k = 1; k < N / 2; k++) { const f = k * sr / N; if (f < 18) continue;
+      const m = Math.pow(10, curveAt(f) / 20), ph = Math.random() * 2 * Math.PI;
+      re[k] = m * Math.cos(ph); im[k] = m * Math.sin(ph); re[N - k] = re[k]; im[N - k] = -im[k]; }
+    ifft(re, im); let s = 0; for (let i = 0; i < N; i++) s += re[i] * re[i];
+    const g = 0.12 / Math.sqrt(s / N), out = new Float32Array(N);
+    for (let i = 0; i < N; i++) out[i] = Math.max(-1, Math.min(1, re[i] * g));
+    return out;
+  }
+  let noise = null; // { gain, low, high, want }
+  function buildNoise() { // two different ~22 s loops, one per ear, so there's no audible repeat
+    const a = audio(), N = 1 << 20, buf = a.createBuffer(2, N, a.sampleRate);
+    buf.getChannelData(0).set(noiseChannel(N, a.sampleRate)); buf.getChannelData(1).set(noiseChannel(N, a.sampleRate));
+    const src = a.createBufferSource(); src.buffer = buf; src.loop = true;
+    const low = a.createBiquadFilter(); low.type = 'lowshelf'; low.frequency.value = 500;
+    const high = a.createBiquadFilter(); high.type = 'highshelf'; high.frequency.value = 500;
+    const gain = a.createGain(); gain.gain.value = 0;
+    src.connect(low).connect(high).connect(gain).connect(a.destination); src.start();
+    noise = { gain, low, high, want: 0 };
+  }
+  const noiseLevel = () => Math.pow(cfg.noiseVol / 100, 2);
+  // Fades in over 20 s, out over 30 s; a volume change while playing takes half a second
+  function setNoise(on) {
+    if (!on && !noise) return;
+    if (!noise) buildNoise();
+    noise.low.gain.value = -cfg.noiseTone / 2; noise.high.gain.value = cfg.noiseTone / 2;
+    const want = on ? noiseLevel() : 0;
+    if (noise.want === want) return;
+    const secs = noise.want === 0 ? 20 : want === 0 ? 30 : .5;
+    noise.want = want;
+    const a = audio(), t = a.currentTime, g = noise.gain.gain;
+    a.resume();
+    g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(want, t + secs);
+  }
+  // In case the tablet holds sound back until someone touches the screen
+  document.addEventListener('pointerdown', () => { if (ac) ac.resume(); });
+
   function startAlarm(test) {
     stopAlarm(); ringing = true; document.body.classList.add('ringing');
     let vol = test ? 1 : .35;
@@ -271,8 +338,9 @@
   ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => $('hold').addEventListener(ev, () => { clearTimeout(holdT); ring.classList.remove('on'); }));
 
   $('sTz').innerHTML = Object.entries(CITIES).map(([z, c]) => `<option value="${z}">${c}</option>`).join('');
-  const fields = { sTz: 'tz', sNight: 'night', sDay: 'day', sAlarm: 'alarm', sSound: 'sound', sDim: 'dim' };
-  const checks = { sWhite: 'whiteDay', sAlarmOn: 'alarmOn', s24: 'h24', sNightClock: 'nightClock' };
+  const fields = { sTz: 'tz', sNight: 'night', sDay: 'day', sAlarm: 'alarm', sSound: 'sound', sDim: 'dim', sNoiseVol: 'noiseVol', sNoiseTone: 'noiseTone' };
+  const checks = { sWhite: 'whiteDay', sAlarmOn: 'alarmOn', s24: 'h24', sNightClock: 'nightClock', sNoise: 'noiseOn' };
+  const NUMBERS = ['dim', 'noiseVol', 'noiseTone'];
   function openSettings() {
     ring.classList.remove('on'); audio().resume();
     for (const [id, k] of Object.entries(fields)) $(id).value = cfg[k];
@@ -280,7 +348,7 @@
     $('settings').classList.add('open');
   }
   function readSettings() {
-    for (const [id, k] of Object.entries(fields)) if ($(id).value !== '') cfg[k] = k === 'dim' ? +$(id).value : $(id).value;
+    for (const [id, k] of Object.entries(fields)) if ($(id).value !== '') cfg[k] = NUMBERS.includes(k) ? +$(id).value : $(id).value;
     for (const [id, k] of Object.entries(checks)) cfg[k] = $(id).checked;
     save(); tick();
   }

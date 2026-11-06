@@ -253,7 +253,7 @@
 <div class="overlay" id="builder"><div class="sheet">
   <div style="display:flex;gap:12px;width:100%;align-items:center">
     <div class="line" id="bLine"></div>
-    <div style="display:flex;flex-direction:column;gap:8px"><button class="round" id="bRead">🔊</button><button class="round" id="bUndo">⌫</button></div>
+    <div style="display:flex;flex-direction:column;gap:8px"><button class="round" id="bBest">⭐</button><button class="round" id="bRead">🔊</button><button class="round" id="bUndo">⌫</button></div>
   </div>
   <div class="check" id="bCheck"></div>
   <div id="bGroups" style="width:100%;display:flex;flex-direction:column;gap:10px"></div>
@@ -747,16 +747,17 @@ function renderLabelPicker(area) {
     chips.append(b);
   }
   const add = el('button', { className: 'chip', textContent: '⌨️' });
-  add.onclick = async () => { const t = await typeIt('Type a label word'); if (t && sel.length < 5) { sel.push(t.trim()); learnWords(t); await saveEntry(); renderPick(); } };
+  add.onclick = async () => { const t = await typeIt('Type a label word', '', true); if (t && sel.length < 5) { sel.push(t.trim()); learnWords(t); await saveEntry(); renderPick(); } };
   chips.append(add); area.append(chips);
 }
 
 function writeHtml(e) { // the text Orlando copies onto paper (also used in the Travel Book)
   const p = e.parts;
   if (e.variant === 'labels') return p.labels.map(esc).join(' · ');
-  if (e.variant === 'shared') return [p.first && `<span class="mine">${esc(p.first)}</span>`, p.middle && `<span class="theirs">${esc(p.middle)}</span>`, p.last && `<span class="mine">${esc(p.last)}</span>`].filter(Boolean).join(' ');
-  if (e.variant === 'postcard') return (p.to ? `Dear ${esc(p.to)},<br>` : '') + esc(p.main) + '<br>From Orlando';
-  return esc(p.main);
+  const sc = t => esc(sentenceCase(t));
+  if (e.variant === 'shared') return [p.first && `<span class="mine">${sc(p.first)}</span>`, p.middle && `<span class="theirs">${sc(p.middle)}</span>`, p.last && `<span class="mine">${sc(p.last)}</span>`].filter(Boolean).join(' ');
+  if (e.variant === 'postcard') return (p.to ? `Dear ${esc(p.to)},<br>` : '') + sc(p.main) + '<br>From Orlando';
+  return sc(p.main);
 }
 function plainText(e) { const d = el('div', { innerHTML: writeHtml(e).replace(/<br>/g, ' ') }); return d.textContent; }
 function renderWrite() {
@@ -767,7 +768,7 @@ function renderWrite() {
     : v === 'postcard' ? '<span>💌 Write your postcard</span><span>🖍️ Draw a picture</span>'
     : `<span>🎯 Today: ${goalText()}</span><span>🖍️ + a drawing</span>`;
   const box = $('#writeText');
-  if (v === 'normal') makeReadable(box, entry.parts.main); else box.innerHTML = writeHtml(entry);
+  if (v === 'normal') makeReadable(box, sentenceCase(entry.parts.main)); else box.innerHTML = writeHtml(entry);
   box.dataset.text = plainText(entry);
   if (!box.dataset.text.trim()) box.innerHTML = '<span style="color:#aaa">⭐ ⬅️</span>';
 }
@@ -798,6 +799,7 @@ $('#postedBtn').onclick = async () => {
 
 /* Word tile builder */
 // Words typed with ⌨️ that aren't tiles yet go into the "New" group, so next time he can tap them
+// (saved in lower case unless it's a name: the keyboard capitalises every word typed on its own)
 function learnWords(text) {
   const known = new Set();
   for (const g of WORDS.groups) for (const w of g.words) splitTiles(w).forEach(x => known.add(x.toLowerCase()));
@@ -805,9 +807,30 @@ function learnWords(text) {
   let added = false;
   for (const w of splitTiles(text)) {
     if (/^[.,!?]$/.test(w) || known.has(w.toLowerCase())) continue;
-    known.add(w.toLowerCase()); S.extraWords.push({ word: w, group: 'new' }); added = true;
+    known.add(w.toLowerCase()); S.extraWords.push({ word: properCase(w), group: 'new' }); added = true;
   }
   if (added) save();
+}
+// Names keep their capital (words.json "proper", plus capitalised words a grown-up added in Grown-ups → Words)
+function isName(w) {
+  const k = w.toLowerCase();
+  return (WORDS.proper || []).some(p => p.toLowerCase() === k)
+    || S.extraWords.some(x => x.group !== 'new' && /^[A-Z]/.test(x.word) && x.word.toLowerCase() === k);
+}
+const properCase = w => /^i$/i.test(w) ? 'I' : /^i'/i.test(w) ? 'I' + w.slice(1).toLowerCase() : isName(w) ? (WORDS.proper || []).find(p => p.toLowerCase() === w.toLowerCase()) || w : w.toLowerCase();
+// The sentence he copies onto paper, in sentence case: a capital only to start each sentence, for "I" and for
+// names, and a full stop if the end has no punctuation
+function sentenceCase(text) {
+  let start = true;
+  const out = splitTiles(text).map(w => {
+    if (/^[.!?]$/.test(w)) { start = true; return w; }
+    if (w === ',') return w;
+    const fixed = /^[A-Za-z][a-z']*$/.test(w) || /^[a-z]/.test(w) ? properCase(w) : w;
+    const r = start ? fixed.charAt(0).toUpperCase() + fixed.slice(1) : fixed;
+    start = false; return r;
+  });
+  const t = joinTiles(out);
+  return t && !/[.!?]$/.test(t) ? t + '.' : t;
 }
 function wordsIn(key) {
   const g = WORDS.groups.find(g => g.key === key) || { words: [] };
@@ -836,13 +859,17 @@ function buildSentence(text) {
   return new Promise(resolve => {
     $('#bUndo').onclick = () => { tiles.pop(); draw(); };
     $('#bRead').onclick = () => say(joinTiles(tiles));
-    $('#bType').onclick = async () => { const t = await typeIt('Type a word'); if (t) { tiles.push(...splitTiles(t)); learnWords(t); draw(); } };
+    // ⭐ hear his favourite recording again while he builds the sentence
+    $('#bBest').hidden = !entry.clips[entry.best];
+    $('#bBest').onclick = () => playClip(entry.clips[entry.best], $('#bBest'));
+    $('#bType').onclick = async () => { const t = await typeIt('Type a word', '', true); if (t) { tiles.push(...splitTiles(t)); learnWords(t); draw(); } };
     $('#bDone').onclick = () => { ov.classList.remove('on'); resolve(joinTiles(tiles)); };
   });
 }
-function typeIt(title, value = '') {
+// words = true: a word, not a sentence, so the keyboard shouldn't capitalise it
+function typeIt(title, value = '', words = false) {
   const ov = $('#typeBox'), ta = $('#typeText');
-  $('#typeTitle').textContent = title; ta.value = value || ''; ov.classList.add('on'); setTimeout(() => ta.focus(), 50);
+  $('#typeTitle').textContent = title; ta.value = value || ''; ta.setAttribute('autocapitalize', words ? 'none' : 'sentences'); ov.classList.add('on'); setTimeout(() => ta.focus(), 50);
   return new Promise(resolve => {
     $('#typeOk').onclick = () => { ov.classList.remove('on'); resolve(ta.value.trim()); };
     $('#typeCancel').onclick = () => { ov.classList.remove('on'); resolve(null); };
@@ -1399,6 +1426,16 @@ async function travelBookHtml(withAudio) {
   const j = f => fetch('travel-school/' + f).then(r => r.json());
   [TRIP, WORDS, LETTERS] = await Promise.all([j('trip.json'), j('words.json'), j('letters.json')]);
   await loadVoices();
+  // Words typed before the keyboard fix came in capitalised ("Bit", "There"): lower-case them, and drop any
+  // that are now ordinary tiles
+  const tiles = new Set(WORDS.groups.flatMap(g => g.words.flatMap(w => splitTiles(w).map(x => x.toLowerCase()))));
+  const seen = new Set();
+  S.extraWords = S.extraWords.filter(w => {
+    if (w.group !== 'new') return true;
+    w.word = properCase(w.word); const k = w.word.toLowerCase();
+    if (tiles.has(k) || seen.has(k)) return false; seen.add(k); return true;
+  });
+  save();
   go('home');
 })();
 </script>

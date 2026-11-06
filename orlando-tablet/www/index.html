@@ -356,6 +356,7 @@
     <button class="big tile1" data-go="robot"><span class="emoji">🤖</span>Coder Robot</button>
     <button class="big tile3" data-go="snake"><span class="emoji">🐍</span>Snake Maths</button>
     <button class="big tile5" data-builder="orlando"><span class="emoji">🦾</span>Robot Builder</button>
+    <button class="big tile6" data-go="catcha"><span class="emoji">🦜</span>Snake Catcha</button>
   </div>
 </section>
 
@@ -488,6 +489,12 @@
 <section id="snake" class="screen">
   <div class="topbar"><button class="back" data-go="orlandoGames">🏠</button></div>
   <iframe id="snakeFrame" title="Snake Maths"></iframe>
+</section>
+
+<!-- SNAKE CATCHA (its own page, snake-catcha.html, in a frame) -->
+<section id="catcha" class="screen">
+  <div class="topbar"><button class="back" data-go="orlandoGames">🏠</button></div>
+  <iframe id="catchaFrame" class="gameframe" title="Snake Catcha"></iframe>
 </section>
 
 <!-- CODER ROBOT -->
@@ -721,7 +728,7 @@ if (!('speechSynthesis' in window) && window.Capacitor && Capacitor.PluginHeader
   window.SpeechSynthesisUtterance = function (text) { this.text = text; this.rate = 1; this.pitch = 1; };
   window.speechSynthesis = {
     speak(u) {
-      Capacitor.nativeCallback('Speech', 'speak', { text: u.text, rate: u.rate, pitch: u.pitch }, (res, err) => {
+      Capacitor.nativeCallback('Speech', 'speak', { text: u.text, rate: u.rate, pitch: u.pitch, lang: u.lang }, (res, err) => {
         if (res && res.type === 'range') { if (u.onboundary) u.onboundary({ charIndex: res.charIndex }); }
         else if (u.onend) u.onend();
       });
@@ -819,8 +826,8 @@ onEnter.orlandoGames = () => markLocked('orlando', 'orlandoGames');
 const KIDS = { luisa: '🦋 Luisa', orlando: '🚀 Orlando' };
 const LIMITED = ['games', 'videos']; // reading is always unlimited
 const SCREEN_CAT = { bubbles: 'games', bodyparts: 'games', travel: 'games', trip: 'games', plane: 'games', feel: 'games', count: 'games',
-  dance: 'games', route: 'games', bakery: 'games', robot: 'games', snake: 'games', builder: 'games', videos: 'videos', player: 'videos' };
-const SCREEN_KID = { bakery: 'orlando', robot: 'orlando', snake: 'orlando' }; // every other timed screen is Luisa's (map and builder: whoever opened it)
+  dance: 'games', route: 'games', bakery: 'games', robot: 'games', snake: 'games', catcha: 'games', builder: 'games', videos: 'videos', player: 'videos' };
+const SCREEN_KID = { bakery: 'orlando', robot: 'orlando', snake: 'orlando', catcha: 'orlando' }; // every other timed screen is Luisa's (map and builder: whoever opened it)
 const STEP_MIN = 5, MAX_MIN = 180, BONUS_MIN = 10; // grown-up stepper: above MAX_MIN = no limit (null)
 // On Orlando's tablet everything counts as his time, Luisa's games included
 const APP_KID = document.documentElement.dataset.kid || '';
@@ -1172,6 +1179,8 @@ document.getElementById('builderBack').addEventListener('click', () => go(menuOf
 /* ============ SNAKE MATHS (Orlando) ============ */
 // Loaded on first visit; it keeps its own level and progress in localStorage ('snake-maths')
 onEnter.snake = () => { const f = document.getElementById('snakeFrame'); if (!f.src) f.src = 'snake-maths.html'; };
+// Snake Catcha: keeps its world, snakes and words in localStorage ('snake-catcha')
+onEnter.catcha = () => { const f = document.getElementById('catchaFrame'); if (!f.src) f.src = 'snake-catcha.html'; };
 // Travel School keeps its journal, photos and recordings in IndexedDB ('travel-school')
 onEnter.school = () => { const f = document.getElementById('schoolFrame'); if (!f.src) f.src = 'travel-school.html'; };
 // A snapped paper page in Travel School can unlock extra games time for today (set in its grown-up area)

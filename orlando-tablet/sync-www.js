@@ -11,6 +11,7 @@ fs.writeFileSync('www/index.html', page);
 fs.copyFileSync('../snake-maths.html', 'www/snake-maths.html');
 fs.copyFileSync('../robot-builder_v2.html', 'www/robot-builder_v2.html');
 fs.copyFileSync('../travel-school.html', 'www/travel-school.html');
+fs.copyFileSync('../snake-catcha.html', 'www/snake-catcha.html');
 for (const dir of ['audio', 'photos', 'books/shelf', 'travel-school']) {
   if (fs.existsSync('../' + dir)) fs.cpSync('../' + dir, 'www/' + dir, { recursive: true, filter: f => !f.endsWith('book.json') });
 }

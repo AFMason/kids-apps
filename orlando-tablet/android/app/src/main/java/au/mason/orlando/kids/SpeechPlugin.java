@@ -25,6 +25,7 @@ public class SpeechPlugin extends Plugin {
     private volatile boolean ready;
     private final Map<String, PluginCall> speaking = new ConcurrentHashMap<>();
     private int next = 0;
+    private String curLang = null; // null = English (the chosen voice)
 
     @Override
     public void load() {
@@ -58,6 +59,13 @@ public class SpeechPlugin extends Plugin {
         speaking.put(id, call);
         tts.setSpeechRate(call.getFloat("rate", 1f));
         tts.setPitch(call.getFloat("pitch", 1f));
+        // Snake Catcha speaks Dutch, French and Swiss German too ("nl-NL", "fr-FR", "de-CH")
+        String lang = call.getString("lang");
+        if (lang != null && (lang.isEmpty() || lang.toLowerCase(Locale.ROOT).startsWith("en"))) lang = null;
+        if (lang == null ? curLang != null : !lang.equals(curLang)) {
+            if (lang == null) english(); else useLang(lang);
+            curLang = lang;
+        }
         tts.speak(call.getString("text", ""), TextToSpeech.QUEUE_ADD, null, id);
     }
 
@@ -76,6 +84,52 @@ public class SpeechPlugin extends Plugin {
             }
         }
         if (pick != null) tts.setVoice(pick);
+    }
+
+    private void english() {
+        if (tts.setLanguage(new Locale("en", "AU")) < 0) tts.setLanguage(Locale.UK);
+        applyVoice(getContext().getSharedPreferences("speech", Context.MODE_PRIVATE).getString("voice", null));
+    }
+
+    // Best voice for the language: installed before online-only, this country first (de-CH falls back to any German)
+    private void useLang(String tag) {
+        Locale want = Locale.forLanguageTag(tag);
+        Voice pick = null;
+        int pickScore = -1;
+        Set<Voice> all = tts.getVoices();
+        if (all != null) for (Voice v : all) {
+            if (!want.getLanguage().equals(v.getLocale().getLanguage())) continue;
+            if (v.getFeatures().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)) continue;
+            int score = (v.isNetworkConnectionRequired() ? 0 : 2000) + (want.getCountry().equals(v.getLocale().getCountry()) ? 1000 : 0) + v.getQuality();
+            if (score > pickScore) { pick = v; pickScore = score; }
+        }
+        if (pick != null) tts.setVoice(pick);
+        else if (tts.setLanguage(want) < 0) tts.setLanguage(new Locale(want.getLanguage()));
+    }
+
+    // For the grown-ups page: "installed", "online" (needs internet), "download" (in the engine but not downloaded) or "none"
+    @PluginMethod
+    public void langs(PluginCall call) {
+        JSObject out = new JSObject();
+        try {
+            JSArray tags = call.getArray("langs");
+            Set<Voice> all = ready ? tts.getVoices() : null;
+            for (int i = 0; tags != null && i < tags.length(); i++) {
+                String tag = tags.getString(i);
+                Locale l = Locale.forLanguageTag(tag);
+                int best = 0; // 0 none, 1 download, 2 online, 3 installed
+                if (all != null) for (Voice v : all) {
+                    if (!l.getLanguage().equals(v.getLocale().getLanguage())) continue;
+                    if (!l.getCountry().isEmpty() && !l.getCountry().equals(v.getLocale().getCountry())) continue;
+                    int b = v.getFeatures().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED) ? 1 : v.isNetworkConnectionRequired() ? 2 : 3;
+                    best = Math.max(best, b);
+                }
+                out.put(tag, new String[] { "none", "download", "online", "installed" }[best]);
+            }
+        } catch (Exception e) { /* answer what we have */ }
+        JSObject r = new JSObject();
+        r.put("langs", out);
+        call.resolve(r);
     }
 
     @PluginMethod

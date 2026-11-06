@@ -17,6 +17,7 @@ Custom offline apps for Orlando's Samsung Galaxy tablet, built as web apps, wrap
 | `luisa-tablet/` | Luisa's tablet (old SM-T350): her games from `index.html` plus offline videos from the SD card. |
 | `orlando-tablet/` | Orlando's tablet (Galaxy Tab S8): his games and books from `index.html`, with a native robot voice. |
 | `travel-school.html` + `travel-school/` | Travel School for Orlando's Europe trip (Year 1 Term 4): daily recount journal and Letter Lab. Content is JSON in `travel-school/`. |
+| `snake-catcha.html` | Snake Catcha for Orlando: a top-down explorer where Catcha the cockatoo catches snakes with quick maths and learns Dutch, French and Swiss German words from people. |
 | `make-books.py` / `.bat` | Converts PDFs, EPUBs, StoryWeaver zips and picture folders in `books/` into the app's bookshelf (`books/shelf`). |
 | `get-videos.bat` | Downloads YouTube links as tablet-friendly MP4s for Luisa's tablet. |
 | `README.md` | This guide. |
@@ -243,6 +244,39 @@ Thumbnail crop boxes for each category are in `VB`.
 - **Install over Wi‑Fi**: Wireless debugging → *Pair device with pairing code*, then `adb pair <ip>:<pairing-port>` and `adb connect <ip>:<port>`. `adb mdns services` shows the connect port. Then `adb install -r orlando-tablet/android/app/build/outputs/apk/debug/app-debug.apk`.
 - **Signing**: the build signs with `kids-debug.keystore` at the repo root (synced by OneDrive, git-ignored), so both laptops can update the installed app. If an install fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, the APK was signed with a different key: back up the app's data first (`adb exec-out run-as au.mason.orlando.kids tar cf - app_webview > backup.tar`), uninstall, install, then restore (`adb exec-in run-as au.mason.orlando.kids tar xf - < backup.tar`) before opening the app.
 - If Gradle says "SDK location not found", create `android/local.properties` with `sdk.dir=C:/Users/<you>/AppData/Local/Android/Sdk`. It's git-ignored, so each project needs one.
+
+## Snake Catcha: app notes
+
+`snake-catcha.html` is on Orlando's 🎮 games page (timed as games). Everything is drawn in code, with no image files. Progress is saved in `localStorage` (`snake-catcha`).
+
+- **World**: five maps (Home 🇦🇺, Singapore 🇸🇬, the Netherlands 🇳🇱, France 🇫🇷, Switzerland 🇨🇭) joined by the ✈️/🚆 station tile. Move with the D-pad, the arrow keys, or by tapping a spot (Catcha walks there). Maps are ASCII grids in `PLACES`.
+- **Habitats and scenery**: each country has its own ground, trees, houses and flowers. Snakes hide in five habitats, and each species only turns up in its real ones (`hab` in `SNAKES`):
+  - long grass (lavender in France, alpine meadow in Switzerland)
+  - reeds by the water (mangroves in Singapore)
+  - forest (gum bush, rainforest, autumn woods, pine forest)
+  - desert spinifex on red sand (Australia)
+  - rocky scree (France, Switzerland)
+
+  There's also plain ground: beach, dunes and snow. Battles get a matching background: the country's sky and landmarks (gum trees, the Singapore skyline, windmills, the lattice tower, snowy peaks) behind the snake's habitat.
+- **Battle animations**:
+  - Catcha flies in and the snake slithers in, with a hiss.
+  - A right answer sends Catcha flying over to peck: impact stars, a hit flash and screen shake. A combo goes PECK!, then DOUBLE PECK!, then DIVE BOMB! with a sparkle trail.
+  - A wrong answer: biters lunge with their fangs out and knock feathers off, pythons coil round Catcha and squeeze, and the spitting cobra spits.
+  - A tired snake goes dizzy with spiral eyes and stars.
+  - Catching: the basket is thrown in an arc, the snake is sucked in, the basket wobbles three times, then confetti and "Caught!".
+  - Escapes slither off in a puff of dust, and 🏃 makes Catcha fly away.
+  - Background life for each habitat (fireflies, falling autumn leaves, ripples, desert dust, floating seeds), swaying tufts, and a pulsing red edge when time is nearly up.
+- **Weather**: sunshine at home, tropical downpours on and off in Singapore, drizzle in the Netherlands, butterflies in France, snow in Switzerland. It shows on the map, in battles and next to the place name.
+- **Snakes**: 33 real species for each place (`SNAKES`), with their real colours and patterns, head shape (vipers' triangle heads, cobra hoods, pythons' heat pits), pupils (round, slit or keyhole), fangs (fixed front, folding front, rear, or none for constrictors), venom level (0–4 💧, from harmless to one of the most venomous in the world), size, diet and a fact. Sizes go from tiny to giant, by real adult length. Tap a snake in 🐍 My Snakes for its page, with its mouth open to show the fangs. Walking in long grass can start a battle. Each right answer pecks the snake, and each wrong answer or timeout costs a feather 🪶 (the right answer is shown). Then 🧺 catches it. Bigger snakes need more answers and ask harder maths. 🍓 gives a feather back and 💡 removes wrong answers.
+- **Languages**: five people in each country (`NPCS`) teach greetings, numbers, animals, colours or food. It's immersive: they only ever speak and show their own language. The meaning comes from pictures, gestures (👋 👉 👍 🙅) and context: they point at a picture and say "Kijk, de hond!", count "un, deux, trois!", ask "Wo isch d Chatz?", and nod or shake their head. Orlando taps to answer in their language ("Ik ben Catcha!", "Merci !"). Three words a visit, then a picture quiz, and a 🍓 or 💡 once a day. Words go in 💬 My Words (picture and word, no English).
+- **🍓 Shop**: every map has a strawberry shop (tile `V`). Walk into it, or tap it.
+  - Inside, a vending machine shows a picture and says a word, and Orlando spells it with letter tiles (plus a few spare letters).
+  - Letters in the right place turn green and stay. After two misses, one letter is filled in for him.
+  - A correct word puts a coin in: the spiral turns, a strawberry drops into the chute and flies to his counter.
+  - Words have three levels (3 letters, 4 letters, 5 or more) and move up after 4 first-try words in a row, or down after 3 misses. Word lists are in `SPELL`.
+  - The daily limit defaults to 10, then the machine shows SOLD OUT until tomorrow.
+- **Grown-ups**: hold ⚙️ (bottom right) to set the maths level, question timer and how many snakes appear, the shop's daily strawberries and spelling level, check the voices, give items or start again. The maths level defaults to "Harder" to match Snake Maths level 5 (two-digit sums).
+- **Voices**: the native Speech plugin takes a `lang` (`nl-NL`, `fr-FR`, `de-CH`, which falls back to German). Without downloaded voice data, Google's engine uses its online voices. For offline use (planes!): Settings → General management → Text-to-speech → ⚙️ next to Speech Services by Google → Install voice data → Dutch, French and German. Swiss German words are read by a German voice, so they are only approximate.
 
 ## Travel School: app notes
 

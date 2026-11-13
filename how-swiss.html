@@ -119,6 +119,10 @@ button.link { background: none; color: var(--muted); padding: 6px; font-weight: 
 .gamebtn.quizbtn { background: var(--snow); }
 .gamebtn.precbtn { background: var(--red); color: #fff; }
 .gamebtn.mostbtn { background: var(--green); color: #fff; }
+.gamebtn.spicybtn { background: #b8174a; color: #fff; }
+.gamepair { display: grid; grid-template-columns: 1.6fr 1fr; gap: 10px; }
+.gamepair .gamebtn { height: 100%; }
+@media (max-width: 360px) { .gamepair { grid-template-columns: 1fr; } }
 .vopt { display: flex; align-items: center; gap: 10px; font-size: 20px; }
 .vopt .f { font-size: 22px; line-height: 1; }
 .vopt .you { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
@@ -400,22 +404,48 @@ const MOST = [
   "cry in a cheese shop", "fall asleep first tonight", "have a secret Swiss bank account", "lose a fight with a magpie",
   "eat a whole fondue alone", "get a tattoo they regret", "skinny dip in a freezing Swiss lake", "get arrested on holiday",
   "marry someone for a passport", "say “yeah, nah” and mean yes", "still be dancing at 3 am", "forget someone's name mid-conversation",
-  "have the dirtiest search history", "end up on a nudist beach by accident", "throw up on a ski lift", "cheat at a board game",
-  "take up yodelling", "try to adopt a wombat", "steal the hotel bathrobe", "flirt with the waiter",
-  "leave a party without saying goodbye", "complain about the price of a beer in Zürich", "become a meme", "get sunburnt in winter",
-  "bring Tupperware to a buffet", "send a five-minute voice message", "secretly love Vegemite", "grab the karaoke mic without being asked",
-  "have a holiday fling", "have hooked up in a ski chalet", "send a spicy photo to the wrong person", "talk dirty in Swiss German",
-  "be the worst kisser here", "get a speeding fine in Switzerland", "own a Swiss Army knife and never use it", "go viral for something embarrassing",
-  "wake up somewhere with no idea how they got there", "fake being sick to get out of plans", "start a fight at the footy", "run naked through the street for a bet",
-  "pee in a public pool", "laugh at a funeral", "get kicked out of a pub", "propose while drunk"
+  "end up on a nudist beach by accident", "throw up on a ski lift", "cheat at a board game", "take up yodelling",
+  "try to adopt a wombat", "steal the hotel bathrobe", "flirt with the waiter", "leave a party without saying goodbye",
+  "complain about the price of a beer in Zürich", "become a meme", "get sunburnt in winter", "bring Tupperware to a buffet",
+  "send a five-minute voice message", "secretly love Vegemite", "grab the karaoke mic without being asked", "get a speeding fine in Switzerland",
+  "own a Swiss Army knife and never use it", "go viral for something embarrassing", "wake up somewhere with no idea how they got there", "fake being sick to get out of plans",
+  "start a fight at the footy", "pee in a public pool", "laugh at a funeral", "get kicked out of a pub", "propose while drunk",
+  "get caught singing in the shower by the neighbours", "eat cheese straight from the fridge at 3 am", "fall over on the dance floor tonight", "invite a stranger from the pub home for dinner",
+  "get a hangover from one drink", "order for the whole table without asking", "fall asleep in the bath", "miss a flight",
+  "give a speech nobody asked for", "buy a cowbell as a souvenir", "end up on reality TV", "argue with a parking machine",
+  "talk to animals more than people", "get stuck on a chairlift", "eat the last bite without asking", "lie about their age",
+  "cry at an ad", "start a business that fails in a week", "fall for an online scam", "actually read the terms and conditions",
+  "take 200 photos of one sunset", "text the wrong group chat", "lose a fight with a seagull over chips", "turn up in fancy dress when it isn't fancy dress",
+  "need a nap after one beer", "get kicked off a plane", "end up with five cats", "accidentally start a cult",
+  "try to pet a kangaroo and regret it", "swear at the GPS"
+];
+const MOST_SPICY = [
+  "have a secret OnlyFans", "hook up with a ski instructor", "have done it in a public place", "have a holiday fling",
+  "send a spicy photo to the wrong person", "talk dirty in Swiss German", "have hooked up in a ski chalet", "be the loudest in bed",
+  "have a sex tape out there somewhere", "flirt their way into a flight upgrade", "join the mile-high club", "skinny dip with strangers",
+  "go home with someone tonight", "have the most exes", "fake it in bed", "use a dating app on holiday",
+  "own a pair of fluffy handcuffs", "get caught in the act", "have a kinky side nobody knows about", "do the walk of shame in thongs",
+  "hook up with a lifeguard", "have had a threesome", "flash someone at a festival", "lose their undies on a night out",
+  "sext with terrible spelling", "fall into bed with someone just for their accent", "have hooked up in a tent", "have done it in a sauna",
+  "try tantric sex", "pay for a private dance", "get a lap dance on their birthday", "have the dirtiest search history",
+  "buy a sex toy on holiday", "snog a stranger at New Year", "hook up with their boss", "end up naked at a party",
+  "drunk-dial for a booty call", "be into role play", "have a sugar daddy or sugar mummy", "do it on a beach and regret the sand",
+  "get walked in on by their parents", "say the wrong name in bed", "have done it in a car", "love a nude Swiss sauna",
+  "hook up at a yodelling festival", "be the worst kisser here", "run naked through the street for a bet", "sleep with someone on the first date",
+  "have a secret crush on a celebrity chef", "send a nude to a group chat by mistake", "have hooked up in a hot tub", "get handsy on a dance floor",
+  "have a drawer they don't want their mum to open", "have hooked up with an ex's friend", "get a cheeky tattoo somewhere hidden", "be wearing no undies right now"
 ];
 const MOST_N = 15;
-function mostOrder(game) { const ids = MOST.map((_, i) => i), r = rng(`${room}:most`); for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; } const off = ((game - 1) * MOST_N) % ids.length; return [...ids.slice(off), ...ids].slice(0, MOST_N); }
-function curMost() { return MOST[mostOrder(S.game)[S.mn]]; }
+function mostDeck(spicy) { return spicy ? MOST_SPICY : MOST; }
+function mostOrder(game, spicy) { const deck = mostDeck(spicy), ids = deck.map((_, i) => i), r = rng(`${room}:most${spicy ? "s" : ""}`); for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; } const off = ((game - 1) * MOST_N) % ids.length; return [...ids.slice(off), ...ids].slice(0, MOST_N); }
+function curMost() { return mostDeck(S.spicy)[mostOrder(S.mgame || S.game, S.spicy)[S.mn]]; }
 function myVote(id) { const v = players[id] && players[id].vote; return v && v.g === S.game && v.n === S.mn ? v.id : null; }
-function startMost() {
+function startMost(spicy) {
   if (onlineIds().length < 2) return toast("You need at least 2 players");
-  setState(n => { n.game = (n.game || 0) + 1; n.mode = "most"; n.phase = "mv"; n.mn = 0; n.mtotal = MOST_N; n.mhist = []; });
+  setState(n => {
+    n.game = (n.game || 0) + 1; n.mode = "most"; n.phase = "mv"; n.mn = 0; n.mtotal = MOST_N; n.mhist = []; n.spicy = !!spicy;
+    n.mplays = n.mplays || { c: 0, s: 0 }; n.mplays[spicy ? "s" : "c"]++; n.mgame = n.mplays[spicy ? "s" : "c"];
+  });
 }
 function vote(id) { pubPlayer({ vote: { g: S.game, n: S.mn, id } }); patch(); checkAnswers(); }
 function revealMost() {
@@ -687,7 +717,10 @@ function lobbyHtml() {
     <div id="plist"></div>
     <span class="label">Pick a game</span>
     <button class="gamebtn startBtn" id="startDial"><b>The Dial</b><span>All on one team. One person says a clue, everyone drags the needle to the secret spot.</span></button>
-    <button class="gamebtn startBtn mostbtn" id="startMost"><b>Most Likely To</b><span>A cheeky question pops up. Everyone secretly votes for who it fits best. No thinking needed.</span></button>
+    <div class="gamepair">
+      <button class="gamebtn startBtn mostbtn" id="startMost"><b>Most Likely To</b><span>A cheeky question pops up. Everyone secretly votes for who it fits best.</span></button>
+      <button class="gamebtn startBtn spicybtn" id="startSpicy"><b>🌶️ Spicy</b><span>Same game, filthier questions. Adults only.</span></button>
+    </div>
     <button class="gamebtn startBtn precbtn" id="startPrec"><b>Swiss Precision</b><span>No talking. Everyone plays their numbers lowest to highest, together. Trust your gut.</span></button>
     <button class="gamebtn startBtn quizbtn" id="startQuiz"><b>${FLAG_CH} Swiss vs Aussie ${FLAG_AU}</b><span>Rude, weird quiz. Everyone answers on their own phone. Your team is your flag.</span></button>
     ${prev ? `<p class="muted small">Last dial game: <b>${S.score}</b> points.</p>` : ""}`;
@@ -732,7 +765,7 @@ function lateBanner(m) {
   const who = Object.keys(by).map(id => `${esc(pname(id))} had ${by[id].sort((a, b) => a - b).join(" and ")}`).join(", ");
   return `<div class="banner bad"><b>Late train!</b> ${esc(pname(m.by))} played ${m.v}, but ${who}. You lose a life.</div>`;
 }
-function mostTop() { return `<div class="score"><span class="label">Most likely to… ${S.mn + 1} of ${S.mtotal}</span></div>`; }
+function mostTop() { return `<div class="score"><span class="label">${S.spicy ? "🌶️ Spicy · " : ""}${S.mn + 1} of ${S.mtotal}</span></div>`; }
 function mvHtml() {
   return `${mostTop()}
     <div class="qcard"><span class="qtag">Who's most likely to…</span><h2>${esc(curMost())}?</h2></div>
@@ -844,7 +877,8 @@ function bindPhase(phase, amGiver) {
     $("#startDial").onclick = startGame;
     $("#startQuiz").onclick = startQuiz;
     $("#startPrec").onclick = startPrec;
-    $("#startMost").onclick = startMost;
+    $("#startMost").onclick = () => startMost(false);
+    $("#startSpicy").onclick = () => startMost(true);
   }
   if (phase === "pp" && $("#playBtn")) $("#playBtn").onclick = precPlay;
   if (phase === "pl") $("#precNextBtn").onclick = precNext;
@@ -856,7 +890,7 @@ function bindPhase(phase, amGiver) {
   }
   if (phase === "mv") document.querySelectorAll(".vopt").forEach(b => b.onclick = () => vote(b.dataset.id));
   if (phase === "mr") $("#nextMostBtn").onclick = nextMost;
-  if (phase === "mend") { $("#againMost").onclick = startMost; $("#lobbyBtn").onclick = toLobby; }
+  if (phase === "mend") { $("#againMost").onclick = () => startMost(S.spicy); $("#lobbyBtn").onclick = toLobby; }
   if (phase === "qr") $("#nextQBtn").onclick = nextQ;
   if (phase === "qend") { $("#againQuiz").onclick = startQuiz; $("#lobbyBtn").onclick = toLobby; }
   if (phase === "guess") {

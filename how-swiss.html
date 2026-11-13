@@ -816,10 +816,17 @@ function render() {
   const key = [phase, S && S.game, S && S.round, S && S.skips, S && S.qn, S && S.mn, S && S.level, S && S.played && S.played.length, amGiver, phase === "guess" ? giver(S) : "", phase === "mv" ? onlineIds().join() : ""].join("|");
   if (key !== lastKey) {
     lastKey = key;
+    try {
     app.innerHTML = ({ lobby: lobbyHtml, guess: guessHtml, reveal: revealHtml, end: endHtml, qq: qqHtml, qr: qrHtml, qend: qendHtml, pp: ppHtml, pl: plHtml, pend: pendHtml, mv: mvHtml, mr: mrHtml, mend: mendHtml, np: npHtml, nx: nxHtml, nv: nvHtml, nend: nendHtml })[phase](amGiver);
     if (phase === "nx" && S.nhist[S.nhist.length - 1].kraut) fartSound();
     if (phase === "pp" && S.mistake && S.mistake.at === S.played.length) { try { navigator.vibrate && navigator.vibrate([200, 80, 200]); } catch (e) {} }
     bindPhase(phase, amGiver);
+    } catch (err) {
+      // A saved game from an older version of the page can't be drawn: offer a way out instead of a blank screen
+      console.error(err);
+      app.innerHTML = `<div class="panel" style="text-align:center"><h2>Something got muddled</h2><p class="muted">This game was saved by an older version of the page.</p><button class="big" id="rescueBtn">Back to the lobby</button></div>`;
+      $("#rescueBtn").onclick = () => { lastKey = ""; toLobby(); };
+    }
   }
   patch();
 }

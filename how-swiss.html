@@ -118,6 +118,16 @@ button.link { background: none; color: var(--muted); padding: 6px; font-weight: 
 .gamebtn span { font-weight: 500; font-size: 15px; line-height: 1.35; }
 .gamebtn.quizbtn { background: var(--snow); }
 .gamebtn.precbtn { background: var(--red); color: #fff; }
+.gamebtn.mostbtn { background: var(--green); color: #fff; }
+.vopt { display: flex; align-items: center; gap: 10px; font-size: 20px; }
+.vopt .f { font-size: 22px; line-height: 1; }
+.vopt .you { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.bars { display: flex; flex-direction: column; gap: 10px; }
+.bar { display: grid; grid-template-columns: minmax(0, 9em) 1fr auto; gap: 10px; align-items: center; font-weight: 600; }
+.bar .bn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar .bt { height: 14px; background: var(--bg3); border-radius: 7px; overflow: hidden; }
+.bar .bt span { display: block; height: 100%; background: var(--gold); border-radius: 7px; transition: width .6s; }
+.bar b { font: 800 20px var(--display); font-variant-numeric: tabular-nums; min-width: 1.2em; text-align: right; }
 .lives { display: inline-flex; gap: 4px; font-size: 18px; align-items: center; }
 .banner.bad { background: var(--red); color: #fff; }
 .pile { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; }
@@ -280,7 +290,7 @@ function onMessage(topic, buf) {
 function pubPlayer(extra) {
   if (!client || !connected) return;
   const me = players[myId] || { joined: Date.now() };
-  const p = { name: profile.name, flag: profile.flag, joined: me.joined, ans: me.ans || null, ...extra };
+  const p = { joined: me.joined, ans: me.ans || null, vote: me.vote || null, name: profile.name, flag: profile.flag, ...extra };
   players[myId] = p;
   client.publish(`${base()}/players/${myId}`, JSON.stringify(p), { retain: true, qos: 1 });
 }
@@ -381,6 +391,41 @@ function precPlay() {
 function precNext() {
   const L = S.level, g = S.game;
   setState(n => { if (n.phase !== "pl" || n.level !== L || n.game !== g) return false; n.level++; n.played = []; n.discarded = []; n.mistake = null; n.phase = "pp"; });
+}
+
+// ---------- Most Likely To: everyone votes who fits the prompt ----------
+const MOST = [
+  "get reported by the neighbours for noise after 10pm", "wear thongs to a wedding", "do a shoey tonight", "report a neighbour for recycling glass on a Sunday",
+  "drunk-text an ex tonight", "get lost on a hike and blame the map", "survive a week alone in the Outback", "get eaten by a croc while taking a selfie",
+  "cry in a cheese shop", "fall asleep first tonight", "have a secret Swiss bank account", "lose a fight with a magpie",
+  "eat a whole fondue alone", "get a tattoo they regret", "skinny dip in a freezing Swiss lake", "get arrested on holiday",
+  "marry someone for a passport", "say “yeah, nah” and mean yes", "still be dancing at 3 am", "forget someone's name mid-conversation",
+  "have the dirtiest search history", "end up on a nudist beach by accident", "throw up on a ski lift", "cheat at a board game",
+  "take up yodelling", "try to adopt a wombat", "steal the hotel bathrobe", "flirt with the waiter",
+  "leave a party without saying goodbye", "complain about the price of a beer in Zürich", "become a meme", "get sunburnt in winter",
+  "bring Tupperware to a buffet", "send a five-minute voice message", "secretly love Vegemite", "grab the karaoke mic without being asked",
+  "have a holiday fling", "have hooked up in a ski chalet", "send a spicy photo to the wrong person", "talk dirty in Swiss German",
+  "be the worst kisser here", "get a speeding fine in Switzerland", "own a Swiss Army knife and never use it", "go viral for something embarrassing",
+  "wake up somewhere with no idea how they got there", "fake being sick to get out of plans", "start a fight at the footy", "run naked through the street for a bet",
+  "pee in a public pool", "laugh at a funeral", "get kicked out of a pub", "propose while drunk"
+];
+const MOST_N = 15;
+function mostOrder(game) { const ids = MOST.map((_, i) => i), r = rng(`${room}:most`); for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; } const off = ((game - 1) * MOST_N) % ids.length; return [...ids.slice(off), ...ids].slice(0, MOST_N); }
+function curMost() { return MOST[mostOrder(S.game)[S.mn]]; }
+function myVote(id) { const v = players[id] && players[id].vote; return v && v.g === S.game && v.n === S.mn ? v.id : null; }
+function startMost() {
+  if (onlineIds().length < 2) return toast("You need at least 2 players");
+  setState(n => { n.game = (n.game || 0) + 1; n.mode = "most"; n.phase = "mv"; n.mn = 0; n.mtotal = MOST_N; n.mhist = []; });
+}
+function vote(id) { pubPlayer({ vote: { g: S.game, n: S.mn, id } }); patch(); checkAnswers(); }
+function revealMost() {
+  const k = S.mn, g = S.game, votes = {};
+  Object.keys(players).forEach(id => { const v = myVote(id); if (v) votes[v] = (votes[v] || 0) + 1; });
+  setState(n => { if (n.phase !== "mv" || n.mn !== k || n.game !== g) return false; n.mhist.push({ n: k, votes }); n.phase = "mr"; });
+}
+function nextMost() {
+  const k = S.mn, g = S.game;
+  setState(n => { if (n.phase !== "mr" || n.mn !== k || n.game !== g) return false; if (n.mn + 1 >= n.mtotal) n.phase = "mend"; else { n.mn++; n.phase = "mv"; } });
 }
 
 // ---------- Swiss vs Aussie quiz ----------
@@ -494,6 +539,7 @@ function startQuiz() {
 }
 function answer(a) { pubPlayer({ ans: { g: S.game, q: S.qn, a } }); patch(); checkAnswers(); }
 function checkAnswers() {
+  if (S && S.phase === "mv") { const ids = onlineIds(); if (ids.length && ids.every(id => myVote(id) != null)) revealMost(); return; }
   if (!S || S.phase !== "qq") return;
   const ids = onlineIds();
   if (ids.length && ids.every(id => myAns(id) != null)) revealQ();
@@ -576,12 +622,12 @@ function render() {
   patchDot();
   const app = $("#app");
   if (!joined) { const k = "home:" + (room || ""); if (k !== lastKey) { lastKey = k; app.innerHTML = homeHtml(); bindHome(); } return; }
-  const phase = S && ["guess", "reveal", "end", "qq", "qr", "qend", "pp", "pl", "pend"].includes(S.phase) ? S.phase : "lobby";
+  const phase = S && ["guess", "reveal", "end", "qq", "qr", "qend", "pp", "pl", "pend", "mv", "mr", "mend"].includes(S.phase) ? S.phase : "lobby";
   const amGiver = phase === "guess" && giver(S) === myId;
-  const key = [phase, S && S.game, S && S.round, S && S.skips, S && S.qn, S && S.level, S && S.played && S.played.length, amGiver, phase === "guess" ? giver(S) : ""].join("|");
+  const key = [phase, S && S.game, S && S.round, S && S.skips, S && S.qn, S && S.mn, S && S.level, S && S.played && S.played.length, amGiver, phase === "guess" ? giver(S) : "", phase === "mv" ? onlineIds().join() : ""].join("|");
   if (key !== lastKey) {
     lastKey = key;
-    app.innerHTML = ({ lobby: lobbyHtml, guess: guessHtml, reveal: revealHtml, end: endHtml, qq: qqHtml, qr: qrHtml, qend: qendHtml, pp: ppHtml, pl: plHtml, pend: pendHtml })[phase](amGiver);
+    app.innerHTML = ({ lobby: lobbyHtml, guess: guessHtml, reveal: revealHtml, end: endHtml, qq: qqHtml, qr: qrHtml, qend: qendHtml, pp: ppHtml, pl: plHtml, pend: pendHtml, mv: mvHtml, mr: mrHtml, mend: mendHtml })[phase](amGiver);
     if (phase === "pp" && S.mistake && S.mistake.at === S.played.length) { try { navigator.vibrate && navigator.vibrate([200, 80, 200]); } catch (e) {} }
     bindPhase(phase, amGiver);
   }
@@ -599,6 +645,11 @@ function patch() {
     const mine = myAns(myId);
     document.querySelectorAll(".opt").forEach(b => b.classList.toggle("sel", +b.dataset.a === mine));
     const wn = $("#waitNote"); if (wn) { const ids = onlineIds(), left = ids.filter(id => myAns(id) == null); wn.textContent = left.length ? `Waiting for ${left.map(pname).join(", ")}` : ""; }
+  }
+  if (S && S.phase === "mv") {
+    const mine = myVote(myId);
+    document.querySelectorAll(".vopt").forEach(b => b.classList.toggle("sel", b.dataset.id === mine));
+    const wn = $("#waitNote"); if (wn) { const left = onlineIds().filter(id => myVote(id) == null); wn.textContent = left.length ? `Waiting for ${left.map(pname).join(", ")}` : ""; }
   }
 }
 
@@ -636,6 +687,7 @@ function lobbyHtml() {
     <div id="plist"></div>
     <span class="label">Pick a game</span>
     <button class="gamebtn startBtn" id="startDial"><b>The Dial</b><span>All on one team. One person says a clue, everyone drags the needle to the secret spot.</span></button>
+    <button class="gamebtn startBtn mostbtn" id="startMost"><b>Most Likely To</b><span>A cheeky question pops up. Everyone secretly votes for who it fits best. No thinking needed.</span></button>
     <button class="gamebtn startBtn precbtn" id="startPrec"><b>Swiss Precision</b><span>No talking. Everyone plays their numbers lowest to highest, together. Trust your gut.</span></button>
     <button class="gamebtn startBtn quizbtn" id="startQuiz"><b>${FLAG_CH} Swiss vs Aussie ${FLAG_AU}</b><span>Rude, weird quiz. Everyone answers on their own phone. Your team is your flag.</span></button>
     ${prev ? `<p class="muted small">Last dial game: <b>${S.score}</b> points.</p>` : ""}`;
@@ -679,6 +731,39 @@ function lateBanner(m) {
   const by = {}; m.lower.forEach(l => (by[l.id] = by[l.id] || []).push(l.v));
   const who = Object.keys(by).map(id => `${esc(pname(id))} had ${by[id].sort((a, b) => a - b).join(" and ")}`).join(", ");
   return `<div class="banner bad"><b>Late train!</b> ${esc(pname(m.by))} played ${m.v}, but ${who}. You lose a life.</div>`;
+}
+function mostTop() { return `<div class="score"><span class="label">Most likely to… ${S.mn + 1} of ${S.mtotal}</span></div>`; }
+function mvHtml() {
+  return `${mostTop()}
+    <div class="qcard"><span class="qtag">Who's most likely to…</span><h2>${esc(curMost())}?</h2></div>
+    <div class="opts">${onlineIds().map(id => `<button class="opt vopt" data-id="${esc(id)}"><span class="f">${pflag(id)}</span> ${esc(pname(id))}${id === myId ? ' <span class="you">you</span>' : ""}</button>`).join("")}</div>
+    <p class="muted small" id="waitNote" style="text-align:center"></p>
+    <button class="link" id="revealNow">Show the votes now</button>`;
+}
+function mrHtml() {
+  const h = S.mhist[S.mhist.length - 1], max = Math.max(1, ...Object.values(h.votes));
+  const ids = Object.keys(players).sort((a, b) => (h.votes[b] || 0) - (h.votes[a] || 0));
+  const top = ids.filter(id => (h.votes[id] || 0) === max);
+  return `${mostTop()}
+    <div class="qcard"><span class="qtag">Most likely to ${esc(curMost())}</span>
+      <h1 style="margin:0">${top.map(id => `${pflag(id)} ${esc(pname(id))}`).join(" & ")}</h1>
+      <p class="muted">${top.length > 1 ? "A tie. You're both guilty." : "Explain yourself."}</p></div>
+    <div class="bars">${ids.map(id => { const c = h.votes[id] || 0; return `<div class="bar"><span class="bn">${pflag(id)} ${esc(pname(id))}</span><span class="bt"><span style="width:${c / max * 100}%"></span></span><b>${c}</b></div>`; }).join("")}</div>
+    <button class="big" id="nextMostBtn">${S.mn + 1 >= S.mtotal ? "Final results" : "Next"}</button>`;
+}
+function mendHtml() {
+  const tot = {}, crowns = {}, nat = { ch: 0, au: 0 };
+  S.mhist.forEach(h => { const m = Math.max(...Object.values(h.votes), 0); Object.entries(h.votes).forEach(([id, c]) => { tot[id] = (tot[id] || 0) + c; nat[team(id)] += c; if (c === m) crowns[id] = (crowns[id] || 0) + 1; }); });
+  const ids = Object.keys(players).sort((a, b) => (tot[b] || 0) - (tot[a] || 0));
+  const worst = ids[0];
+  const natLine = nat.ch === nat.au ? "Both nations equally guilty." : nat.au > nat.ch ? `The Aussies got ${nat.au} votes to ${nat.ch}. Most chaotic nation: Australia.` : `The Swiss got ${nat.ch} votes to ${nat.au}. Turns out the Swiss are the wild ones.`;
+  return `<div class="stack" style="text-align:center;gap:8px;padding-top:10px"><span class="label">Biggest menace</span>
+      <div style="font-size:64px;line-height:1">${worst ? pflag(worst) : ""}</div>
+      <h1 style="margin:0">${worst ? esc(pname(worst)) : "Nobody"}</h1><p class="muted">${worst ? `${tot[worst] || 0} votes and ${crowns[worst] || 0} crowns. Everyone thinks the worst of you.` : ""}</p></div>
+    <div class="note">${natLine}</div>
+    <div class="bars">${ids.map(id => `<div class="bar"><span class="bn">${pflag(id)} ${esc(pname(id))}</span><span class="bt"><span style="width:${(tot[id] || 0) / Math.max(1, tot[worst] || 1) * 100}%"></span></span><b>${tot[id] || 0}</b></div>`).join("")}</div>
+    <button class="big" id="againMost">Play again</button>
+    <button class="ghost" id="lobbyBtn">Back to the lobby</button>`;
 }
 function precTop() {
   const hearts = Array.from({ length: S.lives }, () => FLAG_CH).join(" ");
@@ -759,15 +844,19 @@ function bindPhase(phase, amGiver) {
     $("#startDial").onclick = startGame;
     $("#startQuiz").onclick = startQuiz;
     $("#startPrec").onclick = startPrec;
+    $("#startMost").onclick = startMost;
   }
   if (phase === "pp" && $("#playBtn")) $("#playBtn").onclick = precPlay;
   if (phase === "pl") $("#precNextBtn").onclick = precNext;
   if (phase === "pend") { $("#againPrec").onclick = startPrec; $("#lobbyBtn").onclick = toLobby; }
   if (phase === "qq") document.querySelectorAll(".opt").forEach(b => b.onclick = () => answer(+b.dataset.a));
-  if (phase === "qq" && $("#revealNow")) {
-    let armed = false;
-    $("#revealNow").onclick = e => { if (!armed) { armed = true; e.target.textContent = "Tap again to show the answer"; setTimeout(() => { armed = false; if (e.target.isConnected) e.target.textContent = "Show the answer now"; }, 3000); } else revealQ(); };
+  if ((phase === "qq" || phase === "mv") && $("#revealNow")) {
+    let armed = false; const btn = $("#revealNow"), label = btn.textContent;
+    btn.onclick = () => { if (!armed) { armed = true; btn.textContent = "Tap again to show it"; setTimeout(() => { armed = false; if (btn.isConnected) btn.textContent = label; }, 3000); } else (phase === "qq" ? revealQ : revealMost)(); };
   }
+  if (phase === "mv") document.querySelectorAll(".vopt").forEach(b => b.onclick = () => vote(b.dataset.id));
+  if (phase === "mr") $("#nextMostBtn").onclick = nextMost;
+  if (phase === "mend") { $("#againMost").onclick = startMost; $("#lobbyBtn").onclick = toLobby; }
   if (phase === "qr") $("#nextQBtn").onclick = nextQ;
   if (phase === "qend") { $("#againQuiz").onclick = startQuiz; $("#lobbyBtn").onclick = toLobby; }
   if (phase === "guess") {

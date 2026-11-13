@@ -119,6 +119,27 @@ button.link { background: none; color: var(--muted); padding: 6px; font-weight: 
 .gamebtn.quizbtn { background: var(--snow); }
 .gamebtn.precbtn { background: var(--red); color: #fff; }
 .gamebtn.mostbtn { background: var(--green); color: #fff; }
+.gamebtn.neutralbtn { background: #2d4a7a; color: #fff; }
+.ngscore { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 15px; font-variant-numeric: tabular-nums; }
+.ngscore b { font: 800 22px var(--display); color: var(--gold); }
+.banner.good { background: var(--green); color: #fff; }
+.banner.fart { background: #7a8a1e; color: #fff; font-size: 19px; animation: shake .5s 3; }
+@keyframes shake { 0%, 100% { transform: none; } 25% { transform: translateX(-6px) rotate(-1deg); } 75% { transform: translateX(6px) rotate(1deg); } }
+.peek { position: relative; border-radius: 16px; background: var(--bg3); border: 2px dashed var(--line); min-height: 92px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; cursor: pointer; }
+.peek-cover { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 12px; font-weight: 700; font-size: 17px; color: var(--muted); }
+.peek-in { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; visibility: hidden; }
+.peek.open .peek-in { visibility: visible; }
+.peek.open .peek-cover { display: none; }
+.peek.open { background: var(--snow); color: var(--ink); border-style: solid; border-color: var(--gold); }
+.peek .role { font: 800 22px var(--display); }
+.peek .kraut { background: #e9efc0; border-radius: 10px; padding: 8px 10px; }
+.copt:disabled { opacity: .35; text-decoration: line-through; }
+.tablewrap { overflow-x: auto; }
+.lies { border-collapse: collapse; width: 100%; font-size: 15px; text-align: center; }
+.lies th, .lies td { padding: 7px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.lies th { font-weight: 700; font-size: 13px; }
+.lies .sm { background: rgba(224, 48, 30, .18); }
+@media (prefers-reduced-motion: reduce) { .banner.fart { animation: none; } }
 .gamebtn.spicybtn { background: #b8174a; color: #fff; }
 .gamepair { display: grid; grid-template-columns: 1.6fr 1fr; gap: 10px; }
 .gamepair .gamebtn { height: 100%; }
@@ -294,7 +315,7 @@ function onMessage(topic, buf) {
 function pubPlayer(extra) {
   if (!client || !connected) return;
   const me = players[myId] || { joined: Date.now() };
-  const p = { joined: me.joined, ans: me.ans || null, vote: me.vote || null, name: profile.name, flag: profile.flag, ...extra };
+  const p = { joined: me.joined, ans: me.ans || null, vote: me.vote || null, pick: me.pick || null, nvote: me.nvote || null, name: profile.name, flag: profile.flag, ...extra };
   players[myId] = p;
   client.publish(`${base()}/players/${myId}`, JSON.stringify(p), { retain: true, qos: 1 });
 }
@@ -466,6 +487,135 @@ function nextMost() {
   setState(n => { if (n.phase !== "mr" || n.mn !== k || n.game !== g) return false; if (n.mn + 1 >= n.mtotal) n.phase = "mend"; else { n.mn++; n.phase = "mv"; } });
 }
 
+// ---------- Neutral Ground: secret smuggler vs customs ----------
+const CROSSINGS = [
+  ["🥔", "The Röstigraben"], ["🌉", "Bogan Bridge"], ["🧀", "The Cheese Tunnel"], ["🦢", "Lake Geneva by Pedalo"],
+  ["🐑", "Sheep-Dip Gate"], ["🎶", "The Yodel Pass"], ["🛻", "Ute Track 9"], ["🍫", "The Chocolate Pipeline"],
+  ["🦘", "Kangaroo Crossing"], ["🏚️", "Grandma's Garden Shed"]
+];
+const CONTRABAND = [
+  "a wheel of unlicensed raclette", "400 Tim Tams in a ski bag", "a live wombat in a trench coat", "a cowbell full of schnapps",
+  "Grandma's yodelling cassettes", "a crate of Vegemite labelled “chocolate”", "a suspiciously heavy Toblerone", "a kangaroo in a fake moustache",
+  "a Swiss Army knife with 900 tools", "black-market cervelat skins", "a goon bag of absinthe", "a briefcase of untraceable francs",
+  "a cassowary in a pram", "48 garden gnomes stuffed with chocolate", "a sedated drop bear", "a stolen alphorn",
+  "a fondue pot that is definitely not a bomb", "a box of used budgie smugglers", "a pallet of Rivella", "a mattress stuffed with Gruyère",
+  "three koalas in a hoodie", "a slab of warm beer", "a Matterhorn-shaped bong", "pirated Heidi DVDs", "a pair of thongs full of opals"
+];
+// e: effect, x: which crossing it hits (picked per round)
+const EVENTS = [
+  { e: "none", t: "A cow is blocking the road. Nothing changes, everyone's just annoyed." },
+  { e: "none", t: "It's raining. Customs officers are grumpy and wet." },
+  { e: "none", t: "A tourist is asking everyone for directions to Heidi's house." },
+  { e: "none", t: "Someone is playing the didgeridoo at the border. Badly." },
+  { e: "lunch", t: "Customs lunch break! Nothing gets seized this round." },
+  { e: "koala", t: "Sniffer koala on duty. Every seizure counts double." },
+  { e: "closed", t: "Drop bear alert! {x} is closed this round." },
+  { e: "fondue", t: "Fondue party at {x}. Anything smuggled through there counts double." }
+];
+const DISCUSS = [
+  "Everyone: say where you went. One of you is lying.", "Look each other in the eye. Who's sweating?",
+  "Smuggler, stay calm. Officers, start interrogating.", "Quick! Accuse the person who looks most innocent.",
+  "Who changed their answer at the last second? Suspicious.", "Ask the Aussies. Then ask the Swiss. Compare stories."
+];
+function neutralSetup(st) {
+  const r = rng(`${room}:${st.game}:ng`), ids = st.order.slice();
+  for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; }
+  const cs = CROSSINGS.map((_, i) => i);
+  for (let i = cs.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [cs[i], cs[j]] = [cs[j], cs[i]]; }
+  const k = ids.length >= 6 ? 2 : 1, nc = Math.min(7, Math.max(4, ids.length + 1));
+  return { smug: ids.slice(0, k), cross: cs.slice(0, nc), goal: k === 2 ? { crates: 6, seize: 4 } : { crates: 4, seize: 3 } };
+}
+const SAUERKRAUT = "a tub of sauerkraut";
+function neutralRound(st, rd) {
+  const r = rng(`${room}:${st.game}:ngr${rd}`);
+  const ev = rd === 0 ? 0 : Math.floor(r() * EVENTS.length), x = st.cross[Math.floor(r() * st.cross.length)];
+  const item = CONTRABAND[Math.floor(r() * CONTRABAND.length)];
+  // Sauerkraut (about 1 round in 5): the smuggler farts so loud the crossings next door hear it
+  return { ev, x, item: rd > 0 && r() < 0.2 ? SAUERKRAUT : item };
+}
+// Crossings sit in a row: "next door" means directly above or below in the list
+function nextDoor(st, c) { const i = st.cross.indexOf(c); return [st.cross[i - 1], st.cross[i + 1]].filter(v => v != null); }
+function fartSound() {
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)(), t = ac.currentTime, len = 1.6;
+    const buf = ac.createBuffer(1, ac.sampleRate * len, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.setValueAtTime(180, t); lp.frequency.linearRampToValueAtTime(90, t + len); lp.Q.value = 8;
+    const g = ac.createGain(), wob = ac.createOscillator(), wg = ac.createGain();
+    wob.frequency.setValueAtTime(18, t); wob.frequency.linearRampToValueAtTime(7, t + len); wg.gain.value = 0.5; wob.connect(wg); wg.connect(g.gain);
+    g.gain.setValueAtTime(0.9, t); g.gain.linearRampToValueAtTime(0.7, t + len * 0.7); g.gain.linearRampToValueAtTime(0, t + len);
+    const tone = ac.createOscillator(); tone.type = "sawtooth"; tone.frequency.setValueAtTime(95, t); tone.frequency.linearRampToValueAtTime(55, t + len);
+    const tg = ac.createGain(); tg.gain.value = 0.25; tone.connect(tg); tg.connect(lp);
+    src.connect(lp); lp.connect(g); g.connect(ac.destination);
+    [src, wob, tone].forEach(n => { n.start(t); n.stop(t + len); });
+    navigator.vibrate && navigator.vibrate([300, 60, 500]);
+  } catch (e) {}
+}
+function cname(c) { return `${CROSSINGS[c][0]} ${CROSSINGS[c][1]}`; }
+function evText(st, rd) { const { ev, x } = neutralRound(st, rd); return EVENTS[ev].t.replace("{x}", CROSSINGS[x][1]); }
+function myPick(id) { const p = players[id] && players[id].pick; return p && p.g === S.game && p.r === S.round ? p.c : null; }
+function myNVote(id) { const v = players[id] && players[id].nvote; return v && v.g === S.game ? v.id : null; }
+function startNeutral() {
+  const order = onlineIds();
+  if (order.length < 3) return toast("Neutral Ground needs at least 3 players");
+  setState(n => {
+    n.game = (n.game || 0) + 1; n.mode = "neutral"; n.phase = "np"; n.order = order; n.round = 0;
+    const s = neutralSetup(n); n.smug = s.smug; n.cross = s.cross; n.goal = s.goal;
+    n.crates = 0; n.seized = 0; n.nhist = []; n.nnext = null; n.verdict = null;
+  });
+}
+function pickCrossing(c) { pubPlayer({ pick: { g: S.game, r: S.round, c } }); patch(); checkPicks(); }
+function checkPicks() {
+  if (!S || S.mode !== "neutral") return;
+  if (S.phase === "np") { const ids = S.order.filter(id => online[id] !== false); if (ids.length && ids.every(id => myPick(id) != null)) resolveRound(); }
+  if (S.phase === "nv") { const ids = S.order.filter(id => online[id] !== false); if (ids.length && ids.every(id => myNVote(id) != null)) resolveVote(); }
+}
+function resolveRound() {
+  const rd = S.round, g = S.game, picks = {};
+  S.order.forEach(id => { const c = myPick(id); if (c != null) picks[id] = c; });
+  setState(n => {
+    if (n.phase !== "np" || n.round !== rd || n.game !== g) return false;
+    const { ev, x, item } = neutralRound(n, rd), e = EVENTS[ev].e;
+    const officersAt = new Set(Object.entries(picks).filter(([id]) => !n.smug.includes(id)).map(([, c]) => c));
+    const kraut = item === SAUERKRAUT;
+    let through = 0, seizedHere = 0, fartCatch = false; const seizedAt = [], fartAt = [];
+    n.smug.forEach(id => {
+      const c = picks[id]; if (c == null) return;
+      const heard = kraut ? nextDoor(n, c).filter(v => officersAt.has(v)) : [];
+      if (kraut) fartAt.push(c);
+      if ((officersAt.has(c) || heard.length) && e !== "lunch") {
+        seizedHere += e === "koala" ? 2 : 1; if (!seizedAt.includes(c)) seizedAt.push(c);
+        if (!officersAt.has(c)) fartCatch = true;
+      } else through += e === "fondue" && c === x ? 2 : 1;
+    });
+    n.crates += through; n.seized += seizedHere;
+    n.nhist.push({ r: rd, ev, x, item, picks, through, seizedHere, seizedAt, kraut, fartAt, fartCatch });
+    n.nnext = n.seized >= n.goal.seize ? "end" : n.crates >= n.goal.crates || rd + 1 >= 10 ? "vote" : "round";
+    if (n.nnext === "end") n.verdict = "seized";
+    n.phase = "nx";
+  });
+}
+function neutralNext() {
+  const rd = S.round, g = S.game;
+  setState(n => {
+    if (n.phase !== "nx" || n.round !== rd || n.game !== g) return false;
+    if (n.nnext === "end") n.phase = "nend";
+    else if (n.nnext === "vote") n.phase = "nv";
+    else { n.round++; n.phase = "np"; }
+  });
+}
+function castNVote(id) { pubPlayer({ nvote: { g: S.game, id } }); patch(); checkPicks(); }
+function resolveVote() {
+  const g = S.game, tally = {};
+  S.order.forEach(id => { const v = myNVote(id); if (v) tally[v] = (tally[v] || 0) + 1; });
+  setState(n => {
+    if (n.phase !== "nv" || n.game !== g) return false;
+    const max = Math.max(0, ...Object.values(tally)), top = Object.keys(tally).filter(id => tally[id] === max);
+    n.tally = tally; n.verdict = top.length === 1 && n.smug.includes(top[0]) ? "busted" : "escaped"; n.phase = "nend";
+  });
+}
+
 // ---------- Swiss vs Aussie quiz ----------
 // c: whose country it's about; a[0] is the right answer (options get shuffled); f: the fact shown after.
 const QUIZ = [
@@ -577,6 +727,7 @@ function startQuiz() {
 }
 function answer(a) { pubPlayer({ ans: { g: S.game, q: S.qn, a } }); patch(); checkAnswers(); }
 function checkAnswers() {
+  if (S && S.mode === "neutral") return checkPicks();
   if (S && S.phase === "mv") { const ids = onlineIds(); if (ids.length && ids.every(id => myVote(id) != null)) revealMost(); return; }
   if (!S || S.phase !== "qq") return;
   const ids = onlineIds();
@@ -660,12 +811,13 @@ function render() {
   patchDot();
   const app = $("#app");
   if (!joined) { const k = "home:" + (room || ""); if (k !== lastKey) { lastKey = k; app.innerHTML = homeHtml(); bindHome(); } return; }
-  const phase = S && ["guess", "reveal", "end", "qq", "qr", "qend", "pp", "pl", "pend", "mv", "mr", "mend"].includes(S.phase) ? S.phase : "lobby";
+  const phase = S && ["guess", "reveal", "end", "qq", "qr", "qend", "pp", "pl", "pend", "mv", "mr", "mend", "np", "nx", "nv", "nend"].includes(S.phase) ? S.phase : "lobby";
   const amGiver = phase === "guess" && giver(S) === myId;
   const key = [phase, S && S.game, S && S.round, S && S.skips, S && S.qn, S && S.mn, S && S.level, S && S.played && S.played.length, amGiver, phase === "guess" ? giver(S) : "", phase === "mv" ? onlineIds().join() : ""].join("|");
   if (key !== lastKey) {
     lastKey = key;
-    app.innerHTML = ({ lobby: lobbyHtml, guess: guessHtml, reveal: revealHtml, end: endHtml, qq: qqHtml, qr: qrHtml, qend: qendHtml, pp: ppHtml, pl: plHtml, pend: pendHtml, mv: mvHtml, mr: mrHtml, mend: mendHtml })[phase](amGiver);
+    app.innerHTML = ({ lobby: lobbyHtml, guess: guessHtml, reveal: revealHtml, end: endHtml, qq: qqHtml, qr: qrHtml, qend: qendHtml, pp: ppHtml, pl: plHtml, pend: pendHtml, mv: mvHtml, mr: mrHtml, mend: mendHtml, np: npHtml, nx: nxHtml, nv: nvHtml, nend: nendHtml })[phase](amGiver);
+    if (phase === "nx" && S.nhist[S.nhist.length - 1].kraut) fartSound();
     if (phase === "pp" && S.mistake && S.mistake.at === S.played.length) { try { navigator.vibrate && navigator.vibrate([200, 80, 200]); } catch (e) {} }
     bindPhase(phase, amGiver);
   }
@@ -683,6 +835,11 @@ function patch() {
     const mine = myAns(myId);
     document.querySelectorAll(".opt").forEach(b => b.classList.toggle("sel", +b.dataset.a === mine));
     const wn = $("#waitNote"); if (wn) { const ids = onlineIds(), left = ids.filter(id => myAns(id) == null); wn.textContent = left.length ? `Waiting for ${left.map(pname).join(", ")}` : ""; }
+  }
+  if (S && S.mode === "neutral" && (S.phase === "np" || S.phase === "nv")) {
+    const np = S.phase === "np", mine = np ? myPick(myId) : myNVote(myId);
+    document.querySelectorAll(np ? ".copt" : ".vopt").forEach(b => b.classList.toggle("sel", np ? +b.dataset.c === mine : b.dataset.id === mine));
+    const wn = $("#waitNote"); if (wn) { const left = S.order.filter(id => online[id] !== false && (np ? myPick(id) : myNVote(id)) == null); wn.textContent = left.length ? `Waiting for ${left.map(pname).join(", ")}` : ""; }
   }
   if (S && S.phase === "mv") {
     const mine = myVote(myId);
@@ -725,6 +882,7 @@ function lobbyHtml() {
     <div id="plist"></div>
     <span class="label">Pick a game</span>
     <button class="gamebtn startBtn" id="startDial"><b>The Dial</b><span>All on one team. One person says a clue, everyone drags the needle to the secret spot.</span></button>
+    <button class="gamebtn startBtn neutralbtn" id="startNeutral"><b>🕵️ Neutral Ground</b><span>One of you is secretly a smuggler. Everyone picks a border crossing. Catch them, or lie your way to riches. 3+ players.</span></button>
     <div class="gamepair">
       <button class="gamebtn startBtn mostbtn" id="startMost"><b>Most Likely To</b><span>A cheeky question pops up. Everyone secretly votes for who it fits best.</span></button>
       <button class="gamebtn startBtn spicybtn" id="startSpicy"><b>🌶️ Spicy</b><span>Same game, filthier questions. Adults only.</span></button>
@@ -772,6 +930,58 @@ function lateBanner(m) {
   const by = {}; m.lower.forEach(l => (by[l.id] = by[l.id] || []).push(l.v));
   const who = Object.keys(by).map(id => `${esc(pname(id))} had ${by[id].sort((a, b) => a - b).join(" and ")}`).join(", ");
   return `<div class="banner bad"><b>Late train!</b> ${esc(pname(m.by))} played ${m.v}, but ${who}. You lose a life.</div>`;
+}
+function ngScore() { return `<div class="ngscore"><span>📦 <b>${S.crates}</b> / ${S.goal.crates} got through</span><span>🚨 <b>${S.seized}</b> / ${S.goal.seize} seized</span></div>`; }
+function roleCard() {
+  const isS = S.smug.includes(myId), { item } = neutralRound(S, S.round);
+  const mates = S.smug.filter(id => id !== myId);
+  const kraut = isS && item === SAUERKRAUT;
+  const inner = isS
+    ? `<b class="role">🕵️ You're the SMUGGLER</b><p>This round you're carrying <b>${esc(item)}</b>. Pick a crossing with no customs officers. Then lie about where you went.</p>${mates.length ? `<p>Your partner in crime: <b>${mates.map(pname).map(esc).join(", ")}</b></p>` : ""}${kraut ? `<p class="kraut">💨 Sauerkraut means you <b>will</b> fart, loudly. Officers at the crossings directly above and below yours in the list will hear it through the walls.</p>` : ""}`
+    : `<b class="role">👮 You're CUSTOMS</b><p>Go where you think the smuggler is going. Same crossing as the smuggler = seized.</p>`;
+  return `<div class="peek" id="peek"><div class="peek-cover">👆 Press and hold to see your secret role</div><div class="peek-in">${inner}</div></div>`;
+}
+function npHtml() {
+  const inGame = S.order.includes(myId), { ev, x } = neutralRound(S, S.round), closed = EVENTS[ev].e === "closed" ? x : null;
+  return `<div class="score"><span class="label">Round ${S.round + 1}</span></div>${ngScore()}
+    <div class="banner">📰 ${esc(evText(S, S.round))}</div>
+    ${inGame ? roleCard() : `<p class="muted" style="text-align:center">You joined late, so you're watching this one.</p>`}
+    ${inGame ? `<span class="label">Pick your crossing (secretly)</span>
+    <div class="opts">${S.cross.map(c => `<button class="opt copt" data-c="${c}" ${c === closed ? "disabled" : ""}>${cname(c)}${c === closed ? " (closed)" : ""}</button>`).join("")}</div>
+    <p class="muted small" id="waitNote" style="text-align:center"></p>
+    <button class="link" id="revealNow">Reveal the round now</button>` : ""}`;
+}
+function nxHtml() {
+  const h = S.nhist[S.nhist.length - 1], e = EVENTS[h.ev].e, bits = [];
+  if (h.kraut) bits.push(`<div class="banner fart">💨 <b>PFFFRRRRRT!</b> The smuggler was carrying sauerkraut. The fart echoed out of ${h.fartAt.map(cname).join(" and ")}, through the walls next door.</div>`);
+  if (h.seizedHere) bits.push(`<div class="banner bad">🚨 <b>Seized at ${h.seizedAt.map(cname).join(" and ")}:</b> ${esc(h.item)}!${h.fartCatch ? " Officers next door heard the fart and came running." : ""}${e === "koala" ? " The sniffer koala makes it count double." : ""}</div>`);
+  if (h.through) bits.push(`<div class="banner good">📦 <b>${h.through > 1 ? h.through + " crates" : "Something"} got through.</b> ${e === "lunch" ? "Customs were at lunch." : h.kraut ? "Nobody next door heard a thing. Lucky." : "Somewhere, someone is smiling."}${e === "fondue" && h.through > 1 ? " Fondue party bonus!" : ""}</div>`);
+  const btn = S.nnext === "end" ? "See who it was" : S.nnext === "vote" ? "Final vote: who's the smuggler?" : "Next round";
+  return `<div class="score"><span class="label">Round ${S.round + 1} result</span></div>${ngScore()}
+    ${bits.join("")}
+    <div class="note">🗣️ ${esc(DISCUSS[(S.round + S.game) % DISCUSS.length])}</div>
+    <button class="big" id="ngNextBtn">${btn}</button>`;
+}
+function nvHtml() {
+  const inGame = S.order.includes(myId);
+  return `${ngScore()}
+    <div class="qcard"><span class="qtag">Final vote</span><h2>The smuggler got the goods through. Who is it?</h2><p class="muted">If most of you pick the smuggler, customs win anyway.</p></div>
+    ${inGame ? `<div class="opts">${S.order.filter(id => id !== myId).map(id => `<button class="opt vopt" data-id="${esc(id)}"><span class="f">${pflag(id)}</span> ${esc(pname(id))}</button>`).join("")}</div>
+    <p class="muted small" id="waitNote" style="text-align:center"></p><button class="link" id="revealNow">Count the votes now</button>` : ""}`;
+}
+function nendHtml() {
+  const v = S.verdict, sm = S.smug;
+  const title = v === "escaped" ? "The smuggler escapes!" : v === "busted" ? "Busted!" : "Customs win!";
+  const sub = v === "escaped" ? "Rich, free and very smug." : v === "busted" ? "The goods got through, but you sniffed them out." : `${S.seized} seizures. Off to customs jail.`;
+  const tally = S.tally ? `<div class="bars">${S.order.map(id => { const c = S.tally[id] || 0, m = Math.max(1, ...Object.values(S.tally)); return `<div class="bar"><span class="bn">${pflag(id)} ${esc(pname(id))}</span><span class="bt"><span style="width:${c / m * 100}%"></span></span><b>${c}</b></div>`; }).join("")}</div>` : "";
+  const table = `<div class="tablewrap"><table class="lies"><thead><tr><th></th>${S.order.map(id => `<th class="${sm.includes(id) ? "sm" : ""}">${esc(pname(id))}${sm.includes(id) ? " 🕵️" : ""}</th>`).join("")}</tr></thead><tbody>${S.nhist.map(h => `<tr><td>R${h.r + 1}${h.kraut ? " 💨" : ""}</td>${S.order.map(id => { const c = h.picks[id]; const caught = sm.includes(id) && h.seizedAt.includes(c); return `<td class="${sm.includes(id) ? "sm" : ""}">${c == null ? "–" : CROSSINGS[c][0]}${caught ? "🚨" : sm.includes(id) && c != null ? "📦" : ""}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
+  return `<div class="stack" style="text-align:center;gap:6px;padding-top:10px"><h1 style="margin:0">${title}</h1><p class="muted">${sub}</p></div>
+    <div class="qcard" style="text-align:center"><span class="qtag" style="align-self:center">The smuggler was</span><h1 style="margin:0">${sm.map(id => `${pflag(id)} ${esc(pname(id))}`).join(" & ")}</h1></div>
+    ${tally}
+    <span class="label">Where everyone really went</span>${table}
+    <p class="muted small">${S.cross.map(cname).join(" · ")}</p>
+    <button class="big" id="againNeutral">Play again</button>
+    <button class="ghost" id="lobbyBtn">Back to the lobby</button>`;
 }
 function mostTop() { return `<div class="score"><span class="label">${S.spicy ? "🌶️ Spicy · " : ""}${S.mn + 1} of ${S.mtotal}</span></div>`; }
 function mvHtml() {
@@ -885,6 +1095,7 @@ function bindPhase(phase, amGiver) {
     $("#startDial").onclick = startGame;
     $("#startQuiz").onclick = startQuiz;
     $("#startPrec").onclick = startPrec;
+    $("#startNeutral").onclick = startNeutral;
     $("#startMost").onclick = () => startMost(false);
     $("#startSpicy").onclick = () => startMost(true);
   }
@@ -892,10 +1103,23 @@ function bindPhase(phase, amGiver) {
   if (phase === "pl") $("#precNextBtn").onclick = precNext;
   if (phase === "pend") { $("#againPrec").onclick = startPrec; $("#lobbyBtn").onclick = toLobby; }
   if (phase === "qq") document.querySelectorAll(".opt").forEach(b => b.onclick = () => answer(+b.dataset.a));
-  if ((phase === "qq" || phase === "mv") && $("#revealNow")) {
+  if ($("#revealNow")) {
     let armed = false; const btn = $("#revealNow"), label = btn.textContent;
-    btn.onclick = () => { if (!armed) { armed = true; btn.textContent = "Tap again to show it"; setTimeout(() => { armed = false; if (btn.isConnected) btn.textContent = label; }, 3000); } else (phase === "qq" ? revealQ : revealMost)(); };
+    const act = { qq: revealQ, mv: revealMost, np: resolveRound, nv: resolveVote }[phase];
+    btn.onclick = () => { if (!armed) { armed = true; btn.textContent = "Tap again to show it"; setTimeout(() => { armed = false; if (btn.isConnected) btn.textContent = label; }, 3000); } else act(); };
   }
+  if (phase === "np") {
+    document.querySelectorAll(".copt").forEach(b => b.onclick = () => pickCrossing(+b.dataset.c));
+    const pk = $("#peek");
+    if (pk) {
+      const open = e => { e.preventDefault(); pk.classList.add("open"); }, shut = () => pk.classList.remove("open");
+      pk.addEventListener("pointerdown", open); ["pointerup", "pointerleave", "pointercancel"].forEach(t => pk.addEventListener(t, shut));
+      pk.addEventListener("contextmenu", e => e.preventDefault());
+    }
+  }
+  if (phase === "nx") $("#ngNextBtn").onclick = neutralNext;
+  if (phase === "nv") document.querySelectorAll(".vopt").forEach(b => b.onclick = () => castNVote(b.dataset.id));
+  if (phase === "nend") { $("#againNeutral").onclick = startNeutral; $("#lobbyBtn").onclick = toLobby; }
   if (phase === "mv") document.querySelectorAll(".vopt").forEach(b => b.onclick = () => vote(b.dataset.id));
   if (phase === "mr") $("#nextMostBtn").onclick = nextMost;
   if (phase === "mend") { $("#againMost").onclick = () => startMost(S.spicy); $("#lobbyBtn").onclick = toLobby; }

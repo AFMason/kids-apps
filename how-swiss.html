@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How Swiss Is It?</title>
+<meta name="theme-color" content="#1d1210">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap">
+<style>
+/* Layout: one phone-width column; a postcard-style spectrum card above a big draggable dial. Dusk in the outback, snow on the cards. */
+:root {
+  --bg: #1d1210;
+  --bg2: #2b1b16;
+  --bg3: #3a2620;
+  --fg: #f6efe4;
+  --muted: #c2a998;
+  --line: rgba(246, 239, 228, .14);
+  --snow: #eef3f6;
+  --ochre: #e7a03c;
+  --ink: #1d1210;
+  --red: #e0301e;
+  --gold: #ffc72c;
+  --orange: #f2812a;
+  --green: #2bb36a;
+  --display: "Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
+  --body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: radial-gradient(120% 60% at 50% 0%, #3a1f17 0%, var(--bg) 60%) fixed, var(--bg);
+  color: var(--fg);
+  font: 16px/1.45 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: calc(env(safe-area-inset-top, 0px) + 10px) calc(env(safe-area-inset-bottom, 0px) + 24px);
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap { max-width: 460px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { font: 800 20px/1 var(--display); letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; }
+.brand .x { width: 22px; height: 22px; border-radius: 5px; background: var(--red); position: relative; flex: none; }
+.brand .x::before, .brand .x::after { content: ""; position: absolute; background: #fff; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.brand .x::before { width: 12px; height: 4px; }
+.brand .x::after { width: 4px; height: 12px; }
+.roomchip { font: 600 13px/1 var(--mono); letter-spacing: .12em; background: var(--bg3); border: 1px solid var(--line); padding: 7px 10px; border-radius: 999px; display: flex; align-items: center; gap: 8px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.dot.on { background: var(--green); box-shadow: 0 0 0 3px rgba(43, 179, 106, .25); }
+.dot.off { background: var(--red); }
+
+h1 { font: 800 clamp(34px, 10vw, 46px)/.95 var(--display); letter-spacing: -.02em; margin: 6px 0 0; text-wrap: balance; }
+h2 { font: 800 26px/1.05 var(--display); margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.label { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+input[type=text] {
+  width: 100%; font: 600 18px var(--body); color: var(--fg); background: var(--bg2);
+  border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 14px; outline: none;
+}
+input[type=text]:focus { border-color: var(--gold); }
+input.code { font: 600 22px var(--mono); letter-spacing: .3em; text-transform: uppercase; text-align: center; }
+
+button { font: 700 17px var(--body); border: 0; border-radius: 14px; padding: 15px 18px; cursor: pointer; color: var(--ink); background: var(--gold); transition: transform .08s, filter .15s; }
+button:active { transform: scale(.97); }
+button:focus-visible { outline: 3px solid var(--snow); outline-offset: 2px; }
+button[disabled] { opacity: .45; cursor: default; }
+button.ghost { background: transparent; color: var(--fg); border: 1.5px solid var(--line); }
+button.red { background: var(--red); color: #fff; }
+button.big { width: 100%; font-size: 19px; padding: 17px; }
+button.link { background: none; color: var(--muted); padding: 6px; font-weight: 600; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
+
+.flags { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.flagbtn { background: var(--bg2); color: var(--fg); border: 2px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px; font-size: 15px; }
+.flag { height: 1em; width: auto; display: inline-block; vertical-align: -0.15em; border-radius: 2px; }
+.flagbtn .f { font-size: 34px; line-height: 1; }
+.flagbtn.sel { border-color: var(--gold); background: var(--bg3); }
+
+.panel { background: var(--bg2); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+.players { display: flex; flex-wrap: wrap; gap: 8px; }
+.pchip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px 7px 8px; border-radius: 999px; background: var(--bg3); border: 1.5px solid transparent; font-weight: 600; font-size: 15px; }
+.pchip .f { font-size: 18px; line-height: 1; }
+.pchip.off { opacity: .4; }
+.pchip.ready { border-color: var(--green); }
+.pchip.giver { border-color: var(--gold); }
+.pchip .you { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+
+.qrbox { display: flex; gap: 16px; align-items: center; }
+.qr { background: #fff; padding: 10px; border-radius: 12px; flex: none; line-height: 0; }
+.qr img, .qr canvas { width: 132px !important; height: 132px !important; display: block; }
+.bigcode { font: 600 30px/1 var(--mono); letter-spacing: .14em; }
+
+/* Postcard spectrum card */
+.card {
+  display: grid; grid-template-columns: 1fr 1fr; border-radius: 14px; overflow: hidden; color: var(--ink);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .35); position: relative; text-align: left; padding: 0; width: 100%;
+  font: inherit; background: none;
+}
+.card > span { padding: 16px 14px 18px; font: 800 19px/1.08 var(--display); min-height: 84px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.card .l { background: var(--snow); }
+.card .r { background: var(--ochre); text-align: right; align-items: flex-end; }
+.card .arrow { font: 600 13px var(--body); opacity: .6; }
+.card.pick { border: 3px solid transparent; cursor: pointer; }
+.card.pick.sel { border-color: var(--gold); transform: none; }
+.card.pick:not(.sel) { opacity: .75; }
+
+.clue { text-align: center; padding: 6px 0 0; }
+.clue .q { font: 800 clamp(30px, 9vw, 40px)/1.05 var(--display); color: var(--gold); overflow-wrap: anywhere; }
+
+.dialwrap { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; }
+.dialwrap svg { width: 100%; height: auto; display: block; overflow: visible; }
+.dialwrap.drag { cursor: grab; }
+.ends { display: flex; justify-content: space-between; gap: 12px; font: 800 15px/1.1 var(--display); margin-top: -2px; }
+.ends span { max-width: 48%; overflow-wrap: anywhere; }
+.ends .r { text-align: right; }
+.bands { transform-origin: 100px 105px; }
+.reveal .bands { animation: fan .7s cubic-bezier(.2, .9, .3, 1.2) both; }
+@keyframes fan { from { transform: scale(0) rotate(-40deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.pts { text-align: center; }
+.pts .n { font: 800 72px/1 var(--display); color: var(--gold); }
+.pts .n.zero { color: var(--muted); }
+.score { display: flex; justify-content: space-between; align-items: baseline; font-variant-numeric: tabular-nums; }
+.score b { font: 800 22px var(--display); }
+.note { background: var(--bg3); border-radius: 12px; padding: 10px 12px; font-size: 14px; color: var(--muted); }
+.hist { display: flex; flex-direction: column; gap: 8px; }
+.hist .h { display: grid; grid-template-columns: 1fr auto; gap: 10px; background: var(--bg2); border-radius: 12px; padding: 10px 12px; font-size: 14px; }
+.hist .h b { font: 800 20px var(--display); color: var(--gold); align-self: center; font-variant-numeric: tabular-nums; }
+.hist .h .c { min-width: 0; overflow-wrap: anywhere; }
+.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); transform: translateX(-50%); background: var(--snow); color: var(--ink); font-weight: 700; padding: 10px 16px; border-radius: 999px; box-shadow: 0 6px 20px rgba(0,0,0,.4); z-index: 5; max-width: calc(100vw - 32px); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .reveal .bands { animation: none; } button { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span class="x" aria-hidden="true"></span>How Swiss Is It?</div>
+    <div class="roomchip" id="roomchip" hidden><span class="dot" id="dot"></span><span id="roomcode"></span></div>
+  </header>
+  <main id="app" class="stack"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+"use strict";
+// ---------- Spectrum cards: [left, right] ----------
+const CARDS = [
+  ["Very Swiss", "Very Aussie"], ["Punctual", "She'll be right"], ["Polite", "Rude"],
+  ["Harmless animal", "Will kill you"], ["Fine at a BBQ", "Banned from the BBQ"],
+  ["Fine after 10pm in a Swiss flat", "Neighbours call the Hausverwaltung"],
+  ["Real cheese", "Not cheese"], ["Overrated", "Underrated"], ["Good chocolate", "Bad chocolate"],
+  ["Normal price in Zürich", "Outrageous even for Zürich"], ["Boring", "Thrilling"], ["Healthy", "Unhealthy"],
+  ["Snow sport", "Beach sport"], ["Easy for Aussies to say", "Impossible for Aussies to say"],
+  ["Swiss would understand", "Pure Aussie slang"], ["Fancy", "Daggy"], ["Formal", "Casual"],
+  ["Hero", "Villain"], ["Smells great", "Smells terrible"], ["Great breakfast", "Terrible breakfast"],
+  ["Better hot", "Better cold"], ["Useless superpower", "Amazing superpower"], ["Mountain holiday", "Beach holiday"],
+  ["Waste of money", "Worth every franc"], ["Normal pet", "Weird pet"], ["Calm", "Chaos"],
+  ["Delicious", "Disgusting"], ["Hard to make", "Easy to make"], ["Quiet", "Loud"],
+  ["Uncool", "Cool"], ["Swiss would do it", "Swiss would never"], ["Aussie would do it", "Aussie would never"],
+  ["Skill", "Luck"], ["Good first date", "Terrible first date"], ["Romantic", "Unromantic"],
+  ["Safe job", "Dangerous job"], ["Gets better with age", "Gets worse with age"],
+  ["Fun to watch", "Fun to play"], ["Worth queuing for", "Not worth queuing for"],
+  ["Fine on a tram", "Never on a tram"], ["Great Christmas tradition", "Terrible Christmas tradition"],
+  ["Sounds made up", "Sounds real"], ["Easy language", "Hard language"], ["Natural", "Artificial"],
+  ["Weak coffee", "Strong coffee"], ["Normal sandwich filling", "Unhinged sandwich filling"],
+  ["Better in Switzerland", "Better in Australia"], ["Needs a permit", "Nobody cares"],
+  ["Tourist trap", "Hidden gem"], ["Couch potato", "Mountain goat"], ["Dated", "Timeless"],
+  ["Small", "Huge"], ["Cheap", "Expensive"], ["Kids' thing", "Grown-up thing"],
+  ["Tidy", "Messy"], ["Safe to swim", "Do not swim"], ["Underdressed", "Overdressed"],
+  ["Basic skill", "Impressive skill"], ["Rural", "Urban"], ["Beautiful word", "Ugly word"],
+  ["Fair dinkum", "Dodgy"], ["Gemütlich", "Uncomfortable"], ["Neutral", "Picks a side"],
+  ["Scary", "Cute"], ["Good gift", "Bad gift"], ["Sporty", "Unsporty"], ["Necessity", "Luxury"],
+  ["Lekker", "Yuck"], ["Old-fashioned", "Modern"], ["Minor inconvenience", "Total disaster"]
+];
+const BANDS = [[17.5, 2], [10.5, 3], [3.5, 4]]; // half-width, points
+const PREFIX = "howswissisit-v1";
+const BROKERS = ["wss://broker.emqx.io:8084/mqtt", "wss://broker.hivemq.com:8884/mqtt"];
+const CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
+// ---------- small utils ----------
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = {
+  get(k, d, ses) { try { const v = (ses ? sessionStorage : localStorage).getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v, ses) { try { (ses ? sessionStorage : localStorage).setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+function hashStr(str) { let h = 1779033703 ^ str.length; for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; } return () => { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); return (h ^= h >>> 16) >>> 0; }; }
+function rng(seed) { let a = hashStr(seed)(); return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function randId(n, chars = "abcdefghijkmnpqrstuvwxyz23456789") { let s = ""; const a = crypto.getRandomValues(new Uint8Array(n)); for (const b of a) s += chars[b % chars.length]; return s; }
+let toastT;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
+
+// ---------- identity & connection ----------
+const myId = store.get("hs_id", null, true) || randId(10); store.set("hs_id", myId, true);
+let profile = store.get("hs_profile", { name: "", flag: "" });
+const params = new URLSearchParams(location.search);
+let room = (params.get("room") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6) || null;
+let brokerIdx = Math.min(BROKERS.length - 1, Math.max(0, parseInt(params.get("b") || "0", 10) || 0));
+let joined = false, isCreator = false, client = null, connected = false;
+let S = null;            // shared game state (last-writer-wins by version)
+let players = {};        // id -> {name, flag, joined, ready}
+let online = {};         // id -> bool
+let localPick = null;    // giver's card choice before sending clue
+let dragging = false, localDial = null, pubTimer = null, lastPub = 0;
+let wakeLock = null;
+const base = () => `${PREFIX}/${room}`;
+
+function connect() {
+  if (client) { try { client.end(true); } catch (e) {} }
+  connected = false;
+  client = mqtt.connect(BROKERS[brokerIdx], {
+    clientId: "hs_" + myId + "_" + randId(4), keepalive: 30, reconnectPeriod: 2000, connectTimeout: 8000, clean: true,
+    will: { topic: `${base()}/online/${myId}`, payload: "0", retain: true, qos: 1 }
+  });
+  let everConnected = false;
+  const fallback = setTimeout(() => {
+    if (!everConnected && isCreator && brokerIdx < BROKERS.length - 1) { brokerIdx++; updateUrl(); connect(); }
+  }, 9000);
+  client.on("connect", () => {
+    everConnected = true; clearTimeout(fallback); connected = true;
+    client.subscribe(`${base()}/#`, { qos: 1 });
+    client.publish(`${base()}/online/${myId}`, "1", { retain: true, qos: 1 });
+    pubPlayer();
+    render();
+  });
+  const down = () => { connected = false; patch(); };
+  client.on("offline", down); client.on("close", down);
+  client.on("message", onMessage);
+}
+function onMessage(topic, buf) {
+  const sub = topic.slice(base().length + 1), txt = buf.toString();
+  if (sub === "state") {
+    if (!txt) return;
+    let s; try { s = JSON.parse(txt); } catch (e) { return; }
+    if (!S || s.v > S.v || (s.v === S.v && s.by > S.by)) {
+      if (dragging && S && s.phase === S.phase && s.round === S.round && s.game === S.game) s.dial = localDial;
+      S = s; render(); checkAllReady();
+    }
+  } else if (sub.startsWith("players/")) {
+    const id = sub.slice(8);
+    if (!txt) delete players[id]; else { try { players[id] = JSON.parse(txt); } catch (e) {} }
+    render(); checkAllReady();
+  } else if (sub.startsWith("online/")) {
+    online[sub.slice(7)] = txt === "1"; patch(); checkAllReady();
+  }
+}
+function pubPlayer(extra) {
+  if (!client || !connected) return;
+  const me = players[myId] || { joined: Date.now() };
+  const p = { name: profile.name, flag: profile.flag, joined: me.joined, ready: me.ready || null, ...extra };
+  players[myId] = p;
+  client.publish(`${base()}/players/${myId}`, JSON.stringify(p), { retain: true, qos: 1 });
+}
+function setState(mut) {
+  const n = JSON.parse(JSON.stringify(S || {}));
+  if (mut(n) === false) return;
+  n.v = (S ? S.v || 0 : 0) + 1; n.by = myId;
+  S = n; publishState(); render(); checkAllReady();
+}
+function publishState() { if (client && connected) client.publish(`${base()}/state`, JSON.stringify(S), { retain: true, qos: 1 }); }
+function updateUrl() { const u = new URL(location.href); u.search = ""; u.searchParams.set("room", room); if (brokerIdx) u.searchParams.set("b", brokerIdx); history.replaceState(null, "", u); }
+function joinUrl() { const u = new URL(location.href); u.search = ""; u.hash = ""; u.searchParams.set("room", room); if (brokerIdx) u.searchParams.set("b", brokerIdx); return u.toString(); }
+async function keepAwake() { try { if ("wakeLock" in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => wakeLock = null); } } catch (e) {} }
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && joined) keepAwake(); });
+
+// ---------- game derivations (deterministic from room + game + round) ----------
+function deck(game) { const idx = CARDS.map((_, i) => i), r = rng(`${room}:${game}:deck`); for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; } return idx; }
+function options(st) { const d = deck(st.game), n = d.length; return [d[(2 * st.round) % n], d[(2 * st.round + 1) % n]]; }
+function target(st) { return Math.round((4 + 92 * rng(`${room}:${st.game}:t${st.round}`)()) * 10) / 10; }
+function giver(st) { if (st.over && st.over.r === st.round) return st.over.id; return st.order[st.round % st.order.length]; }
+function points(dial, t) { const d = Math.abs(dial - t); for (const [w, p] of BANDS.slice().reverse()) if (d <= w) return p; return 0; }
+function onlineIds() { return Object.keys(players).filter(id => online[id] !== false).sort((a, b) => players[a].joined - players[b].joined); }
+function pname(id) { const p = players[id]; return p ? p.name || "Someone" : "Someone"; }
+// Drawn flags: flag emoji don't show on Windows, and these match on every phone
+const FLAG_CH = `<svg class="flag" viewBox="0 0 32 32" aria-label="Switzerland"><rect width="32" height="32" rx="4" fill="#da291c"/><path d="M13 6h6v7h7v6h-7v7h-6v-7H6v-6h7z" fill="#fff"/></svg>`;
+const STAR = (x, y, r) => { let d = ""; for (let i = 0; i < 14; i++) { const a = Math.PI / 7 * i - Math.PI / 2, rr = i % 2 ? r * .45 : r; d += (i ? "L" : "M") + (x + rr * Math.cos(a)).toFixed(2) + " " + (y + rr * Math.sin(a)).toFixed(2); } return `<path d="${d}Z" fill="#fff"/>`; };
+const FLAG_AU = `<svg class="flag" viewBox="0 0 64 32" aria-label="Australia"><rect width="64" height="32" rx="4" fill="#012169"/><path d="M0 0L32 16M32 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L32 16M32 0L0 16" stroke="#c8102e" stroke-width="1.2"/><path d="M16 0v16M0 8h32" stroke="#fff" stroke-width="5.3"/><path d="M16 0v16M0 8h32" stroke="#c8102e" stroke-width="3.2"/>${STAR(16, 24, 4.6)}${STAR(48, 26.5, 2.6)}${STAR(41, 14.5, 2.6)}${STAR(48, 5.5, 2.6)}${STAR(54.5, 12.5, 2.6)}${STAR(51, 17.5, 1.5)}</svg>`;
+function pflag(id) { const p = players[id]; return p && p.flag === "au" ? FLAG_AU : p && p.flag === "ch" ? FLAG_CH : "🙂"; }
+function guessers() { return onlineIds().filter(id => id !== giver(S)); }
+function readyOk(id) { const r = players[id] && players[id].ready; return !!(r && r.g === S.game && r.r === S.round && r.dv === S.dialV); }
+
+function startGame() {
+  const order = onlineIds();
+  if (order.length < 2) return toast("You need at least 2 players");
+  setState(n => {
+    n.game = (n.game || 0) + 1; n.phase = "pick"; n.round = 0; n.rounds = Math.max(6, order.length * 2);
+    n.order = order; n.score = 0; n.history = []; n.dial = 50; n.dialV = 0; n.card = null; n.clue = ""; n.over = null;
+  });
+}
+function giveClue(clue) {
+  if (localPick == null) return toast("Pick a card first");
+  const r = S.round, g = S.game;
+  setState(n => { if (n.phase !== "pick" || n.round !== r || n.game !== g) return false; n.card = localPick; n.clue = clue; n.phase = "guess"; n.dial = 50; n.dialV = (n.dialV || 0) + 1; });
+  localPick = null;
+}
+function checkAllReady() {
+  if (!S || S.phase !== "guess") return;
+  const gs = guessers();
+  if (gs.length && gs.every(readyOk) && readyOk(myId)) lockIn();
+}
+function lockIn() {
+  const r = S.round, g = S.game;
+  setState(n => {
+    if (n.phase !== "guess" || n.round !== r || n.game !== g) return false;
+    const t = target(n), p = points(n.dial, t);
+    n.history.push({ r, card: n.card, clue: n.clue, giver: giver(n), dial: Math.round(n.dial * 10) / 10, t, p });
+    n.score += p; n.phase = "reveal";
+  });
+}
+function nextRound() {
+  const r = S.round, g = S.game;
+  setState(n => {
+    if (n.phase !== "reveal" || n.round !== r || n.game !== g) return false;
+    if (n.round + 1 >= n.rounds) { n.phase = "end"; return; }
+    n.round++; n.phase = "pick"; n.card = null; n.clue = ""; n.dial = 50; n.dialV++; n.over = null;
+  });
+}
+function takeOver() { const r = S.round; setState(n => { if (n.phase !== "pick" || n.round !== r) return false; n.over = { r, id: myId }; }); }
+function toLobby() { setState(n => { n.phase = "lobby"; }); }
+function setDial(v, final) {
+  localDial = Math.max(0, Math.min(100, v));
+  S.dial = localDial; patchDial();
+  const now = Date.now();
+  const send = () => { pubTimer = null; lastPub = Date.now(); const keep = localDial; setState(n => { if (n.phase !== "guess") return false; n.dial = keep; n.dialV = (n.dialV || 0) + 1; }); };
+  if (final) { clearTimeout(pubTimer); send(); }
+  else if (!pubTimer) pubTimer = setTimeout(send, Math.max(0, 120 - (now - lastPub)));
+}
+
+// ---------- dial SVG ----------
+const CX = 100, CY = 105, R = 92;
+function pt(v, r = R) { const a = Math.PI * (1 - v / 100); return [CX + r * Math.cos(a), CY - r * Math.sin(a)]; }
+function wedge(a, b) { a = Math.max(0, a); b = Math.min(100, b); const [x1, y1] = pt(a), [x2, y2] = pt(b); return `M${CX} ${CY}L${x1.toFixed(2)} ${y1.toFixed(2)}A${R} ${R} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)}Z`; }
+function dialSvg({ t = null, dial = 50, showNeedle = true }) {
+  const ticks = [];
+  for (let i = 0; i <= 20; i++) { const v = i * 5, [x1, y1] = pt(v, R + 3), [x2, y2] = pt(v, R + (i % 5 ? 7 : 11)); ticks.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="var(--muted)" stroke-width="${i % 5 ? .8 : 1.6}" stroke-linecap="round"/>`); }
+  const colors = { 2: "var(--gold)", 3: "var(--orange)", 4: "var(--red)" };
+  const bands = t == null ? "" : `<g class="bands">${BANDS.map(([w, p]) => `<path d="${wedge(t - w, t + w)}" fill="${colors[p]}"/>`).join("")}
+    ${[[-14, 2], [-7, 3], [0, 4], [7, 3], [14, 2]].filter(([o]) => t + o >= 0 && t + o <= 100).map(([o, p]) => { const [x, y] = pt(t + o, R - 12); return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="middle" font-family="var(--display)" font-weight="800" font-size="9" fill="${p === 4 ? "#fff" : "var(--ink)"}">${p}</text>`; }).join("")}</g>`;
+  const [nx, ny] = pt(dial, R - 4);
+  return `<svg viewBox="-6 0 212 116" role="img" aria-label="Dial, needle at ${Math.round(dial)} of 100">
+    <path d="${wedge(0, 100)}" fill="var(--bg3)" stroke="var(--line)"/>
+    ${bands}
+    ${ticks.join("")}
+    <g id="needle" ${showNeedle ? "" : 'style="display:none"'}>
+      <line id="nl" x1="${CX}" y1="${CY}" x2="${nx.toFixed(2)}" y2="${ny.toFixed(2)}" stroke="var(--snow)" stroke-width="3.5" stroke-linecap="round"/>
+      <circle id="nk" cx="${nx.toFixed(2)}" cy="${ny.toFixed(2)}" r="6" fill="var(--snow)" stroke="var(--ink)" stroke-width="1.5"/>
+    </g>
+    <circle cx="${CX}" cy="${CY}" r="8" fill="var(--red)"/>
+    <rect x="${CX - 4}" y="${CY - 1.3}" width="8" height="2.6" fill="#fff"/><rect x="${CX - 1.3}" y="${CY - 4}" width="2.6" height="8" fill="#fff"/>
+  </svg>`;
+}
+function patchDial() {
+  const nl = $("#nl"), nk = $("#nk"); if (!nl || !S) return;
+  const [x, y] = pt(S.dial, R - 4);
+  nl.setAttribute("x2", x.toFixed(2)); nl.setAttribute("y2", y.toFixed(2)); nk.setAttribute("cx", x.toFixed(2)); nk.setAttribute("cy", y.toFixed(2));
+}
+function bindDrag(el) {
+  const svg = el.querySelector("svg");
+  const valAt = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; const q = p.matrixTransform(svg.getScreenCTM().inverse()); let a = Math.atan2(CY - q.y, q.x - CX); if (a < 0) a = q.x < CX ? Math.PI : 0; return 100 * (1 - a / Math.PI); };
+  el.addEventListener("pointerdown", e => { dragging = true; el.setPointerCapture(e.pointerId); setDial(valAt(e)); e.preventDefault(); });
+  el.addEventListener("pointermove", e => { if (dragging) setDial(valAt(e)); });
+  const end = e => { if (!dragging) return; dragging = false; setDial(valAt(e), true); };
+  el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+}
+
+// ---------- rendering ----------
+function cardHtml(i, cls = "", attrs = "") {
+  const [l, r] = CARDS[i];
+  return `<button type="button" class="card ${cls}" ${attrs}><span class="l">${esc(l)}<span class="arrow">← left</span></span><span class="r">${esc(r)}<span class="arrow">right →</span></span></button>`;
+}
+function playersHtml(opts = {}) {
+  return `<div class="players">${Object.keys(players).sort((a, b) => players[a].joined - players[b].joined).map(id => {
+    const cls = [online[id] === false ? "off" : "", opts.ready && readyOk(id) ? "ready" : "", opts.giver === id ? "giver" : ""].join(" ");
+    return `<span class="pchip ${cls}"><span class="f">${pflag(id)}</span>${esc(pname(id))}${id === myId ? ' <span class="you">you</span>' : ""}${opts.ready && readyOk(id) ? " ✓" : ""}${opts.giver === id ? " 🎙️" : ""}</span>`;
+  }).join("")}</div>`;
+}
+function scoreHtml() { return `<div class="score"><span class="label">Round ${S.round + 1} of ${S.rounds}</span><span class="muted small">Team score <b>${S.score}</b></span></div>`; }
+function ends(i) { const [l, r] = CARDS[i]; return `<div class="ends"><span>← ${esc(l)}</span><span class="r">${esc(r)} →</span></div>`; }
+
+let lastKey = "";
+function render() {
+  const chip = $("#roomchip"); chip.hidden = !joined; $("#roomcode").textContent = room || "";
+  patchDot();
+  const app = $("#app");
+  if (!joined) { const k = "home:" + (room || ""); if (k !== lastKey) { lastKey = k; app.innerHTML = homeHtml(); bindHome(); } return; }
+  const phase = S && S.phase && S.phase !== "lobby" ? S.phase : "lobby";
+  const amGiver = phase !== "lobby" && phase !== "end" && giver(S) === myId;
+  const key = [phase, S && S.game, S && S.round, amGiver, S && S.card, phase === "pick" ? localPick : "", phase === "pick" ? (S.over && S.over.id) : ""].join("|");
+  if (key !== lastKey) {
+    lastKey = key;
+    app.innerHTML = ({ lobby: lobbyHtml, pick: pickHtml, guess: guessHtml, reveal: revealHtml, end: endHtml })[phase](amGiver);
+    bindPhase(phase, amGiver);
+  }
+  patch();
+}
+function patchDot() { const d = $("#dot"); if (d) d.className = "dot " + (connected ? "on" : joined ? "off" : ""); }
+function patch() {
+  patchDot();
+  const pl = $("#plist"); if (pl && S !== undefined) {
+    const phase = S && S.phase && S.phase !== "lobby" ? S.phase : "lobby";
+    pl.innerHTML = playersHtml({ ready: phase === "guess", giver: phase !== "lobby" && phase !== "end" ? giver(S) : null });
+  }
+  if (S && S.phase === "guess") {
+    patchDial();
+    const rb = $("#readyBtn"), rn = $("#readyNote");
+    if (rb) { const me = readyOk(myId); rb.textContent = me ? "Waiting for the others…" : "I'm happy with this"; rb.disabled = me; }
+    if (rn) { const gs = guessers(), n = gs.filter(readyOk).length; rn.textContent = `${n} of ${gs.length} happy. Moving the dial resets everyone.`; }
+  }
+  const tb = $("#takeover"); if (tb && S && S.phase === "pick") tb.hidden = online[giver(S)] !== false || giver(S) === myId;
+  const sb = $("#startBtn"); if (sb) sb.disabled = onlineIds().length < 2 || !connected;
+}
+
+function homeHtml() {
+  return `<div class="stack" style="gap:20px">
+    <h1>${room ? "Join the game" : "Swiss or Aussie, polite or rude, how far along is it?"}</h1>
+    <p class="muted">A team guessing game for phones. One player sees where the hidden target sits and gives a one-word clue. Everyone else drags the dial together to find it.</p>
+    <div class="stack"><label class="label" for="nameIn">Your name</label><input type="text" id="nameIn" maxlength="16" autocomplete="nickname" placeholder="e.g. Reto or Shazza" value="${esc(profile.name)}"></div>
+    <div class="stack"><span class="label">You're playing for</span>
+      <div class="flags"><button type="button" class="flagbtn ${profile.flag === "ch" ? "sel" : ""}" data-flag="ch"><span class="f">${FLAG_CH}</span>Switzerland</button><button type="button" class="flagbtn ${profile.flag === "au" ? "sel" : ""}" data-flag="au"><span class="f">${FLAG_AU}</span>Australia</button></div></div>
+    ${room ? `<button class="big" id="joinBtn">Join game ${esc(room)}</button><button class="link" id="newBtn">Start a different game instead</button>`
+      : `<button class="big" id="newBtn">Start a new game</button>
+         <div class="row" style="flex-wrap:nowrap"><input type="text" class="code" id="codeIn" maxlength="6" placeholder="CODE" aria-label="Game code"><button class="ghost" id="joinBtn" style="flex:none">Join</button></div>`}
+  </div>`;
+}
+function bindHome() {
+  document.querySelectorAll(".flagbtn").forEach(b => b.onclick = () => { profile.flag = b.dataset.flag; document.querySelectorAll(".flagbtn").forEach(x => x.classList.toggle("sel", x === b)); });
+  const go = (code, creator) => {
+    const name = $("#nameIn").value.trim();
+    if (!name) { $("#nameIn").focus(); return toast("Type your name first"); }
+    if (!profile.flag) return toast("Pick Switzerland or Australia");
+    profile.name = name; store.set("hs_profile", profile);
+    room = code; isCreator = creator; joined = true; if (creator) brokerIdx = 0;
+    store.set("hs_joined", room, true);
+    updateUrl(); keepAwake(); connect(); render();
+  };
+  $("#newBtn").onclick = () => go(randId(5, CODE_CHARS), true);
+  $("#joinBtn").onclick = () => { const c = room || ($("#codeIn").value || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); if (c.length < 4) return toast("Type the game code"); go(c, false); };
+}
+
+function lobbyHtml() {
+  const prev = S && S.history && S.history.length && S.phase === "lobby";
+  return `<div class="panel">
+      <span class="label">Scan to join</span>
+      <div class="qrbox"><div class="qr" id="qr"></div><div class="stack" style="gap:6px;min-width:0"><span class="muted small">or go to this page and type</span><span class="bigcode">${esc(room)}</span><button class="link" id="copyBtn" style="align-self:flex-start;padding-left:0">Copy invite link</button></div></div>
+    </div>
+    <div class="stack"><span class="label">At the table</span><div id="plist"></div></div>
+    <div class="note">Best with 4: everyone gives two clues. ${prev ? `Last game: <b>${S.score}</b> points.` : "Each round is worth up to 4 points."}</div>
+    <button class="big" id="startBtn">Start game</button>
+    <details class="small muted"><summary style="cursor:pointer">How to play</summary><div class="stack" style="margin-top:10px">
+      <p>Each round, one player is the <b>clue giver</b>. Their phone shows two spectrum cards (like <i>Polite ↔ Rude</i>) and a secret target somewhere on the dial.</p>
+      <p>They pick a card and give a clue that sits at that point on the spectrum. For example, if the target is far right on <i>Very Swiss ↔ Very Aussie</i>, "Vegemite" works.</p>
+      <p>Everyone else drags the shared dial together and talks it through. When every guesser taps <b>I'm happy</b>, the dial locks.</p>
+      <p>Bullseye scores 4, near 3, close 2. You win or lose as a team.</p></div></details>`;
+}
+function pickHtml(amGiver) {
+  const g = giver(S);
+  if (!amGiver) return `${scoreHtml()}
+    <div class="panel" style="align-items:center;text-align:center;padding:28px 16px">
+      <span style="font-size:44px;line-height:1">${pflag(g)}</span>
+      <h2>${esc(pname(g))} is thinking of a clue…</h2>
+      <p class="muted small">No peeking at their phone.</p>
+    </div>
+    <div id="plist"></div>
+    <button class="link" id="takeover" hidden>${esc(pname(g))} has dropped out. Give this clue yourself</button>`;
+  const [a, b] = options(S), t = target(S);
+  return `${scoreHtml()}
+    <h2>Your turn to give the clue</h2>
+    <p class="muted small">Pick a card. Only you can see the target.</p>
+    <div class="stack">${cardHtml(a, "pick" + (localPick === a ? " sel" : ""), `data-c="${a}"`)}${cardHtml(b, "pick" + (localPick === b ? " sel" : ""), `data-c="${b}"`)}</div>
+    ${localPick == null ? "" : `<div class="dialwrap reveal">${dialSvg({ t, showNeedle: false })}${ends(localPick)}</div>
+    <div class="stack"><label class="label" for="clueIn">Your clue</label><input type="text" id="clueIn" maxlength="40" placeholder="One word or a short phrase" autocomplete="off">
+    <button class="big" id="clueBtn">Send clue</button><button class="ghost" id="loudBtn">I'll say it out loud</button></div>`}`;
+}
+function guessHtml(amGiver) {
+  const g = giver(S);
+  const clue = S.clue ? `<div class="q">“${esc(S.clue)}”</div>` : `<div class="q">🗣️</div><p class="muted small">${esc(pname(g))} says the clue out loud</p>`;
+  return `${scoreHtml()}
+    ${cardHtml(S.card, "", 'tabindex="-1" aria-disabled="true"')}
+    <div class="clue"><span class="label">${pflag(g)} ${esc(pname(g))}'s clue</span>${clue}</div>
+    <div class="dialwrap ${amGiver ? "reveal" : "drag"}" id="dial">${dialSvg({ t: amGiver ? target(S) : null, dial: S.dial })}</div>
+    ${amGiver ? `<div class="note">Poker face. You can see the target, they can't. No hints!</div>`
+      : `<button class="big" id="readyBtn">I'm happy with this</button><p class="muted small" id="readyNote" style="text-align:center"></p>`}
+    <div id="plist"></div>
+    ${amGiver ? "" : `<button class="link" id="forceBtn">Lock it in now</button>`}`;
+}
+function revealHtml() {
+  const h = S.history[S.history.length - 1];
+  const lines = { 4: ["Bullseye!", "Exakt wie e Schwiizer Uhr."], 3: ["Bloody ripper.", "So close."], 2: ["Not bad, mate.", "In the ballpark."], 0: ["Yeah, nah.", "Totally lost."] };
+  const [big, sub] = lines[h.p];
+  const last = S.round + 1 >= S.rounds;
+  return `${scoreHtml()}
+    ${cardHtml(h.card, "", 'tabindex="-1" aria-disabled="true"')}
+    <div class="clue"><span class="label">${pflag(h.giver)} ${esc(pname(h.giver))}'s clue</span><div class="q">${h.clue ? "“" + esc(h.clue) + "”" : "🗣️"}</div></div>
+    <div class="dialwrap reveal">${dialSvg({ t: h.t, dial: h.dial })}</div>
+    <div class="pts"><div class="n ${h.p ? "" : "zero"}">+${h.p}</div><h2>${big}</h2><p class="muted">${sub}</p></div>
+    <button class="big" id="nextBtn">${last ? "See the final score" : "Next round"}</button>
+    <div id="plist"></div>`;
+}
+function endHtml() {
+  const max = S.rounds * 4, pct = S.score / max;
+  const tiers = [[.8, "Dual citizens", "You're basically one country now. Grüezi, mate."], [.62, "Permanent residents", "You know each other's brains really well."], [.45, "Working holiday visa", "Some great moments, some baffled faces."], [.25, "Tourists with a phrasebook", "Lots of pointing, some luck."], [0, "Lost at Zürich HB", "Different planets. Play again?"]];
+  const [title, sub] = tiers.find(([m]) => pct >= m).slice(1);
+  return `<div class="stack" style="text-align:center;gap:6px;padding-top:10px"><span class="label">Final team score</span><div class="pts"><div class="n">${S.score}<span class="muted" style="font-size:28px"> / ${max}</span></div></div><h1 style="margin:0">${title}</h1><p class="muted">${sub}</p></div>
+    <div class="hist">${S.history.map(h => `<div class="h"><div class="c"><span class="muted">${pflag(h.giver)} ${esc(pname(h.giver))}:</span> “${h.clue ? esc(h.clue) : "said out loud"}”<br><span class="muted small">${esc(CARDS[h.card][0])} ↔ ${esc(CARDS[h.card][1])}</span></div><b>+${h.p}</b></div>`).join("")}</div>
+    <button class="big" id="againBtn">Play again</button>
+    <button class="ghost" id="lobbyBtn">Back to the lobby</button>`;
+}
+function bindPhase(phase, amGiver) {
+  if (phase === "lobby") {
+    const qr = $("#qr");
+    try { new QRCode(qr, { text: joinUrl(), width: 264, height: 264, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { qr.textContent = "QR unavailable"; }
+    $("#copyBtn").onclick = () => { navigator.clipboard.writeText(joinUrl()).then(() => toast("Invite link copied"), () => toast(joinUrl())); };
+    $("#startBtn").onclick = startGame;
+  }
+  if (phase === "pick") {
+    document.querySelectorAll(".card.pick").forEach(c => c.onclick = () => { localPick = +c.dataset.c; render(); });
+    const send = loud => { const v = loud ? "" : ($("#clueIn").value || "").trim(); if (!loud && !v) { $("#clueIn").focus(); return toast("Type a clue, or say it out loud"); } giveClue(v); };
+    if ($("#clueBtn")) { $("#clueBtn").onclick = () => send(false); $("#loudBtn").onclick = () => send(true); $("#clueIn").onkeydown = e => { if (e.key === "Enter") send(false); }; }
+    if ($("#takeover")) $("#takeover").onclick = takeOver;
+  }
+  if (phase === "guess") {
+    if (!amGiver) {
+      bindDrag($("#dial"));
+      $("#readyBtn").onclick = () => { pubPlayer({ ready: { g: S.game, r: S.round, dv: S.dialV } }); patch(); checkAllReady(); };
+      let armed = false;
+      $("#forceBtn").onclick = e => { if (!armed) { armed = true; e.target.textContent = "Tap again to lock it in"; setTimeout(() => { armed = false; if (e.target.isConnected) e.target.textContent = "Lock it in now"; }, 3000); } else lockIn(); };
+    }
+  }
+  if (phase === "reveal") $("#nextBtn").onclick = nextRound;
+  if (phase === "end") { $("#againBtn").onclick = startGame; $("#lobbyBtn").onclick = toLobby; }
+}
+
+// Reloading the page (or the phone dropping it) puts you straight back in your game
+if (room && store.get("hs_joined", null, true) === room && profile.name && profile.flag && typeof mqtt !== "undefined") { joined = true; connect(); keepAwake(); }
+render();
+if (typeof mqtt === "undefined") toast("Couldn't load the sync library. Check your internet connection.");
+</script>
+</body>
+</html>

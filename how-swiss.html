@@ -438,20 +438,28 @@ const MOST_SPICY = [
 const MOST_N = 15;
 function mostDeck(spicy) { return spicy ? MOST_SPICY : MOST; }
 function mostOrder(game, spicy) { const deck = mostDeck(spicy), ids = deck.map((_, i) => i), r = rng(`${room}:most${spicy ? "s" : ""}`); for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; } const off = ((game - 1) * MOST_N) % ids.length; return [...ids.slice(off), ...ids].slice(0, MOST_N); }
-function curMost() { return mostDeck(S.spicy)[mostOrder(S.mgame || S.game, S.spicy)[S.mn]]; }
+function curMost() { return S.mlist ? S.mlist[S.mn] : mostDeck(S.spicy)[mostOrder(S.mgame || S.game, S.spicy)[S.mn]]; }
 function myVote(id) { const v = players[id] && players[id].vote; return v && v.g === S.game && v.n === S.mn ? v.id : null; }
+// The room remembers every prompt it has shown (mseen), so new games skip them until a deck runs out.
 function startMost(spicy) {
   if (onlineIds().length < 2) return toast("You need at least 2 players");
   setState(n => {
-    n.game = (n.game || 0) + 1; n.mode = "most"; n.phase = "mv"; n.mn = 0; n.mtotal = MOST_N; n.mhist = []; n.spicy = !!spicy;
-    n.mplays = n.mplays || { c: 0, s: 0 }; n.mplays[spicy ? "s" : "c"]++; n.mgame = n.mplays[spicy ? "s" : "c"];
+    const deck = mostDeck(spicy), seen = new Set(n.mseen || []);
+    let avail = deck.filter(x => !seen.has(x));
+    if (avail.length < MOST_N) { n.mseen = (n.mseen || []).filter(x => !deck.includes(x)); avail = deck.slice(); toast("You've seen every prompt. Starting the deck again."); }
+    n.game = (n.game || 0) + 1;
+    const r = rng(`${room}:${n.game}:mostpick`);
+    for (let i = avail.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [avail[i], avail[j]] = [avail[j], avail[i]]; }
+    n.mlist = avail.slice(0, MOST_N);
+    n.mode = "most"; n.phase = "mv"; n.mn = 0; n.mtotal = n.mlist.length; n.mhist = []; n.spicy = !!spicy;
   });
 }
 function vote(id) { pubPlayer({ vote: { g: S.game, n: S.mn, id } }); patch(); checkAnswers(); }
 function revealMost() {
   const k = S.mn, g = S.game, votes = {};
   Object.keys(players).forEach(id => { const v = myVote(id); if (v) votes[v] = (votes[v] || 0) + 1; });
-  setState(n => { if (n.phase !== "mv" || n.mn !== k || n.game !== g) return false; n.mhist.push({ n: k, votes }); n.phase = "mr"; });
+  const prompt = curMost();
+  setState(n => { if (n.phase !== "mv" || n.mn !== k || n.game !== g) return false; n.mhist.push({ n: k, votes }); n.phase = "mr"; n.mseen = n.mseen || []; if (!n.mseen.includes(prompt)) n.mseen.push(prompt); });
 }
 function nextMost() {
   const k = S.mn, g = S.game;

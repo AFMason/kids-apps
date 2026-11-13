@@ -113,7 +113,24 @@ button.link { background: none; color: var(--muted); padding: 6px; font-weight: 
 .banner .f { font-size: 20px; }
 .banner.you { background: var(--gold); color: var(--ink); }
 .rules { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 6px; font-size: 18px; }
-.example { text-align: center; margin-top: -6px; }
+.gamebtn { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; }
+.gamebtn b { font: 800 22px/1.1 var(--display); }
+.gamebtn span { font-weight: 500; font-size: 15px; line-height: 1.35; }
+.gamebtn.quizbtn { background: var(--snow); }
+.teambar { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
+.teambar .tm { display: inline-flex; align-items: center; gap: 8px; font-size: 22px; }
+.teambar .tm b { font: 800 26px var(--display); }
+.teambar.big .tm b { font-size: 44px; }
+.teambar.big .tm { font-size: 34px; }
+.qcard { background: var(--bg2); border: 1px solid var(--line); border-radius: 18px; padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; }
+.qcard h2 { font-size: 25px; line-height: 1.15; }
+.qtag { align-self: flex-start; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+.opts { display: grid; gap: 10px; }
+.opt { display: block; width: 100%; text-align: left; background: var(--bg3); color: var(--fg); border: 2px solid transparent; border-radius: 14px; padding: 16px; font: 600 18px/1.25 var(--body); }
+.opt.sel { border-color: var(--gold); background: #4a3020; }
+.opt.right { background: var(--green); color: #fff; font-weight: 700; }
+.opt.wrong { opacity: .4; }
+.opt.wrong.mine { opacity: 1; border-color: var(--red); }
 
 .dialwrap { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; }
 .dialwrap svg { width: 100%; height: auto; display: block; overflow: visible; }
@@ -239,20 +256,20 @@ function onMessage(topic, buf) {
     let s; try { s = JSON.parse(txt); } catch (e) { return; }
     if (!S || s.v > S.v || (s.v === S.v && s.by > S.by)) {
       if (dragging && S && s.phase === S.phase && s.round === S.round && s.game === S.game) s.dial = localDial;
-      S = s; render();
+      S = s; render(); checkAnswers();
     }
   } else if (sub.startsWith("players/")) {
     const id = sub.slice(8);
     if (!txt) delete players[id]; else { try { players[id] = JSON.parse(txt); } catch (e) {} }
-    render();
+    render(); checkAnswers();
   } else if (sub.startsWith("online/")) {
-    online[sub.slice(7)] = txt === "1"; patch();
+    online[sub.slice(7)] = txt === "1"; patch(); checkAnswers();
   }
 }
-function pubPlayer() {
+function pubPlayer(extra) {
   if (!client || !connected) return;
   const me = players[myId] || { joined: Date.now() };
-  const p = { name: profile.name, flag: profile.flag, joined: me.joined };
+  const p = { name: profile.name, flag: profile.flag, joined: me.joined, ans: me.ans || null, ...extra };
   players[myId] = p;
   client.publish(`${base()}/players/${myId}`, JSON.stringify(p), { retain: true, qos: 1 });
 }
@@ -285,7 +302,7 @@ function startGame() {
   const order = onlineIds();
   if (order.length < 2) return toast("You need at least 2 players");
   setState(n => {
-    n.game = (n.game || 0) + 1; n.phase = "guess"; n.round = 0; n.rounds = Math.max(6, order.length * 2);
+    n.game = (n.game || 0) + 1; n.mode = "dial"; n.phase = "guess"; n.round = 0; n.rounds = Math.max(6, order.length * 2);
     n.order = order; n.score = 0; n.history = []; n.dial = 50; n.skips = 0; n.over = null;
   });
 }
@@ -312,6 +329,95 @@ function nextRound() {
 }
 function takeOver() { const r = S.round; setState(n => { if (n.phase !== "guess" || n.round !== r) return false; n.over = { r, id: myId }; n.skips = (n.skips || 0) + 1; n.dial = 50; }); }
 function toLobby() { setState(n => { n.phase = "lobby"; }); }
+
+// ---------- Swiss vs Aussie quiz ----------
+// c: whose country it's about; a[0] is the right answer (options get shuffled); f: the fact shown after.
+const QUIZ = [
+  // Australia
+  { c: "au", q: "An Aussie says “I'd love a root.” What do they want?", a: ["Sex", "A beer", "A vegemite sandwich", "A haircut"], f: "To root = to have sex. Never say you “root for” a team in Australia." },
+  { c: "au", q: "“My ute's rooted.” What's wrong with the ute?", a: ["It's broken", "It's stolen", "It's muddy", "It's brand new"], f: "Rooted also means wrecked or exhausted. A very flexible word." },
+  { c: "au", q: "What are budgie smugglers?", a: ["Tight men's swimming briefs", "Pet shop thieves", "Cheap cigarettes", "Pockets in board shorts"], f: "Named for what they appear to be hiding." },
+  { c: "au", q: "What is the “map of Tasmania”?", a: ["Female pubic hair", "A beer stain on a shirt", "A bad sunburn", "A hangover face"], f: "Look at Tasmania's shape. You'll get it." },
+  { c: "au", q: "In Australia, a “fanny” is…", a: ["Female genitals", "Your bum", "A bum bag", "A grandmother"], f: "Americans saying “fanny pack” in Australia cause real chaos." },
+  { c: "au", q: "What's a goon bag?", a: ["The silver bag inside cheap cask wine", "A security guard's backpack", "A sleeping bag at a festival", "A bag of chips"], f: "Pro move: blow it up and use it as a pillow when it's empty." },
+  { c: "au", q: "“Chuck a sickie” means…", a: ["Fake being sick to skip work", "Vomit", "Throw a boomerang", "Call an ambulance"], f: "Popular on Mondays after a big weekend." },
+  { c: "au", q: "What's a “durry”?", a: ["A cigarette", "A sausage", "A long drive", "A shark"], f: "Also called a ciggy or a smoko break." },
+  { c: "au", q: "“Spit the dummy” means…", a: ["Throw a tantrum", "Quit smoking", "Give up a secret", "Lose a footy match"], f: "A dummy is a baby's pacifier." },
+  { c: "au", q: "What's a shoey?", a: ["Drinking beer out of a shoe", "A shoe shop", "A kick in the bum", "A dance move"], f: "Made famous on F1 podiums by Daniel Ricciardo." },
+  { c: "au", q: "Someone who's “up themselves” is…", a: ["Arrogant", "Drunk", "Constipated", "Very tall"], f: "See also: tall poppy, about to be cut down." },
+  { c: "au", q: "A “pash” is…", a: ["A passionate snog", "A passion fruit", "A lazy person", "A parking fine"], f: "Pash rash is the stubble burn afterwards." },
+  { c: "au", q: "What's a bogan?", a: ["An uncouth, unsophisticated person", "A kind of possum", "A surfboard", "A country pub"], f: "Mullet and flannel optional but common." },
+  { c: "au", q: "In Aussie rhyming slang, “dead horse” is…", a: ["Tomato sauce", "A hangover", "A bad joke", "A boring party"], f: "Dead horse, sauce. Pass the dead horse for your pie." },
+  { c: "au", q: "What's unusual about wombat poo?", a: ["It's cube-shaped", "It glows", "It smells of mint", "It's blue"], f: "They stack the cubes on rocks to mark territory." },
+  { c: "au", q: "What do baby koalas eat to get their gut bacteria?", a: ["Their mum's poo", "Ants", "Eucalyptus flowers", "Rotten fruit"], f: "It's called pap. Delicious." },
+  { c: "au", q: "In 1932 the Australian army fought a war against which animal, and lost?", a: ["Emus", "Kangaroos", "Rabbits", "Cane toads"], f: "The Great Emu War. Machine guns, and the emus still won." },
+  { c: "au", q: "How many heads does a male echidna's penis have?", a: ["Four", "One", "Two", "Six"], f: "It only uses two at a time, taking turns." },
+  { c: "au", q: "Roughly how many sheep are there per person in Australia?", a: ["About 2 to 3", "About 1", "About 10", "About 0.5"], f: "Roughly 70 million sheep for 27 million people." },
+  { c: "au", q: "Why is Canberra the capital?", a: ["Sydney and Melbourne couldn't agree", "It's in the exact centre", "Gold was found there", "The Queen picked it on a map"], f: "A purpose-built compromise. Many Aussies still forget it exists." },
+  { c: "au", q: "What is a drop bear?", a: ["A made-up animal used to scare tourists", "A koala that falls when drunk", "A rugby tackle", "A cheap cask of wine"], f: "Tip: Vegemite behind the ears keeps them away." },
+  { c: "au", q: "What is fairy bread?", a: ["White bread, butter and sprinkles", "Bread with no crust", "Gluten-free bread", "Bread left out for luck"], f: "Mandatory at every Aussie kid's birthday party." },
+  { c: "au", q: "“Hit the frog and toad” means…", a: ["Hit the road", "Have a wee", "Go to the pub", "Drive drunk"], f: "Rhyming slang: frog and toad, road." },
+  { c: "au", q: "What are thongs in Australia?", a: ["Flip-flops", "Underwear", "Tongs for the BBQ", "Swimming goggles"], f: "Wearing thongs to a wedding is only slightly frowned upon." },
+  // Switzerland
+  { c: "ch", q: "What does “Chuchichäschtli” mean?", a: ["Kitchen cupboard", "Little cake", "Cuckoo clock", "Cheese grater"], f: "The word Swiss people make foreigners say to test their throat." },
+  { c: "ch", q: "In Swiss German, “huere guet” means…", a: ["Bloody good (literally whore good)", "Very expensive", "Good night", "Pretty boring"], f: "“Huere” works as an all-purpose intensifier. Use with care around grandma." },
+  { c: "ch", q: "What's a “Füdli”?", a: ["Bum", "Fondue fork", "Small dog", "Beer glass"], f: "Füdlibürger, literally bum citizen, means a boring conformist." },
+  { c: "ch", q: "What's a “Schnäbi”?", a: ["A kid's word for penis", "A little bird", "A chocolate bar", "A ski lift"], f: "The equivalent of willy. Not a bird, despite the sound of it." },
+  { c: "ch", q: "“Gopferdammi” is…", a: ["A swear word, like God damn it", "A mountain pass", "A cheese dish", "Grandpa's nickname"], f: "Often shortened to “Gopf”. Polite Swiss swearing at its finest." },
+  { c: "ch", q: "A Swiss German calling you a “Sauhund” is calling you…", a: ["A bastard (literally pig dog)", "A good friend", "A lazy dog", "A truffle hunter"], f: "Pig + dog. Strong stuff, used with feeling." },
+  { c: "ch", q: "“Ich bi uf de Felge” (I'm on the rims) means…", a: ["I'm exhausted", "I'm drunk", "I'm broke", "I'm driving"], f: "Like a car riding on its wheel rims with no tyres left." },
+  { c: "ch", q: "In Swiss German slang, something “glatt” is…", a: ["Funny", "Boring", "Disgusting", "Expensive"], f: "Literally smooth. Swiss humour is smooth, apparently." },
+  { c: "ch", q: "In Switzerland it's illegal to keep only one…", a: ["Guinea pig", "Goldfish", "Cow", "Cat"], f: "They're social animals, so the law says they need a buddy." },
+  { c: "ch", q: "What is the Röstigraben?", a: ["The culture gap between German and French speakers", "A famous ski run", "A potato field", "Zürich's party street"], f: "Literally the hash-brown ditch." },
+  { c: "ch", q: "What is officially Switzerland's capital?", a: ["None. Bern is just the “federal city”", "Bern", "Zürich", "Geneva"], f: "The constitution never names a capital." },
+  { c: "ch", q: "Which drug was first made in a Basel lab?", a: ["LSD", "Ecstasy", "Aspirin", "Viagra"], f: "Albert Hofmann tried it in 1943 and rode his bike home tripping. Bicycle Day." },
+  { c: "ch", q: "Until which year was absinthe banned in Switzerland?", a: ["2005", "1955", "1985", "2015"], f: "The green fairy was made in secret in the Val-de-Travers for nearly a century." },
+  { c: "ch", q: "What's Rivella, the Swiss soft drink, made from?", a: ["Milk whey", "Apples", "Herbs and cream", "Glacier water"], f: "A by-product of cheese making, in a bottle." },
+  { c: "ch", q: "How much chocolate does the average Swiss person eat a year?", a: ["About 10 kg", "About 2 kg", "About 5 kg", "About 25 kg"], f: "Among the most in the world. Schoggi is a food group." },
+  { c: "ch", q: "Swiss bunkers have room for how much of the population?", a: ["All of it", "About half", "About 10%", "Only the government"], f: "There's more bunker space than people." },
+  { c: "ch", q: "What do many Swiss men keep at home after army service?", a: ["Their service rifle", "Their army bike", "A parachute", "A Swiss army knife only"], f: "Ammunition is a different story these days." },
+  { c: "ch", q: "Which of these was invented in Switzerland?", a: ["Velcro", "The zip", "Post-it notes", "Sticky tape"], f: "George de Mestral got the idea from burrs stuck to his dog." },
+  { c: "ch", q: "The only other country with a square flag is…", a: ["Vatican City", "Nepal", "Monaco", "Japan"], f: "Nepal's flag isn't even a rectangle. It's two triangles." },
+  { c: "ch", q: "In the Valais “Battle of the Queens”, who fights?", a: ["Cows", "Goats", "Grandmothers", "Brides"], f: "Black Hérens cows lock horns. The winner is crowned queen." },
+  { c: "ch", q: "Many Swiss house rules ban what on Sundays?", a: ["Recycling glass bottles", "Showering", "Opening windows", "Eating cheese"], f: "Clinking glass on a Sunday is basically a crime against the neighbours." },
+  { c: "ch", q: "What's a “Znüni”?", a: ["A mid-morning snack", "A 9-year-old", "A late-night drink", "A nap"], f: "Literally “at nine”. There's a Zvieri at four, too." },
+  { c: "ch", q: "“Tschau zäme” means…", a: ["Bye, everyone", "Cheers, mate", "Eat up", "Shut up"], f: "Zäme = together. Works for leaving a pub too." },
+  { c: "ch", q: "How many official national languages does Switzerland have?", a: ["Four", "Three", "Two", "Five"], f: "German, French, Italian and Romansh." }
+];
+const QUIZ_EACH = 6; // questions per country per game
+function quizOrder(game) {
+  const pick = c => { const ids = QUIZ.map((q, i) => i).filter(i => QUIZ[i].c === c), r = rng(`${room}:quiz:${c}`); for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; } const off = ((game - 1) * QUIZ_EACH) % ids.length; return [...ids.slice(off), ...ids].slice(0, QUIZ_EACH); };
+  const au = pick("au"), ch = pick("ch"), out = [];
+  for (let i = 0; i < QUIZ_EACH; i++) out.push(i % 2 ? ch[i] : au[i], i % 2 ? au[i] : ch[i]);
+  return out;
+}
+function optOrder(game, qi) { const o = [0, 1, 2, 3], r = rng(`${room}:${game}:opt${qi}`); for (let i = 3; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; } return o; }
+function curQ() { return QUIZ[quizOrder(S.game)[S.qn]]; }
+function myAns(id) { const a = players[id] && players[id].ans; return a && a.g === S.game && a.q === S.qn ? a.a : null; }
+function team(id) { return players[id] && players[id].flag === "au" ? "au" : "ch"; }
+function startQuiz() {
+  if (onlineIds().length < 2) return toast("You need at least 2 players");
+  setState(n => { n.game = (n.game || 0) + 1; n.mode = "quiz"; n.phase = "qq"; n.qn = 0; n.qtotal = QUIZ_EACH * 2; n.tscore = { ch: 0, au: 0 }; n.qhist = []; });
+}
+function answer(a) { pubPlayer({ ans: { g: S.game, q: S.qn, a } }); patch(); checkAnswers(); }
+function checkAnswers() {
+  if (!S || S.phase !== "qq") return;
+  const ids = onlineIds();
+  if (ids.length && ids.every(id => myAns(id) != null)) revealQ();
+}
+function revealQ() {
+  const q = S.qn, g = S.game;
+  const right = Object.keys(players).filter(id => myAns(id) === 0);
+  setState(n => {
+    if (n.phase !== "qq" || n.qn !== q || n.game !== g) return false;
+    right.forEach(id => n.tscore[team(id)]++);
+    n.qhist.push({ qn: q, right }); n.phase = "qr";
+  });
+}
+function nextQ() {
+  const q = S.qn, g = S.game;
+  setState(n => { if (n.phase !== "qr" || n.qn !== q || n.game !== g) return false; if (n.qn + 1 >= n.qtotal) n.phase = "qend"; else { n.qn++; n.phase = "qq"; } });
+}
 function setDial(v, final) {
   localDial = Math.max(0, Math.min(100, v));
   S.dial = localDial; patchDial();
@@ -377,12 +483,12 @@ function render() {
   patchDot();
   const app = $("#app");
   if (!joined) { const k = "home:" + (room || ""); if (k !== lastKey) { lastKey = k; app.innerHTML = homeHtml(); bindHome(); } return; }
-  const phase = S && ["guess", "reveal", "end"].includes(S.phase) ? S.phase : "lobby";
+  const phase = S && ["guess", "reveal", "end", "qq", "qr", "qend"].includes(S.phase) ? S.phase : "lobby";
   const amGiver = phase === "guess" && giver(S) === myId;
-  const key = [phase, S && S.game, S && S.round, S && S.skips, amGiver, phase === "guess" ? giver(S) : ""].join("|");
+  const key = [phase, S && S.game, S && S.round, S && S.skips, S && S.qn, amGiver, phase === "guess" ? giver(S) : ""].join("|");
   if (key !== lastKey) {
     lastKey = key;
-    app.innerHTML = ({ lobby: lobbyHtml, guess: guessHtml, reveal: revealHtml, end: endHtml })[phase](amGiver);
+    app.innerHTML = ({ lobby: lobbyHtml, guess: guessHtml, reveal: revealHtml, end: endHtml, qq: qqHtml, qr: qrHtml, qend: qendHtml })[phase](amGiver);
     bindPhase(phase, amGiver);
   }
   patch();
@@ -394,7 +500,12 @@ function patch() {
   if (pl) pl.innerHTML = playersHtml(S && S.phase === "guess" ? giver(S) : null);
   if (S && S.phase === "guess") patchDial();
   const tb = $("#takeover"); if (tb && S && S.phase === "guess") tb.hidden = online[giver(S)] !== false || giver(S) === myId;
-  const sb = $("#startBtn"); if (sb) sb.disabled = onlineIds().length < 2 || !connected;
+  document.querySelectorAll(".startBtn").forEach(b => b.disabled = onlineIds().length < 2 || !connected);
+  if (S && S.phase === "qq") {
+    const mine = myAns(myId);
+    document.querySelectorAll(".opt").forEach(b => b.classList.toggle("sel", +b.dataset.a === mine));
+    const wn = $("#waitNote"); if (wn) { const ids = onlineIds(), left = ids.filter(id => myAns(id) == null); wn.textContent = left.length ? `Waiting for ${left.map(pname).join(", ")}` : ""; }
+  }
 }
 
 function homeHtml() {
@@ -429,13 +540,10 @@ function lobbyHtml() {
       <div class="qrbox"><div class="qr" id="qr"></div><div class="stack" style="gap:6px;min-width:0"><span class="muted small">or type the code</span><span class="bigcode">${esc(room)}</span><button class="link" id="copyBtn" style="align-self:flex-start;padding-left:0">Copy link</button></div></div>
     </div>
     <div id="plist"></div>
-    <ol class="rules">
-      <li>One person sees a secret spot on the dial.</li>
-      <li>They say a clue out loud.</li>
-      <li>Everyone else drags the needle to the spot.</li>
-    </ol>
-    ${prev ? `<p class="muted small">Last game: <b>${S.score}</b> points.</p>` : ""}
-    <button class="big" id="startBtn">Start</button>`;
+    <span class="label">Pick a game</span>
+    <button class="gamebtn startBtn" id="startDial"><b>The Dial</b><span>All on one team. One person says a clue, everyone drags the needle to the secret spot.</span></button>
+    <button class="gamebtn startBtn quizbtn" id="startQuiz"><b>${FLAG_CH} Swiss vs Aussie ${FLAG_AU}</b><span>Rude, weird quiz. Everyone answers on their own phone. Your team is your flag.</span></button>
+    ${prev ? `<p class="muted small">Last dial game: <b>${S.score}</b> points.</p>` : ""}`;
 }
 function guessHtml(amGiver) {
   const g = giver(S), c = cardOf(S);
@@ -472,13 +580,58 @@ function endHtml() {
     <div class="hist">${S.history.map(h => `<div class="h"><div class="c">${pflag(h.giver)} ${esc(pname(h.giver))}<br><span class="muted small">${esc(CARDS[h.card][0])} ↔ ${esc(CARDS[h.card][1])}</span></div><b>+${h.p}</b></div>`).join("")}</div>
     <button class="ghost" id="lobbyBtn">Back to the lobby</button>`;
 }
+function teamBar() {
+  const t = S.tscore || { ch: 0, au: 0 };
+  return `<div class="teambar"><span class="tm ch">${FLAG_CH} <b>${t.ch}</b></span><span class="label">Question ${S.qn + 1} of ${S.qtotal}</span><span class="tm au"><b>${t.au}</b> ${FLAG_AU}</span></div>`;
+}
+function qTag(q) { return `<span class="qtag ${q.c}">${q.c === "au" ? FLAG_AU + " Aussie question" : FLAG_CH + " Swiss question"}</span>`; }
+function qqHtml() {
+  const q = curQ(), order = optOrder(S.game, S.qn);
+  return `${teamBar()}
+    <div class="qcard">${qTag(q)}<h2>${esc(q.q)}</h2></div>
+    <div class="opts">${order.map(i => `<button class="opt" data-a="${i}">${esc(q.a[i])}</button>`).join("")}</div>
+    <p class="muted small" id="waitNote" style="text-align:center"></p>
+    <button class="link" id="revealNow">Show the answer now</button>`;
+}
+function qrHtml() {
+  const q = curQ(), order = optOrder(S.game, S.qn), h = S.qhist[S.qhist.length - 1];
+  const right = h.right.map(id => `<span class="pchip ready"><span class="f">${pflag(id)}</span>${esc(pname(id))}</span>`).join("");
+  return `${teamBar()}
+    <div class="qcard">${qTag(q)}<h2>${esc(q.q)}</h2></div>
+    <div class="opts">${order.map(i => `<div class="opt ${i === 0 ? "right" : "wrong"} ${i !== 0 && myAns(myId) === i ? "mine" : ""}">${i === 0 ? "✓ " : myAns(myId) === i ? "✗ " : ""}${esc(q.a[i])}</div>`).join("")}</div>
+    <div class="note">${esc(q.f)}</div>
+    <div class="stack" style="gap:8px"><span class="label">Got it right</span><div class="players">${right || '<span class="muted">Nobody. Brutal.</span>'}</div></div>
+    <button class="big" id="nextQBtn">${S.qn + 1 >= S.qtotal ? "Final score" : "Next question"}</button>`;
+}
+function qendHtml() {
+  const t = S.tscore, win = t.ch === t.au ? null : t.ch > t.au ? "ch" : "au";
+  const title = win === "ch" ? "Switzerland wins!" : win === "au" ? "Australia wins!" : "It's a draw";
+  const sub = win === "ch" ? "Precise, neutral and smug about it. Huere guet." : win === "au" ? "Fair dinkum legends. Shoeys all round." : "Perfectly neutral. Very Swiss of you all.";
+  const best = {}; S.qhist.forEach(h => h.right.forEach(id => best[id] = (best[id] || 0) + 1));
+  const mvp = Object.keys(best).sort((a, b) => best[b] - best[a])[0];
+  return `<div class="stack" style="text-align:center;gap:8px;padding-top:10px">
+      <div style="font-size:64px;line-height:1">${win === "au" ? FLAG_AU : win === "ch" ? FLAG_CH : FLAG_CH + " " + FLAG_AU}</div>
+      <h1 style="margin:0">${title}</h1><p class="muted">${sub}</p></div>
+    <div class="teambar big"><span class="tm ch">${FLAG_CH} <b>${t.ch}</b></span><span class="label">final</span><span class="tm au"><b>${t.au}</b> ${FLAG_AU}</span></div>
+    ${mvp ? `<div class="note">Smartest drunk: <b>${esc(pname(mvp))}</b> with ${best[mvp]} right.</div>` : ""}
+    <button class="big" id="againQuiz">Rematch</button>
+    <button class="ghost" id="lobbyBtn">Back to the lobby</button>`;
+}
 function bindPhase(phase, amGiver) {
   if (phase === "lobby") {
     const qr = $("#qr");
     try { new QRCode(qr, { text: joinUrl(), width: 264, height: 264, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { qr.textContent = "QR unavailable"; }
     $("#copyBtn").onclick = () => { navigator.clipboard.writeText(joinUrl()).then(() => toast("Link copied"), () => toast(joinUrl())); };
-    $("#startBtn").onclick = startGame;
+    $("#startDial").onclick = startGame;
+    $("#startQuiz").onclick = startQuiz;
   }
+  if (phase === "qq") document.querySelectorAll(".opt").forEach(b => b.onclick = () => answer(+b.dataset.a));
+  if (phase === "qq" && $("#revealNow")) {
+    let armed = false;
+    $("#revealNow").onclick = e => { if (!armed) { armed = true; e.target.textContent = "Tap again to show the answer"; setTimeout(() => { armed = false; if (e.target.isConnected) e.target.textContent = "Show the answer now"; }, 3000); } else revealQ(); };
+  }
+  if (phase === "qr") $("#nextQBtn").onclick = nextQ;
+  if (phase === "qend") { $("#againQuiz").onclick = startQuiz; $("#lobbyBtn").onclick = toLobby; }
   if (phase === "guess") {
     if (amGiver) $("#newCardBtn").onclick = newCard;
     else {

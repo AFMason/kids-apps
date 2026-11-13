@@ -117,6 +117,17 @@ button.link { background: none; color: var(--muted); padding: 6px; font-weight: 
 .gamebtn b { font: 800 22px/1.1 var(--display); }
 .gamebtn span { font-weight: 500; font-size: 15px; line-height: 1.35; }
 .gamebtn.quizbtn { background: var(--snow); }
+.gamebtn.precbtn { background: var(--red); color: #fff; }
+.lives { display: inline-flex; gap: 4px; font-size: 18px; align-items: center; }
+.banner.bad { background: var(--red); color: #fff; }
+.pile { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; }
+.pnum { font: 800 96px/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
+.trail { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; color: var(--muted); font: 600 15px var(--mono); }
+.hand { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.ncard { min-width: 62px; padding: 14px 10px; text-align: center; border-radius: 12px; background: var(--snow); color: var(--ink); font: 800 30px/1 var(--display); font-variant-numeric: tabular-nums; }
+.ncard.low { background: var(--gold); }
+.ncard:not(.low) { opacity: .6; }
+.cnt { color: var(--gold); }
 .teambar { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
 .teambar .tm { display: inline-flex; align-items: center; gap: 8px; font-size: 22px; }
 .teambar .tm b { font: 800 26px var(--display); }
@@ -330,6 +341,48 @@ function nextRound() {
 function takeOver() { const r = S.round; setState(n => { if (n.phase !== "guess" || n.round !== r) return false; n.over = { r, id: myId }; n.skips = (n.skips || 0) + 1; n.dial = 50; }); }
 function toLobby() { setState(n => { n.phase = "lobby"; }); }
 
+// ---------- Swiss Precision: play numbers in order, no talking ----------
+function precDeal(st) {
+  const nums = Array.from({ length: 100 }, (_, i) => i + 1), r = rng(`${room}:${st.game}:prec${st.level}`);
+  for (let i = nums.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [nums[i], nums[j]] = [nums[j], nums[i]]; }
+  const hands = {};
+  st.order.forEach((id, k) => hands[id] = nums.slice(k * st.level, (k + 1) * st.level).sort((a, b) => a - b));
+  return hands;
+}
+function precHands(st) {
+  const gone = new Set([...st.played.map(p => p.v), ...st.discarded]), h = precDeal(st);
+  for (const id in h) h[id] = h[id].filter(v => !gone.has(v));
+  return h;
+}
+function startPrec() {
+  const order = onlineIds();
+  if (order.length < 2) return toast("You need at least 2 players");
+  setState(n => {
+    n.game = (n.game || 0) + 1; n.mode = "prec"; n.phase = "pp"; n.order = order; n.level = 1;
+    n.maxLevel = order.length <= 2 ? 8 : order.length === 3 ? 7 : 6; n.lives = Math.max(3, order.length);
+    n.played = []; n.discarded = []; n.mistake = null; n.won = null;
+  });
+}
+function precPlay() {
+  const L = S.level, g = S.game;
+  setState(n => {
+    if (n.phase !== "pp" || n.level !== L || n.game !== g) return false;
+    const h = precHands(n), mine = h[myId];
+    if (!mine || !mine.length) return false;
+    const v = mine[0], lower = [];
+    for (const id in h) if (id !== myId) h[id].forEach(x => { if (x < v) lower.push({ v: x, id }); });
+    n.played.push({ v, by: myId });
+    if (lower.length) { n.lives--; lower.forEach(l => n.discarded.push(l.v)); n.mistake = { at: n.played.length, v, by: myId, lower }; }
+    const left = Object.values(precHands(n)).reduce((a, b) => a + b.length, 0);
+    if (n.lives <= 0) { n.phase = "pend"; n.won = false; }
+    else if (!left) { if (n.level >= n.maxLevel) { n.phase = "pend"; n.won = true; } else n.phase = "pl"; }
+  });
+}
+function precNext() {
+  const L = S.level, g = S.game;
+  setState(n => { if (n.phase !== "pl" || n.level !== L || n.game !== g) return false; n.level++; n.played = []; n.discarded = []; n.mistake = null; n.phase = "pp"; });
+}
+
 // ---------- Swiss vs Aussie quiz ----------
 // c: whose country it's about; a[0] is the right answer (options get shuffled); f: the fact shown after.
 const QUIZ = [
@@ -523,12 +576,13 @@ function render() {
   patchDot();
   const app = $("#app");
   if (!joined) { const k = "home:" + (room || ""); if (k !== lastKey) { lastKey = k; app.innerHTML = homeHtml(); bindHome(); } return; }
-  const phase = S && ["guess", "reveal", "end", "qq", "qr", "qend"].includes(S.phase) ? S.phase : "lobby";
+  const phase = S && ["guess", "reveal", "end", "qq", "qr", "qend", "pp", "pl", "pend"].includes(S.phase) ? S.phase : "lobby";
   const amGiver = phase === "guess" && giver(S) === myId;
-  const key = [phase, S && S.game, S && S.round, S && S.skips, S && S.qn, amGiver, phase === "guess" ? giver(S) : ""].join("|");
+  const key = [phase, S && S.game, S && S.round, S && S.skips, S && S.qn, S && S.level, S && S.played && S.played.length, amGiver, phase === "guess" ? giver(S) : ""].join("|");
   if (key !== lastKey) {
     lastKey = key;
-    app.innerHTML = ({ lobby: lobbyHtml, guess: guessHtml, reveal: revealHtml, end: endHtml, qq: qqHtml, qr: qrHtml, qend: qendHtml })[phase](amGiver);
+    app.innerHTML = ({ lobby: lobbyHtml, guess: guessHtml, reveal: revealHtml, end: endHtml, qq: qqHtml, qr: qrHtml, qend: qendHtml, pp: ppHtml, pl: plHtml, pend: pendHtml })[phase](amGiver);
+    if (phase === "pp" && S.mistake && S.mistake.at === S.played.length) { try { navigator.vibrate && navigator.vibrate([200, 80, 200]); } catch (e) {} }
     bindPhase(phase, amGiver);
   }
   patch();
@@ -582,6 +636,7 @@ function lobbyHtml() {
     <div id="plist"></div>
     <span class="label">Pick a game</span>
     <button class="gamebtn startBtn" id="startDial"><b>The Dial</b><span>All on one team. One person says a clue, everyone drags the needle to the secret spot.</span></button>
+    <button class="gamebtn startBtn precbtn" id="startPrec"><b>Swiss Precision</b><span>No talking. Everyone plays their numbers lowest to highest, together. Trust your gut.</span></button>
     <button class="gamebtn startBtn quizbtn" id="startQuiz"><b>${FLAG_CH} Swiss vs Aussie ${FLAG_AU}</b><span>Rude, weird quiz. Everyone answers on their own phone. Your team is your flag.</span></button>
     ${prev ? `<p class="muted small">Last dial game: <b>${S.score}</b> points.</p>` : ""}`;
 }
@@ -618,6 +673,45 @@ function endHtml() {
   return `<div class="stack" style="text-align:center;gap:6px;padding-top:10px"><span class="label">Team score</span><div class="pts"><div class="n">${S.score}<span class="muted" style="font-size:28px"> / ${max}</span></div></div><h1 style="margin:0">${title}</h1><p class="muted">${sub}</p></div>
     <button class="big" id="againBtn">Play again</button>
     <div class="hist">${S.history.map(h => `<div class="h"><div class="c">${pflag(h.giver)} ${esc(pname(h.giver))}<br><span class="muted small">${esc(CARDS[h.card][0])} ↔ ${esc(CARDS[h.card][1])}</span></div><b>+${h.p}</b></div>`).join("")}</div>
+    <button class="ghost" id="lobbyBtn">Back to the lobby</button>`;
+}
+function lateBanner(m) {
+  const by = {}; m.lower.forEach(l => (by[l.id] = by[l.id] || []).push(l.v));
+  const who = Object.keys(by).map(id => `${esc(pname(id))} had ${by[id].sort((a, b) => a - b).join(" and ")}`).join(", ");
+  return `<div class="banner bad"><b>Late train!</b> ${esc(pname(m.by))} played ${m.v}, but ${who}. You lose a life.</div>`;
+}
+function precTop() {
+  const hearts = Array.from({ length: S.lives }, () => FLAG_CH).join(" ");
+  return `<div class="score"><span class="label">Level ${S.level} of ${S.maxLevel}</span><span class="lives" aria-label="${S.lives} lives left"><span class="label">Lives</span> ${hearts}</span></div>`;
+}
+function ppHtml() {
+  const h = precHands(S), mine = h[myId], inGame = S.order.includes(myId);
+  const last = S.played[S.played.length - 1];
+  const m = S.mistake && S.mistake.at === S.played.length ? S.mistake : null;
+  const others = S.order.filter(id => id !== myId).map(id => `<span class="pchip"><span class="f">${pflag(id)}</span>${esc(pname(id))} <b class="cnt">${h[id].length}</b></span>`).join("");
+  return `${precTop()}
+    ${m ? `${lateBanner(m)}`
+        : `<div class="banner">🤫 <b>No talking.</b> Play your lowest card when it feels right.</div>`}
+    <div class="pile"><span class="label">Last departure</span><div class="pnum">${last ? last.v : "–"}</div><div class="trail">${S.played.slice(-8, -1).map(p => `<span>${p.v}</span>`).join("")}</div></div>
+    ${!inGame ? `<p class="muted" style="text-align:center">You joined late. You're watching this one.</p>`
+      : mine.length ? `<div class="hand">${mine.map((v, i) => `<span class="ncard ${i ? "" : "low"}">${v}</span>`).join("")}</div><button class="big" id="playBtn">Play ${mine[0]}</button>`
+      : `<p class="muted" style="text-align:center">You're out of cards. Watch the others sweat.</p>`}
+    <div class="stack" style="gap:8px"><span class="label">Cards left</span><div class="players">${others}</div></div>`;
+}
+function plHtml() {
+  const m = S.mistake && S.mistake.at === S.played.length ? S.mistake : null;
+  return `${precTop()}
+    ${m ? `${lateBanner(m)}` : ""}
+    <div class="pts" style="padding-top:20px"><div class="n">✓</div><h2>Level ${S.level} done. On time!</h2><p class="muted">Next level: everyone gets ${S.level + 1} cards.</p></div>
+    <button class="big" id="precNextBtn">Next level</button>`;
+}
+function pendHtml() {
+  const reached = S.won ? S.maxLevel : S.level;
+  return `<div class="stack" style="text-align:center;gap:8px;padding-top:20px">
+      <div class="pts"><div class="n ${S.won ? "" : "zero"}">${S.won ? "🏆" : reached}</div></div>
+      <h1 style="margin:0">${S.won ? "Every train on time" : "The trains are late"}</h1>
+      <p class="muted">${S.won ? "Swiss precision achieved. The railway timetable is proud of you." : `You made it to level ${reached} of ${S.maxLevel}. Not very Swiss.`}</p></div>
+    <button class="big" id="againPrec">Play again</button>
     <button class="ghost" id="lobbyBtn">Back to the lobby</button>`;
 }
 function teamBar() {
@@ -664,7 +758,11 @@ function bindPhase(phase, amGiver) {
     $("#copyBtn").onclick = () => { navigator.clipboard.writeText(joinUrl()).then(() => toast("Link copied"), () => toast(joinUrl())); };
     $("#startDial").onclick = startGame;
     $("#startQuiz").onclick = startQuiz;
+    $("#startPrec").onclick = startPrec;
   }
+  if (phase === "pp" && $("#playBtn")) $("#playBtn").onclick = precPlay;
+  if (phase === "pl") $("#precNextBtn").onclick = precNext;
+  if (phase === "pend") { $("#againPrec").onclick = startPrec; $("#lobbyBtn").onclick = toLobby; }
   if (phase === "qq") document.querySelectorAll(".opt").forEach(b => b.onclick = () => answer(+b.dataset.a));
   if (phase === "qq" && $("#revealNow")) {
     let armed = false;

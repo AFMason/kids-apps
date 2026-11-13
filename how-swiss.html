@@ -104,23 +104,20 @@ button.link { background: none; color: var(--muted); padding: 6px; font-weight: 
   box-shadow: 0 10px 30px rgba(0, 0, 0, .35); position: relative; text-align: left; padding: 0; width: 100%;
   font: inherit; background: none;
 }
-.card > span { padding: 16px 14px 18px; font: 800 19px/1.08 var(--display); min-height: 84px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.card > span { padding: 16px 14px; font: 800 22px/1.08 var(--display); min-height: 80px; display: flex; align-items: center; min-width: 0; overflow-wrap: anywhere; }
 .card .l { background: var(--snow); }
-.card .r { background: var(--ochre); text-align: right; align-items: flex-end; }
-.card .arrow { font: 600 13px var(--body); opacity: .6; }
-.card.pick { border: 3px solid transparent; cursor: pointer; }
-.card.pick.sel { border-color: var(--gold); transform: none; }
-.card.pick:not(.sel) { opacity: .75; }
+.card .r { background: var(--ochre); text-align: right; justify-content: flex-end; }
 
-.clue { text-align: center; padding: 6px 0 0; }
-.clue .q { font: 800 clamp(30px, 9vw, 40px)/1.05 var(--display); color: var(--gold); overflow-wrap: anywhere; }
+.banner { background: var(--bg3); border-radius: 14px; padding: 14px 16px; font-size: 18px; line-height: 1.35; }
+.banner b { font-weight: 700; }
+.banner .f { font-size: 20px; }
+.banner.you { background: var(--gold); color: var(--ink); }
+.rules { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 6px; font-size: 18px; }
+.example { text-align: center; margin-top: -6px; }
 
 .dialwrap { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; }
 .dialwrap svg { width: 100%; height: auto; display: block; overflow: visible; }
 .dialwrap.drag { cursor: grab; }
-.ends { display: flex; justify-content: space-between; gap: 12px; font: 800 15px/1.1 var(--display); margin-top: -2px; }
-.ends span { max-width: 48%; overflow-wrap: anywhere; }
-.ends .r { text-align: right; }
 .bands { transform-origin: 100px 105px; }
 .reveal .bands { animation: fan .7s cubic-bezier(.2, .9, .3, 1.2) both; }
 @keyframes fan { from { transform: scale(0) rotate(-40deg); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -182,7 +179,7 @@ const CARDS = [
   ["Lekker", "Yuck"], ["Old-fashioned", "Modern"], ["Minor inconvenience", "Total disaster"]
 ];
 const BANDS = [[17.5, 2], [10.5, 3], [3.5, 4]]; // half-width, points
-const PREFIX = "howswissisit-v1";
+const PREFIX = "howswissisit-v2";
 const BROKERS = ["wss://broker.emqx.io:8084/mqtt", "wss://broker.hivemq.com:8884/mqtt"];
 const CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 
@@ -209,7 +206,6 @@ let joined = false, isCreator = false, client = null, connected = false;
 let S = null;            // shared game state (last-writer-wins by version)
 let players = {};        // id -> {name, flag, joined, ready}
 let online = {};         // id -> bool
-let localPick = null;    // giver's card choice before sending clue
 let dragging = false, localDial = null, pubTimer = null, lastPub = 0;
 let wakeLock = null;
 const base = () => `${PREFIX}/${room}`;
@@ -243,20 +239,20 @@ function onMessage(topic, buf) {
     let s; try { s = JSON.parse(txt); } catch (e) { return; }
     if (!S || s.v > S.v || (s.v === S.v && s.by > S.by)) {
       if (dragging && S && s.phase === S.phase && s.round === S.round && s.game === S.game) s.dial = localDial;
-      S = s; render(); checkAllReady();
+      S = s; render();
     }
   } else if (sub.startsWith("players/")) {
     const id = sub.slice(8);
     if (!txt) delete players[id]; else { try { players[id] = JSON.parse(txt); } catch (e) {} }
-    render(); checkAllReady();
+    render();
   } else if (sub.startsWith("online/")) {
-    online[sub.slice(7)] = txt === "1"; patch(); checkAllReady();
+    online[sub.slice(7)] = txt === "1"; patch();
   }
 }
-function pubPlayer(extra) {
+function pubPlayer() {
   if (!client || !connected) return;
   const me = players[myId] || { joined: Date.now() };
-  const p = { name: profile.name, flag: profile.flag, joined: me.joined, ready: me.ready || null, ...extra };
+  const p = { name: profile.name, flag: profile.flag, joined: me.joined };
   players[myId] = p;
   client.publish(`${base()}/players/${myId}`, JSON.stringify(p), { retain: true, qos: 1 });
 }
@@ -264,7 +260,7 @@ function setState(mut) {
   const n = JSON.parse(JSON.stringify(S || {}));
   if (mut(n) === false) return;
   n.v = (S ? S.v || 0 : 0) + 1; n.by = myId;
-  S = n; publishState(); render(); checkAllReady();
+  S = n; publishState(); render();
 }
 function publishState() { if (client && connected) client.publish(`${base()}/state`, JSON.stringify(S), { retain: true, qos: 1 }); }
 function updateUrl() { const u = new URL(location.href); u.search = ""; u.searchParams.set("room", room); if (brokerIdx) u.searchParams.set("b", brokerIdx); history.replaceState(null, "", u); }
@@ -274,8 +270,8 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 
 // ---------- game derivations (deterministic from room + game + round) ----------
 function deck(game) { const idx = CARDS.map((_, i) => i), r = rng(`${room}:${game}:deck`); for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; } return idx; }
-function options(st) { const d = deck(st.game), n = d.length; return [d[(2 * st.round) % n], d[(2 * st.round + 1) % n]]; }
-function target(st) { return Math.round((4 + 92 * rng(`${room}:${st.game}:t${st.round}`)()) * 10) / 10; }
+function cardOf(st) { const d = deck(st.game); return d[(st.round + (st.skips || 0)) % d.length]; }
+function target(st) { return Math.round((4 + 92 * rng(`${room}:${st.game}:t${st.round}:${st.skips || 0}`)()) * 10) / 10; }
 function giver(st) { if (st.over && st.over.r === st.round) return st.over.id; return st.order[st.round % st.order.length]; }
 function points(dial, t) { const d = Math.abs(dial - t); for (const [w, p] of BANDS.slice().reverse()) if (d <= w) return p; return 0; }
 function onlineIds() { return Object.keys(players).filter(id => online[id] !== false).sort((a, b) => players[a].joined - players[b].joined); }
@@ -285,34 +281,24 @@ const FLAG_CH = `<svg class="flag" viewBox="0 0 32 32" aria-label="Switzerland">
 const STAR = (x, y, r) => { let d = ""; for (let i = 0; i < 14; i++) { const a = Math.PI / 7 * i - Math.PI / 2, rr = i % 2 ? r * .45 : r; d += (i ? "L" : "M") + (x + rr * Math.cos(a)).toFixed(2) + " " + (y + rr * Math.sin(a)).toFixed(2); } return `<path d="${d}Z" fill="#fff"/>`; };
 const FLAG_AU = `<svg class="flag" viewBox="0 0 64 32" aria-label="Australia"><rect width="64" height="32" rx="4" fill="#012169"/><path d="M0 0L32 16M32 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L32 16M32 0L0 16" stroke="#c8102e" stroke-width="1.2"/><path d="M16 0v16M0 8h32" stroke="#fff" stroke-width="5.3"/><path d="M16 0v16M0 8h32" stroke="#c8102e" stroke-width="3.2"/>${STAR(16, 24, 4.6)}${STAR(48, 26.5, 2.6)}${STAR(41, 14.5, 2.6)}${STAR(48, 5.5, 2.6)}${STAR(54.5, 12.5, 2.6)}${STAR(51, 17.5, 1.5)}</svg>`;
 function pflag(id) { const p = players[id]; return p && p.flag === "au" ? FLAG_AU : p && p.flag === "ch" ? FLAG_CH : "🙂"; }
-function guessers() { return onlineIds().filter(id => id !== giver(S)); }
-function readyOk(id) { const r = players[id] && players[id].ready; return !!(r && r.g === S.game && r.r === S.round && r.dv === S.dialV); }
-
 function startGame() {
   const order = onlineIds();
   if (order.length < 2) return toast("You need at least 2 players");
   setState(n => {
-    n.game = (n.game || 0) + 1; n.phase = "pick"; n.round = 0; n.rounds = Math.max(6, order.length * 2);
-    n.order = order; n.score = 0; n.history = []; n.dial = 50; n.dialV = 0; n.card = null; n.clue = ""; n.over = null;
+    n.game = (n.game || 0) + 1; n.phase = "guess"; n.round = 0; n.rounds = Math.max(6, order.length * 2);
+    n.order = order; n.score = 0; n.history = []; n.dial = 50; n.skips = 0; n.over = null;
   });
 }
-function giveClue(clue) {
-  if (localPick == null) return toast("Pick a card first");
+function newCard() {
   const r = S.round, g = S.game;
-  setState(n => { if (n.phase !== "pick" || n.round !== r || n.game !== g) return false; n.card = localPick; n.clue = clue; n.phase = "guess"; n.dial = 50; n.dialV = (n.dialV || 0) + 1; });
-  localPick = null;
-}
-function checkAllReady() {
-  if (!S || S.phase !== "guess") return;
-  const gs = guessers();
-  if (gs.length && gs.every(readyOk) && readyOk(myId)) lockIn();
+  setState(n => { if (n.phase !== "guess" || n.round !== r || n.game !== g) return false; n.skips = (n.skips || 0) + 1; n.dial = 50; });
 }
 function lockIn() {
   const r = S.round, g = S.game;
   setState(n => {
     if (n.phase !== "guess" || n.round !== r || n.game !== g) return false;
     const t = target(n), p = points(n.dial, t);
-    n.history.push({ r, card: n.card, clue: n.clue, giver: giver(n), dial: Math.round(n.dial * 10) / 10, t, p });
+    n.history.push({ r, card: cardOf(n), giver: giver(n), dial: Math.round(n.dial * 10) / 10, t, p });
     n.score += p; n.phase = "reveal";
   });
 }
@@ -321,16 +307,16 @@ function nextRound() {
   setState(n => {
     if (n.phase !== "reveal" || n.round !== r || n.game !== g) return false;
     if (n.round + 1 >= n.rounds) { n.phase = "end"; return; }
-    n.round++; n.phase = "pick"; n.card = null; n.clue = ""; n.dial = 50; n.dialV++; n.over = null;
+    n.round++; n.phase = "guess"; n.dial = 50; n.over = null;
   });
 }
-function takeOver() { const r = S.round; setState(n => { if (n.phase !== "pick" || n.round !== r) return false; n.over = { r, id: myId }; }); }
+function takeOver() { const r = S.round; setState(n => { if (n.phase !== "guess" || n.round !== r) return false; n.over = { r, id: myId }; n.skips = (n.skips || 0) + 1; n.dial = 50; }); }
 function toLobby() { setState(n => { n.phase = "lobby"; }); }
 function setDial(v, final) {
   localDial = Math.max(0, Math.min(100, v));
   S.dial = localDial; patchDial();
   const now = Date.now();
-  const send = () => { pubTimer = null; lastPub = Date.now(); const keep = localDial; setState(n => { if (n.phase !== "guess") return false; n.dial = keep; n.dialV = (n.dialV || 0) + 1; }); };
+  const send = () => { pubTimer = null; lastPub = Date.now(); const keep = localDial; setState(n => { if (n.phase !== "guess") return false; n.dial = keep; }); };
   if (final) { clearTimeout(pubTimer); send(); }
   else if (!pubTimer) pubTimer = setTimeout(send, Math.max(0, 120 - (now - lastPub)));
 }
@@ -373,18 +359,17 @@ function bindDrag(el) {
 }
 
 // ---------- rendering ----------
-function cardHtml(i, cls = "", attrs = "") {
+function cardHtml(i) {
   const [l, r] = CARDS[i];
-  return `<button type="button" class="card ${cls}" ${attrs}><span class="l">${esc(l)}<span class="arrow">← left</span></span><span class="r">${esc(r)}<span class="arrow">right →</span></span></button>`;
+  return `<div class="card"><span class="l">← ${esc(l)}</span><span class="r">${esc(r)} →</span></div>`;
 }
-function playersHtml(opts = {}) {
+function playersHtml(giverId) {
   return `<div class="players">${Object.keys(players).sort((a, b) => players[a].joined - players[b].joined).map(id => {
-    const cls = [online[id] === false ? "off" : "", opts.ready && readyOk(id) ? "ready" : "", opts.giver === id ? "giver" : ""].join(" ");
-    return `<span class="pchip ${cls}"><span class="f">${pflag(id)}</span>${esc(pname(id))}${id === myId ? ' <span class="you">you</span>' : ""}${opts.ready && readyOk(id) ? " ✓" : ""}${opts.giver === id ? " 🎙️" : ""}</span>`;
+    const cls = [online[id] === false ? "off" : "", giverId === id ? "giver" : ""].join(" ");
+    return `<span class="pchip ${cls}"><span class="f">${pflag(id)}</span>${esc(pname(id))}${id === myId ? ' <span class="you">you</span>' : ""}</span>`;
   }).join("")}</div>`;
 }
-function scoreHtml() { return `<div class="score"><span class="label">Round ${S.round + 1} of ${S.rounds}</span><span class="muted small">Team score <b>${S.score}</b></span></div>`; }
-function ends(i) { const [l, r] = CARDS[i]; return `<div class="ends"><span>← ${esc(l)}</span><span class="r">${esc(r)} →</span></div>`; }
+function scoreHtml() { return `<div class="score"><span class="label">Round ${S.round + 1} of ${S.rounds}</span><span class="label">Score <b>${S.score}</b></span></div>`; }
 
 let lastKey = "";
 function render() {
@@ -392,12 +377,12 @@ function render() {
   patchDot();
   const app = $("#app");
   if (!joined) { const k = "home:" + (room || ""); if (k !== lastKey) { lastKey = k; app.innerHTML = homeHtml(); bindHome(); } return; }
-  const phase = S && S.phase && S.phase !== "lobby" ? S.phase : "lobby";
-  const amGiver = phase !== "lobby" && phase !== "end" && giver(S) === myId;
-  const key = [phase, S && S.game, S && S.round, amGiver, S && S.card, phase === "pick" ? localPick : "", phase === "pick" ? (S.over && S.over.id) : ""].join("|");
+  const phase = S && ["guess", "reveal", "end"].includes(S.phase) ? S.phase : "lobby";
+  const amGiver = phase === "guess" && giver(S) === myId;
+  const key = [phase, S && S.game, S && S.round, S && S.skips, amGiver, phase === "guess" ? giver(S) : ""].join("|");
   if (key !== lastKey) {
     lastKey = key;
-    app.innerHTML = ({ lobby: lobbyHtml, pick: pickHtml, guess: guessHtml, reveal: revealHtml, end: endHtml })[phase](amGiver);
+    app.innerHTML = ({ lobby: lobbyHtml, guess: guessHtml, reveal: revealHtml, end: endHtml })[phase](amGiver);
     bindPhase(phase, amGiver);
   }
   patch();
@@ -405,28 +390,19 @@ function render() {
 function patchDot() { const d = $("#dot"); if (d) d.className = "dot " + (connected ? "on" : joined ? "off" : ""); }
 function patch() {
   patchDot();
-  const pl = $("#plist"); if (pl && S !== undefined) {
-    const phase = S && S.phase && S.phase !== "lobby" ? S.phase : "lobby";
-    pl.innerHTML = playersHtml({ ready: phase === "guess", giver: phase !== "lobby" && phase !== "end" ? giver(S) : null });
-  }
-  if (S && S.phase === "guess") {
-    patchDial();
-    const rb = $("#readyBtn"), rn = $("#readyNote");
-    if (rb) { const me = readyOk(myId); rb.textContent = me ? "Waiting for the others…" : "I'm happy with this"; rb.disabled = me; }
-    if (rn) { const gs = guessers(), n = gs.filter(readyOk).length; rn.textContent = `${n} of ${gs.length} happy. Moving the dial resets everyone.`; }
-  }
-  const tb = $("#takeover"); if (tb && S && S.phase === "pick") tb.hidden = online[giver(S)] !== false || giver(S) === myId;
+  const pl = $("#plist");
+  if (pl) pl.innerHTML = playersHtml(S && S.phase === "guess" ? giver(S) : null);
+  if (S && S.phase === "guess") patchDial();
+  const tb = $("#takeover"); if (tb && S && S.phase === "guess") tb.hidden = online[giver(S)] !== false || giver(S) === myId;
   const sb = $("#startBtn"); if (sb) sb.disabled = onlineIds().length < 2 || !connected;
 }
 
 function homeHtml() {
   return `<div class="stack" style="gap:20px">
-    <h1>${room ? "Join the game" : "Swiss or Aussie, polite or rude, how far along is it?"}</h1>
-    <p class="muted">A team guessing game for phones. One player sees where the hidden target sits and gives a one-word clue. Everyone else drags the dial together to find it.</p>
+    <h1>${room ? "Join the game" : "Guess where it sits on the dial"}</h1>
     <div class="stack"><label class="label" for="nameIn">Your name</label><input type="text" id="nameIn" maxlength="16" autocomplete="nickname" placeholder="e.g. Reto or Shazza" value="${esc(profile.name)}"></div>
-    <div class="stack"><span class="label">You're playing for</span>
-      <div class="flags"><button type="button" class="flagbtn ${profile.flag === "ch" ? "sel" : ""}" data-flag="ch"><span class="f">${FLAG_CH}</span>Switzerland</button><button type="button" class="flagbtn ${profile.flag === "au" ? "sel" : ""}" data-flag="au"><span class="f">${FLAG_AU}</span>Australia</button></div></div>
-    ${room ? `<button class="big" id="joinBtn">Join game ${esc(room)}</button><button class="link" id="newBtn">Start a different game instead</button>`
+    <div class="flags"><button type="button" class="flagbtn ${profile.flag === "ch" ? "sel" : ""}" data-flag="ch"><span class="f">${FLAG_CH}</span>Swiss</button><button type="button" class="flagbtn ${profile.flag === "au" ? "sel" : ""}" data-flag="au"><span class="f">${FLAG_AU}</span>Aussie</button></div>
+    ${room ? `<button class="big" id="joinBtn">Join</button><button class="link" id="newBtn">Start a different game instead</button>`
       : `<button class="big" id="newBtn">Start a new game</button>
          <div class="row" style="flex-wrap:nowrap"><input type="text" class="code" id="codeIn" maxlength="6" placeholder="CODE" aria-label="Game code"><button class="ghost" id="joinBtn" style="flex:none">Join</button></div>`}
   </div>`;
@@ -436,7 +412,7 @@ function bindHome() {
   const go = (code, creator) => {
     const name = $("#nameIn").value.trim();
     if (!name) { $("#nameIn").focus(); return toast("Type your name first"); }
-    if (!profile.flag) return toast("Pick Switzerland or Australia");
+    if (!profile.flag) return toast("Tap Swiss or Aussie");
     profile.name = name; store.set("hs_profile", profile);
     room = code; isCreator = creator; joined = true; if (creator) brokerIdx = 0;
     store.set("hs_joined", room, true);
@@ -449,90 +425,66 @@ function bindHome() {
 function lobbyHtml() {
   const prev = S && S.history && S.history.length && S.phase === "lobby";
   return `<div class="panel">
-      <span class="label">Scan to join</span>
-      <div class="qrbox"><div class="qr" id="qr"></div><div class="stack" style="gap:6px;min-width:0"><span class="muted small">or go to this page and type</span><span class="bigcode">${esc(room)}</span><button class="link" id="copyBtn" style="align-self:flex-start;padding-left:0">Copy invite link</button></div></div>
-    </div>
-    <div class="stack"><span class="label">At the table</span><div id="plist"></div></div>
-    <div class="note">Best with 4: everyone gives two clues. ${prev ? `Last game: <b>${S.score}</b> points.` : "Each round is worth up to 4 points."}</div>
-    <button class="big" id="startBtn">Start game</button>
-    <details class="small muted"><summary style="cursor:pointer">How to play</summary><div class="stack" style="margin-top:10px">
-      <p>Each round, one player is the <b>clue giver</b>. Their phone shows two spectrum cards (like <i>Polite ↔ Rude</i>) and a secret target somewhere on the dial.</p>
-      <p>They pick a card and give a clue that sits at that point on the spectrum. For example, if the target is far right on <i>Very Swiss ↔ Very Aussie</i>, "Vegemite" works.</p>
-      <p>Everyone else drags the shared dial together and talks it through. When every guesser taps <b>I'm happy</b>, the dial locks.</p>
-      <p>Bullseye scores 4, near 3, close 2. You win or lose as a team.</p></div></details>`;
-}
-function pickHtml(amGiver) {
-  const g = giver(S);
-  if (!amGiver) return `${scoreHtml()}
-    <div class="panel" style="align-items:center;text-align:center;padding:28px 16px">
-      <span style="font-size:44px;line-height:1">${pflag(g)}</span>
-      <h2>${esc(pname(g))} is thinking of a clue…</h2>
-      <p class="muted small">No peeking at their phone.</p>
+      <span class="label">Everyone scan this</span>
+      <div class="qrbox"><div class="qr" id="qr"></div><div class="stack" style="gap:6px;min-width:0"><span class="muted small">or type the code</span><span class="bigcode">${esc(room)}</span><button class="link" id="copyBtn" style="align-self:flex-start;padding-left:0">Copy link</button></div></div>
     </div>
     <div id="plist"></div>
-    <button class="link" id="takeover" hidden>${esc(pname(g))} has dropped out. Give this clue yourself</button>`;
-  const [a, b] = options(S), t = target(S);
-  return `${scoreHtml()}
-    <h2>Your turn to give the clue</h2>
-    <p class="muted small">Pick a card. Only you can see the target.</p>
-    <div class="stack">${cardHtml(a, "pick" + (localPick === a ? " sel" : ""), `data-c="${a}"`)}${cardHtml(b, "pick" + (localPick === b ? " sel" : ""), `data-c="${b}"`)}</div>
-    ${localPick == null ? "" : `<div class="dialwrap reveal">${dialSvg({ t, showNeedle: false })}${ends(localPick)}</div>
-    <div class="stack"><label class="label" for="clueIn">Your clue</label><input type="text" id="clueIn" maxlength="40" placeholder="One word or a short phrase" autocomplete="off">
-    <button class="big" id="clueBtn">Send clue</button><button class="ghost" id="loudBtn">I'll say it out loud</button></div>`}`;
+    <ol class="rules">
+      <li>One person sees a secret spot on the dial.</li>
+      <li>They say a clue out loud.</li>
+      <li>Everyone else drags the needle to the spot.</li>
+    </ol>
+    ${prev ? `<p class="muted small">Last game: <b>${S.score}</b> points.</p>` : ""}
+    <button class="big" id="startBtn">Start</button>`;
 }
 function guessHtml(amGiver) {
-  const g = giver(S);
-  const clue = S.clue ? `<div class="q">“${esc(S.clue)}”</div>` : `<div class="q">🗣️</div><p class="muted small">${esc(pname(g))} says the clue out loud</p>`;
+  const g = giver(S), c = cardOf(S);
+  if (amGiver) return `${scoreHtml()}
+    <div class="banner you"><b>Your turn.</b> Only you can see the target. Say a clue out loud that fits that spot.</div>
+    ${cardHtml(c)}
+    <div class="dialwrap reveal" id="dial">${dialSvg({ t: target(S), dial: S.dial })}</div>    <button class="ghost" id="newCardBtn">Hard one? New card</button>
+    <div id="plist"></div>`;
   return `${scoreHtml()}
-    ${cardHtml(S.card, "", 'tabindex="-1" aria-disabled="true"')}
-    <div class="clue"><span class="label">${pflag(g)} ${esc(pname(g))}'s clue</span>${clue}</div>
-    <div class="dialwrap ${amGiver ? "reveal" : "drag"}" id="dial">${dialSvg({ t: amGiver ? target(S) : null, dial: S.dial })}</div>
-    ${amGiver ? `<div class="note">Poker face. You can see the target, they can't. No hints!</div>`
-      : `<button class="big" id="readyBtn">I'm happy with this</button><p class="muted small" id="readyNote" style="text-align:center"></p>`}
+    <div class="banner"><span class="f">${pflag(g)}</span> <b>Listen to ${esc(pname(g))}'s clue.</b> Then drag the needle together.</div>
+    ${cardHtml(c)}
+    <div class="dialwrap drag" id="dial">${dialSvg({ t: null, dial: S.dial })}</div>
+    <button class="big" id="lockBtn">Lock it in</button>
     <div id="plist"></div>
-    ${amGiver ? "" : `<button class="link" id="forceBtn">Lock it in now</button>`}`;
+    <button class="link" id="takeover" hidden>${esc(pname(g))} has dropped out. I'll give the clue</button>`;
 }
 function revealHtml() {
   const h = S.history[S.history.length - 1];
-  const lines = { 4: ["Bullseye!", "Exakt wie e Schwiizer Uhr."], 3: ["Bloody ripper.", "So close."], 2: ["Not bad, mate.", "In the ballpark."], 0: ["Yeah, nah.", "Totally lost."] };
+  const lines = { 4: ["Bullseye!", "Exakt wie e Schwiizer Uhr."], 3: ["Bloody ripper.", "So close."], 2: ["Not bad, mate.", "In the ballpark."], 0: ["Yeah, nah.", "Missed."] };
   const [big, sub] = lines[h.p];
   const last = S.round + 1 >= S.rounds;
   return `${scoreHtml()}
-    ${cardHtml(h.card, "", 'tabindex="-1" aria-disabled="true"')}
-    <div class="clue"><span class="label">${pflag(h.giver)} ${esc(pname(h.giver))}'s clue</span><div class="q">${h.clue ? "“" + esc(h.clue) + "”" : "🗣️"}</div></div>
-    <div class="dialwrap reveal">${dialSvg({ t: h.t, dial: h.dial })}</div>
     <div class="pts"><div class="n ${h.p ? "" : "zero"}">+${h.p}</div><h2>${big}</h2><p class="muted">${sub}</p></div>
-    <button class="big" id="nextBtn">${last ? "See the final score" : "Next round"}</button>
-    <div id="plist"></div>`;
+    ${cardHtml(h.card)}
+    <div class="dialwrap reveal">${dialSvg({ t: h.t, dial: h.dial })}</div>
+    <button class="big" id="nextBtn">${last ? "See the final score" : "Next"}</button>`;
 }
 function endHtml() {
   const max = S.rounds * 4, pct = S.score / max;
   const tiers = [[.8, "Dual citizens", "You're basically one country now. Grüezi, mate."], [.62, "Permanent residents", "You know each other's brains really well."], [.45, "Working holiday visa", "Some great moments, some baffled faces."], [.25, "Tourists with a phrasebook", "Lots of pointing, some luck."], [0, "Lost at Zürich HB", "Different planets. Play again?"]];
   const [title, sub] = tiers.find(([m]) => pct >= m).slice(1);
-  return `<div class="stack" style="text-align:center;gap:6px;padding-top:10px"><span class="label">Final team score</span><div class="pts"><div class="n">${S.score}<span class="muted" style="font-size:28px"> / ${max}</span></div></div><h1 style="margin:0">${title}</h1><p class="muted">${sub}</p></div>
-    <div class="hist">${S.history.map(h => `<div class="h"><div class="c"><span class="muted">${pflag(h.giver)} ${esc(pname(h.giver))}:</span> “${h.clue ? esc(h.clue) : "said out loud"}”<br><span class="muted small">${esc(CARDS[h.card][0])} ↔ ${esc(CARDS[h.card][1])}</span></div><b>+${h.p}</b></div>`).join("")}</div>
+  return `<div class="stack" style="text-align:center;gap:6px;padding-top:10px"><span class="label">Team score</span><div class="pts"><div class="n">${S.score}<span class="muted" style="font-size:28px"> / ${max}</span></div></div><h1 style="margin:0">${title}</h1><p class="muted">${sub}</p></div>
     <button class="big" id="againBtn">Play again</button>
+    <div class="hist">${S.history.map(h => `<div class="h"><div class="c">${pflag(h.giver)} ${esc(pname(h.giver))}<br><span class="muted small">${esc(CARDS[h.card][0])} ↔ ${esc(CARDS[h.card][1])}</span></div><b>+${h.p}</b></div>`).join("")}</div>
     <button class="ghost" id="lobbyBtn">Back to the lobby</button>`;
 }
 function bindPhase(phase, amGiver) {
   if (phase === "lobby") {
     const qr = $("#qr");
     try { new QRCode(qr, { text: joinUrl(), width: 264, height: 264, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { qr.textContent = "QR unavailable"; }
-    $("#copyBtn").onclick = () => { navigator.clipboard.writeText(joinUrl()).then(() => toast("Invite link copied"), () => toast(joinUrl())); };
+    $("#copyBtn").onclick = () => { navigator.clipboard.writeText(joinUrl()).then(() => toast("Link copied"), () => toast(joinUrl())); };
     $("#startBtn").onclick = startGame;
   }
-  if (phase === "pick") {
-    document.querySelectorAll(".card.pick").forEach(c => c.onclick = () => { localPick = +c.dataset.c; render(); });
-    const send = loud => { const v = loud ? "" : ($("#clueIn").value || "").trim(); if (!loud && !v) { $("#clueIn").focus(); return toast("Type a clue, or say it out loud"); } giveClue(v); };
-    if ($("#clueBtn")) { $("#clueBtn").onclick = () => send(false); $("#loudBtn").onclick = () => send(true); $("#clueIn").onkeydown = e => { if (e.key === "Enter") send(false); }; }
-    if ($("#takeover")) $("#takeover").onclick = takeOver;
-  }
   if (phase === "guess") {
-    if (!amGiver) {
+    if (amGiver) $("#newCardBtn").onclick = newCard;
+    else {
       bindDrag($("#dial"));
-      $("#readyBtn").onclick = () => { pubPlayer({ ready: { g: S.game, r: S.round, dv: S.dialV } }); patch(); checkAllReady(); };
-      let armed = false;
-      $("#forceBtn").onclick = e => { if (!armed) { armed = true; e.target.textContent = "Tap again to lock it in"; setTimeout(() => { armed = false; if (e.target.isConnected) e.target.textContent = "Lock it in now"; }, 3000); } else lockIn(); };
+      $("#lockBtn").onclick = lockIn;
+      $("#takeover").onclick = takeOver;
     }
   }
   if (phase === "reveal") $("#nextBtn").onclick = nextRound;

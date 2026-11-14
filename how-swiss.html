@@ -782,95 +782,67 @@ function nextSecret() {
 // c: whose country it's about; a[0] is the right answer (options get shuffled); f: the fact shown after.
 const QUIZ = [
   // Australia
-  { c: "au", q: "An Aussie says “I'd love a root.” What do they want?", a: ["Sex", "A beer", "A vegemite sandwich", "A haircut"], f: "To root = to have sex. Never say you “root for” a team in Australia." },
-  { c: "au", q: "“My ute's rooted.” What's wrong with the ute?", a: ["It's broken", "It's stolen", "It's muddy", "It's brand new"], f: "Rooted also means wrecked or exhausted. A very flexible word." },
-  { c: "au", q: "What are budgie smugglers?", a: ["Tight men's swimming briefs", "Pet shop thieves", "Cheap cigarettes", "Pockets in board shorts"], f: "Named for what they appear to be hiding." },
-  { c: "au", q: "What is the “map of Tasmania”?", a: ["Female pubic hair", "A beer stain on a shirt", "A bad sunburn", "A hangover face"], f: "Look at Tasmania's shape. You'll get it." },
-  { c: "au", q: "In Australia, a “fanny” is…", a: ["Female genitals", "Your bum", "A bum bag", "A grandmother"], f: "Americans saying “fanny pack” in Australia cause real chaos." },
-  { c: "au", q: "What's a goon bag?", a: ["The silver bag inside cheap cask wine", "A security guard's backpack", "A sleeping bag at a festival", "A bag of chips"], f: "Pro move: blow it up and use it as a pillow when it's empty." },
-  { c: "au", q: "“Chuck a sickie” means…", a: ["Fake being sick to skip work", "Vomit", "Throw a boomerang", "Call an ambulance"], f: "Popular on Mondays after a big weekend." },
-  { c: "au", q: "What's a “durry”?", a: ["A cigarette", "A sausage", "A long drive", "A shark"], f: "Also called a ciggy or a smoko break." },
-  { c: "au", q: "“Spit the dummy” means…", a: ["Throw a tantrum", "Quit smoking", "Give up a secret", "Lose a footy match"], f: "A dummy is a baby's pacifier." },
-  { c: "au", q: "What's a shoey?", a: ["Drinking beer out of a shoe", "A shoe shop", "A kick in the bum", "A dance move"], f: "Made famous on F1 podiums by Daniel Ricciardo." },
-  { c: "au", q: "Someone who's “up themselves” is…", a: ["Arrogant", "Drunk", "Constipated", "Very tall"], f: "See also: tall poppy, about to be cut down." },
-  { c: "au", q: "A “pash” is…", a: ["A passionate snog", "A passion fruit", "A lazy person", "A parking fine"], f: "Pash rash is the stubble burn afterwards." },
-  { c: "au", q: "What's a bogan?", a: ["An uncouth, unsophisticated person", "A kind of possum", "A surfboard", "A country pub"], f: "Mullet and flannel optional but common." },
-  { c: "au", q: "In Aussie rhyming slang, “dead horse” is…", a: ["Tomato sauce", "A hangover", "A bad joke", "A boring party"], f: "Dead horse, sauce. Pass the dead horse for your pie." },
-  { c: "au", q: "What's unusual about wombat poo?", a: ["It's cube-shaped", "It glows", "It smells of mint", "It's blue"], f: "They stack the cubes on rocks to mark territory." },
-  { c: "au", q: "What do baby koalas eat to get their gut bacteria?", a: ["Their mum's poo", "Ants", "Eucalyptus flowers", "Rotten fruit"], f: "It's called pap. Delicious." },
-  { c: "au", q: "In 1932 the Australian army fought a war against which animal, and lost?", a: ["Emus", "Kangaroos", "Rabbits", "Cane toads"], f: "The Great Emu War. Machine guns, and the emus still won." },
-  { c: "au", q: "How many heads does a male echidna's penis have?", a: ["Four", "One", "Two", "Six"], f: "It only uses two at a time, taking turns." },
-  { c: "au", q: "Roughly how many sheep are there per person in Australia?", a: ["About 2 to 3", "About 1", "About 10", "About 0.5"], f: "Roughly 70 million sheep for 27 million people." },
-  { c: "au", q: "Why is Canberra the capital?", a: ["Sydney and Melbourne couldn't agree", "It's in the exact centre", "Gold was found there", "The Queen picked it on a map"], f: "A purpose-built compromise. Many Aussies still forget it exists." },
-  { c: "au", q: "What is a drop bear?", a: ["A made-up animal used to scare tourists", "A koala that falls when drunk", "A rugby tackle", "A cheap cask of wine"], f: "Tip: Vegemite behind the ears keeps them away." },
-  { c: "au", q: "What is fairy bread?", a: ["White bread, butter and sprinkles", "Bread with no crust", "Gluten-free bread", "Bread left out for luck"], f: "Mandatory at every Aussie kid's birthday party." },
-  { c: "au", q: "“Hit the frog and toad” means…", a: ["Hit the road", "Have a wee", "Go to the pub", "Drive drunk"], f: "Rhyming slang: frog and toad, road." },
-  { c: "au", q: "What are thongs in Australia?", a: ["Flip-flops", "Underwear", "Tongs for the BBQ", "Swimming goggles"], f: "Wearing thongs to a wedding is only slightly frowned upon." },
-  { c: "au", q: "“Dry as a dead dingo's…” what?", a: ["Donger", "Dinner", "Doorstep", "Dunny"], f: "Donger = penis. Means you're very, very thirsty." },
-  { c: "au", q: "“He couldn't organise a root in a brothel” means he's…", a: ["Useless", "Very shy", "Faithful to his wife", "Broke"], f: "The ultimate Aussie verdict on incompetence." },
-  { c: "au", q: "To “point Percy at the porcelain” is to…", a: ["Have a wee", "Get married", "Throw up", "Wash the dishes"], f: "Percy is the penis. The porcelain is the dunny." },
-  { c: "au", q: "A “technicolour yawn” is…", a: ["Throwing up", "A boring film", "A sunset", "A big hangover"], f: "Also known as a chunder, or a liquid laugh." },
-  { c: "au", q: "What were the original “dags”?", a: ["Dried poo stuck to a sheep's bum", "Farm dogs", "Bad dancers", "Daggers"], f: "Now it means an uncool, daggy person. Still a compliment, sort of." },
-  { c: "au", q: "A “root rat” is someone who…", a: ["Sleeps around a lot", "Steals from gardens", "Lives under the house", "Gets drunk alone"], f: "See also: “a bit of a goer”." },
-  { c: "au", q: "“Flat out like a lizard drinking” means…", a: ["Extremely busy", "Passed out drunk", "Sunbathing", "Lying on the floor"], f: "Lizards lap water really fast. Apparently." },
-  { c: "au", q: "What does an Aussie call an American?", a: ["A Seppo", "A Kiwi", "A Pom", "A Bludger"], f: "Septic tank, Yank. Rhyming slang with a bite." },
-  { c: "au", q: "A “bludger” is…", a: ["A lazy freeloader", "A rugby player", "A heavy drinker", "A tow truck"], f: "Dole bludger is the classic insult for anyone avoiding work." },
-  { c: "au", q: "“Get on the turps” means…", a: ["Get drunk", "Paint the house", "Quit drinking", "Go fishing"], f: "Turps = turpentine. That's the standard of the booze." },
-  { c: "au", q: "What's a “democracy sausage”?", a: ["A sausage sizzle at the polling booth on election day", "A vegan sausage", "A sausage the PM eats", "A sausage shared at a pub"], f: "Voting is compulsory, so at least there's a snag in it." },
-  { c: "au", q: "In “goon of fortune”, what do you spin?", a: ["A clothesline with a goon bag pegged to it", "A beer bottle", "A roulette wheel", "A kangaroo"], f: "Whoever the bag stops on takes a drink straight from the tap." },
-  { c: "au", q: "PM Bob Hawke held a world record for…", a: ["Downing a yard of ale fastest", "Longest speech", "Most cigarettes smoked at once", "Fastest marathon by a PM"], f: "About 1.4 litres in 11 seconds at Oxford. Then he became PM." },
-  { c: "au", q: "PM Harold Holt vanished while swimming in 1967. What was named after him?", a: ["A swimming pool", "A lifeguard school", "A beach", "A brand of goggles"], f: "The Harold Holt Memorial Swimming Centre, in Melbourne. Peak Aussie humour." },
-  { c: "au", q: "Male platypuses have what on their back legs?", a: ["Venomous spurs", "Webbed claws", "Suckers", "Tiny wings"], f: "One of very few venomous mammals. The pain lasts for weeks." },
-  { c: "au", q: "Cane toads were brought to Australia to eat…", a: ["Cane beetles", "Snakes", "Mosquitoes", "Rabbits"], f: "They ignored the beetles and took over half the country instead." },
-  { c: "au", q: "About how many Australians die from snakebite in a year?", a: ["About 2", "About 50", "About 200", "About 1,000"], f: "Horses and cows kill more Aussies than snakes do." },
-  { c: "au", q: "A “ranga” is…", a: ["A redhead", "A park ranger", "An orangutan at the zoo", "A rugby fan"], f: "From orangutan. Rude but usually affectionate." },
-  { c: "au", q: "“Rack off” means…", a: ["Go away", "Take your clothes off", "Have a drink", "Start a fight"], f: "The polite version. There are ruder ones." },
-  { c: "au", q: "A “hoon” is…", a: ["Someone who drives like a lunatic", "A drunk singer", "A beach bum", "A loud bird"], f: "Police can actually crush hoons' cars in some states." },
+  { c: "au", q: "“Fair suck of the sav!” means…", a: ["Be reasonable, give me a break", "Eat your sausage", "Hurry up", "Nice try, mate"], f: "A sav is a saveloy, a bright red sausage. Nobody knows why it means this." },
+  { c: "au", q: "“Let's have a Captain Cook” means…", a: ["Let's have a look", "Let's fire up the BBQ", "Let's get lost", "Let's take a nap"], f: "Rhyming slang: Captain Cook, look." },
+  { c: "au", q: "Someone who's “gone troppo” has…", a: ["Gone a bit crazy from the heat", "Moved to Queensland", "Got a deep tan", "Switched to rum"], f: "Usually blamed on too long in the tropics, or too long at the pub." },
+  { c: "au", q: "What's a “servo”?", a: ["A petrol station", "A waiter", "A tennis serve", "A servant"], f: "Where you buy fuel, a pie, and questionable sushi." },
+  { c: "au", q: "What's a “slab”?", a: ["A carton of 24 beers", "A big steak", "A lazy person", "A concrete patio"], f: "Carrying a slab on each shoulder is a recognised Aussie skill." },
+  { c: "au", q: "“See you this arvo” means…", a: ["See you this afternoon", "See you at the beach", "See you at the avocado farm", "See you never"], f: "Aussies shorten everything, then add an o." },
+  { c: "au", q: "A “tradie” is…", a: ["A tradesperson, like a plumber or sparky", "A stock trader", "A traditional dance", "A trade-in car"], f: "Known for hi-vis, a ute, and a 6 am start." },
+  { c: "au", q: "In Queensland it's togs, in NSW it's cossie, in Victoria it's bathers. What is it?", a: ["Swimwear", "A beach towel", "Sandals", "A cooler box"], f: "Three words for one tiny piece of fabric." },
+  { c: "au", q: "What's a “dunny”?", a: ["A toilet", "A stupid person", "A sand dune", "A dinghy"], f: "Classically an outhouse at the bottom of the garden, with a redback spider under the seat." },
+  { c: "au", q: "“Mad as a cut snake” means…", a: ["Furious or totally crazy", "Very sad", "Bleeding a lot", "Dead keen"], f: "A snake chopped in half thrashes about. Hence the fury." },
+  { c: "au", q: "“Built like a brick dunny” means…", a: ["Big and solid", "Smells bad", "Badly made", "Very old"], f: "Brick outhouses survived cyclones. So do these blokes." },
+  { c: "au", q: "“As useful as tits on a bull” means…", a: ["Completely useless", "Surprisingly handy", "Very rare", "Stubborn"], f: "Related: as useful as an ashtray on a motorbike." },
+  { c: "au", q: "“Have a crack” means…", a: ["Give it a go", "Fart", "Insult someone", "Break something"], f: "Very different from what it means in some other countries." },
+  { c: "au", q: "An Aussie shouts “Strewth!” Where does the word come from?", a: ["God's truth", "Straw and tooth", "A town called Strewth", "Struth, a bushranger"], f: "A squashed-up old oath. Now mostly said by blokes in old films." },
+  { c: "au", q: "A quokka mum being chased by a predator might…", a: ["Drop her baby out of her pouch", "Play dead", "Spit at it", "Climb a tree"], f: "The flailing joey distracts the predator while mum escapes. Harsh." },
+  { c: "au", q: "What does a platypus do under UV light?", a: ["Glows blue-green", "Turns invisible", "Goes bright red", "Nothing at all"], f: "Scientists only noticed in 2020. Nobody knows why." },
+  { c: "au", q: "How many eyes does a box jellyfish have?", a: ["24", "None", "2", "8"], f: "And no brain. Still one of the most venomous animals on Earth." },
+  { c: "au", q: "How fast can a wombat run?", a: ["About 40 km/h", "About 5 km/h", "About 15 km/h", "About 80 km/h"], f: "Faster than Usain Bolt over a short distance. On those little legs." },
+  { c: "au", q: "“Hooroo!” means…", a: ["Goodbye", "Hooray", "A baby kangaroo", "A hangover"], f: "Old-school, but you'll still hear it in the country." },
+  { c: "au", q: "A pot, a middy and a schooner are all…", a: ["Beer glass sizes", "Surfing moves", "Fishing boats", "Footy positions"], f: "And the names change depending on the state, to confuse everyone." },
+  { c: "au", q: "What's an “esky”?", a: ["A cooler box for drinks", "An Eskimo", "A cheap scooter", "A sun hat"], f: "From Esky, a brand name. Essential for any BBQ or cricket match." },
+  { c: "au", q: "“Wagging school” means…", a: ["Skipping school", "Being the teacher's pet", "Walking a dog to school", "Getting detention"], f: "In other places it's bunking or playing hooky." },
+  { c: "au", q: "“He's a few stubbies short of a six-pack” means he's…", a: ["Not very bright", "A bit drunk", "Broke", "Short"], f: "Also: a few roos loose in the top paddock." },
+  { c: "au", q: "In Australia, if you're “pissed” you're…", a: ["Drunk", "Angry", "Wet", "Tired"], f: "Pissed off is angry. Pissed is drunk. Pissed and pissed off is a big night." },
+  { c: "au", q: "“Like a shag on a rock” means…", a: ["All alone", "Very happy", "Having great sex", "Stuck"], f: "A shag is a kind of cormorant. Probably." },
+  { c: "au", q: "“He wouldn't shout if a shark bit him” means he's…", a: ["Stingy, never buys a round", "Very brave", "Very calm", "Deaf"], f: "To shout is to buy everyone a drink. Not shouting is a serious crime." },
+  { c: "au", q: "“Hard yakka” is…", a: ["Hard work", "Hard liquor", "A tough guy", "A rock-hard bed"], f: "From an Aboriginal word for work. Also a famous workwear brand." },
+  { c: "au", q: "“Flat chat” means…", a: ["As fast as possible", "A boring conversation", "Lying down", "A flat tyre"], f: "Going flat chat is going as fast as you can." },
+  { c: "au", q: "A “sanga” is…", a: ["A sandwich", "A singer", "A jug of sangria", "A shark"], f: "A sausage sanga is a snag wrapped in a slice of white bread." },
+  { c: "au", q: "“Chockers” means…", a: ["Completely full", "Covered in chocolate", "Choking", "Very angry"], f: "The pub was chockers. So was the dunny queue." },
   // Switzerland
-  { c: "ch", q: "What does “Chuchichäschtli” mean?", a: ["Kitchen cupboard", "Little cake", "Cuckoo clock", "Cheese grater"], f: "The word Swiss people make foreigners say to test their throat." },
-  { c: "ch", q: "In Swiss German, “huere guet” means…", a: ["Bloody good (literally whore good)", "Very expensive", "Good night", "Pretty boring"], f: "“Huere” works as an all-purpose intensifier. Use with care around grandma." },
-  { c: "ch", q: "What's a “Füdli”?", a: ["Bum", "Fondue fork", "Small dog", "Beer glass"], f: "Füdlibürger, literally bum citizen, means a boring conformist." },
-  { c: "ch", q: "What's a “Schnäbi”?", a: ["A kid's word for penis", "A little bird", "A chocolate bar", "A ski lift"], f: "The equivalent of willy. Not a bird, despite the sound of it." },
-  { c: "ch", q: "“Gopferdammi” is…", a: ["A swear word, like God damn it", "A mountain pass", "A cheese dish", "Grandpa's nickname"], f: "Often shortened to “Gopf”. Polite Swiss swearing at its finest." },
-  { c: "ch", q: "A Swiss German calling you a “Sauhund” is calling you…", a: ["A bastard (literally pig dog)", "A good friend", "A lazy dog", "A truffle hunter"], f: "Pig + dog. Strong stuff, used with feeling." },
-  { c: "ch", q: "“Ich bi uf de Felge” (I'm on the rims) means…", a: ["I'm exhausted", "I'm drunk", "I'm broke", "I'm driving"], f: "Like a car riding on its wheel rims with no tyres left." },
-  { c: "ch", q: "In Swiss German slang, something “glatt” is…", a: ["Funny", "Boring", "Disgusting", "Expensive"], f: "Literally smooth. Swiss humour is smooth, apparently." },
-  { c: "ch", q: "In Switzerland it's illegal to keep only one…", a: ["Guinea pig", "Goldfish", "Cow", "Cat"], f: "They're social animals, so the law says they need a buddy." },
-  { c: "ch", q: "What is the Röstigraben?", a: ["The culture gap between German and French speakers", "A famous ski run", "A potato field", "Zürich's party street"], f: "Literally the hash-brown ditch." },
-  { c: "ch", q: "What is officially Switzerland's capital?", a: ["None. Bern is just the “federal city”", "Bern", "Zürich", "Geneva"], f: "The constitution never names a capital." },
-  { c: "ch", q: "Which drug was first made in a Basel lab?", a: ["LSD", "Ecstasy", "Aspirin", "Viagra"], f: "Albert Hofmann tried it in 1943 and rode his bike home tripping. Bicycle Day." },
-  { c: "ch", q: "Until which year was absinthe banned in Switzerland?", a: ["2005", "1955", "1985", "2015"], f: "The green fairy was made in secret in the Val-de-Travers for nearly a century." },
-  { c: "ch", q: "What's Rivella, the Swiss soft drink, made from?", a: ["Milk whey", "Apples", "Herbs and cream", "Glacier water"], f: "A by-product of cheese making, in a bottle." },
-  { c: "ch", q: "How much chocolate does the average Swiss person eat a year?", a: ["About 10 kg", "About 2 kg", "About 5 kg", "About 25 kg"], f: "Among the most in the world. Schoggi is a food group." },
-  { c: "ch", q: "Swiss bunkers have room for how much of the population?", a: ["All of it", "About half", "About 10%", "Only the government"], f: "There's more bunker space than people." },
-  { c: "ch", q: "What do many Swiss men keep at home after army service?", a: ["Their service rifle", "Their army bike", "A parachute", "A Swiss army knife only"], f: "Ammunition is a different story these days." },
-  { c: "ch", q: "Which of these was invented in Switzerland?", a: ["Velcro", "The zip", "Post-it notes", "Sticky tape"], f: "George de Mestral got the idea from burrs stuck to his dog." },
-  { c: "ch", q: "The only other country with a square flag is…", a: ["Vatican City", "Nepal", "Monaco", "Japan"], f: "Nepal's flag isn't even a rectangle. It's two triangles." },
-  { c: "ch", q: "In the Valais “Battle of the Queens”, who fights?", a: ["Cows", "Goats", "Grandmothers", "Brides"], f: "Black Hérens cows lock horns. The winner is crowned queen." },
-  { c: "ch", q: "Many Swiss house rules ban what on Sundays?", a: ["Recycling glass bottles", "Showering", "Opening windows", "Eating cheese"], f: "Clinking glass on a Sunday is basically a crime against the neighbours." },
-  { c: "ch", q: "What's a “Znüni”?", a: ["A mid-morning snack", "A 9-year-old", "A late-night drink", "A nap"], f: "Literally “at nine”. There's a Zvieri at four, too." },
-  { c: "ch", q: "“Tschau zäme” means…", a: ["Bye, everyone", "Cheers, mate", "Eat up", "Shut up"], f: "Zäme = together. Works for leaving a pub too." },
-  { c: "ch", q: "How many official national languages does Switzerland have?", a: ["Four", "Three", "Two", "Five"], f: "German, French, Italian and Romansh." },
-  { c: "ch", q: "In Swiss German, “Seich” literally means piss. “Das isch Seich” means…", a: ["That's rubbish", "That's delicious", "That's expensive", "That's my beer"], f: "“Seich verzapfe” = talking crap. Very handy at the pub." },
-  { c: "ch", q: "What's “Gaggi”?", a: ["Poo", "Grandpa", "A cheese knife", "A cough"], f: "A kids' word that adults use the moment something goes wrong." },
-  { c: "ch", q: "“Huere Siech!” is…", a: ["A strong swear, like bloody bastard", "A toast at weddings", "Bless you", "A mountain warning"], f: "Siech is a sick person. Huere you already know." },
-  { c: "ch", q: "A Swiss German calling you a “Tubel” means you're…", a: ["An idiot", "Cute", "Tall", "Drunk"], f: "Close cousin of “Lappi”, also an idiot." },
-  { c: "ch", q: "What's a “Schnudergoof”?", a: ["A snotty brat", "A ski accident", "A cheese with holes", "A clumsy waiter"], f: "Schnuder = snot, Goof = kid." },
-  { c: "ch", q: "A “Bünzli” is…", a: ["A petty, rule-obsessed conformist", "A sausage", "A small mountain hut", "A cowbell"], f: "The guy who reports you for recycling on a Sunday." },
-  { c: "ch", q: "What do Swiss people call Germans, not so kindly?", a: ["Schwob", "Kiwi", "Pom", "Tubel"], f: "From Swabian. Said with a little smile and zero affection." },
-  { c: "ch", q: "In Zürich every spring, a snowman called the Böögg is…", a: ["Blown up on a bonfire", "Thrown in the lake", "Married to the mayor", "Eaten"], f: "The faster his head explodes, the better the summer will be." },
-  { c: "ch", q: "Bern has a famous fountain statue of an ogre doing what?", a: ["Eating children", "Drinking beer", "Peeing", "Counting money"], f: "The Kindlifresserbrunnen. Nobody quite knows why." },
-  { c: "ch", q: "In which year was the last Swiss canton forced by a court to let women vote?", a: ["1990", "1921", "1959", "1971"], f: "Appenzell Innerrhoden. National voting for women only came in 1971." },
-  { c: "ch", q: "Basel's carnival starts at what time on a Monday morning?", a: ["4 am", "Midnight", "9 am", "Noon"], f: "Morgestraich: the city lights go off and thousands of piccolos start at once." },
-  { c: "ch", q: "Scientists found that the holes in Swiss cheese come from…", a: ["Tiny bits of hay in the milk", "Air pumped in", "Mice", "Cheese makers poking it"], f: "Cleaner milking machines meant fewer holes. Mystery solved in 2015." },
-  { c: "ch", q: "Who pushed fondue as Switzerland's national dish?", a: ["The Swiss cheese cartel, to sell more cheese", "The army", "A Geneva chef", "The tourist office in the 1990s"], f: "The Swiss Cheese Union marketed it for decades. It worked." },
-  { c: "ch", q: "Switzerland's national sausage is the…", a: ["Cervelat", "Bratwurst", "Chorizo", "Frankfurter"], f: "In 2008 an EU ban on Brazilian cattle guts caused a national cervelat crisis." },
-  { c: "ch", q: "Why did Toblerone remove the Matterhorn from its pack?", a: ["Some production moved out of Switzerland", "A copyright fight with Zermatt", "The mountain was too pointy", "Customers complained"], f: "Swiss rules: no Swiss mountain unless it's made in Switzerland." },
-  { c: "ch", q: "A Swiss station clock's second hand stops at 12 for about…", a: ["1.5 seconds", "Never", "10 seconds", "A whole minute"], f: "It races round in 58.5 seconds, then waits for the signal." },
-  { c: "ch", q: "The Swiss Guard protects…", a: ["The Pope", "The Swiss banks", "The Matterhorn", "The President"], f: "Catholic Swiss men only. The stripy outfits are standard issue." },
-  { c: "ch", q: "“Kafi fertig” is…", a: ["Coffee with a shot of schnapps", "Coffee to go", "Finished coffee", "Decaf"], f: "Breakfast of champions in the countryside." },
-  { c: "ch", q: "“Es isch mir Wurscht” (it's sausage to me) means…", a: ["I don't care", "I'm hungry", "It's a mess", "I love it"], f: "Also works in Germany, but the Swiss say it with more indifference." },
-  { c: "ch", q: "Bern's onion market ends with people…", a: ["Bopping each other with plastic hammers", "Crying in public", "Throwing onions at the mayor", "Eating raw onions"], f: "Zibelemärit: onions, confetti and squeaky hammers at 6 am." }
+  { c: "ch", q: "What's a “Rüebli”?", a: ["Carrot", "Little rabbit", "Turnip soup", "Short rope"], f: "Rüeblitorte from Aargau is the classic." },
+  { c: "ch", q: "In Bern you're greeted with “Grüessech”. What is it?", a: ["Hello", "Cheers", "Thank you", "Bless you"], f: "Zürich says Grüezi. Bern says Grüessech, very slowly." },
+  { c: "ch", q: "What's a “Velo”?", a: ["Bicycle", "Velvet", "Speed camera", "Wedding veil"], f: "Swiss German loves French words: Velo, Trottoir, Glace, Coiffeur." },
+  { c: "ch", q: "What are “Gschwellti”?", a: ["Potatoes boiled in their skins", "Swollen ankles", "Pancakes", "Tight trousers"], f: "Served with a pile of cheese. Simple and perfect." },
+  { c: "ch", q: "If a Swiss person says they had to “chrampfe” all week, they…", a: ["Worked really hard", "Had cramps", "Partied a lot", "Were sick"], f: "Said with great pride, every Friday." },
+  { c: "ch", q: "“Es Gnusch” is…", a: ["A tangled mess", "A hug", "A nosebleed", "A small cheese"], f: "Earphone cables in your pocket. Always es Gnusch." },
+  { c: "ch", q: "“En Guete!” is said…", a: ["Before eating", "After someone sneezes", "When clinking glasses", "When leaving"], f: "Skip it and the whole table will notice." },
+  { c: "ch", q: "“Halt dSchnurre!” means…", a: ["Shut up!", "Hold my beer!", "Wipe your nose!", "Hurry up!"], f: "Not for use on your boss." },
+  { c: "ch", q: "If something “fägt”, it's…", a: ["Fun", "Broken", "Expensive", "Disgusting"], f: "Das fägt! The highest praise for a party." },
+  { c: "ch", q: "Who is “s Grosi”?", a: ["Grandma", "The boss", "A big cow", "The neighbour"], f: "Grosi bakes the Zopf. Grosi is always right." },
+  { c: "ch", q: "“Schmöcke” means…", a: ["To smell", "To smoke", "To kiss", "To hit"], f: "Schmöcksch das? Usually a question about cheese." },
+  { c: "ch", q: "What's a “Lööli”?", a: ["An idiot", "A lollipop", "A lazy cat", "A loo"], f: "Mild. Your mum might call you one." },
+  { c: "ch", q: "In Bern, your “Gring” is your…", a: ["Head", "Ring", "Belly", "Grandpa"], f: "Bernese has its own words for everything, said at its own speed." },
+  { c: "ch", q: "What's in your “Hosesack”?", a: ["Your trouser pocket", "Your balls", "Your laundry", "Your lunch"], f: "Hand in the Hosesack is the standard Swiss waiting pose." },
+  { c: "ch", q: "If you've got “de Pfnüsel”, you…", a: ["Have a cold", "Are hungover", "Are in love", "Have been fined"], f: "Time for a Lindenblütentee and a day on the sofa." },
+  { c: "ch", q: "What's a “Büsi”?", a: ["A cat", "A small bus", "A kiss", "A bush"], f: "Büsi, Büsi, Büsi! How every Swiss person calls a cat." },
+  { c: "ch", q: "In Swiss German, “Schwümm” are…", a: ["Mushrooms", "Swimmers", "Sponges", "Swans"], f: "Schwümm sammle is a serious autumn sport. Get them checked at the Pilzkontrolle." },
+  { c: "ch", q: "What's “Anke”?", a: ["Butter", "An anchor", "An aunt", "An ankle"], f: "Ankebrot with honey: the Swiss breakfast of champions." },
+  { c: "ch", q: "What's “Nidle”?", a: ["Cream", "Needles", "Noodles", "Nettles"], f: "Meringue mit Nidle in Gruyère. Life-changing." },
+  { c: "ch", q: "What are “Härdöpfel”?", a: ["Potatoes", "Hard apples", "Hedgehogs", "Hiking boots"], f: "The base of Rösti, so the base of the Röstigraben." },
+  { c: "ch", q: "In many Swiss towns, rubbish bags must…", a: ["Be official bags or carry a paid sticker", "Be black", "Be tied with a ribbon", "Only go out on Sundays"], f: "Rubbish detectives open illegal bags to find out who you are." },
+  { c: "ch", q: "What is Hornussen?", a: ["A farm sport: whack a puck down a field, the other team swats it with boards", "A cow horn-blowing contest", "Rolling cheese down a hill", "Wrestling in sawdust"], f: "Schwingen is the sawdust wrestling. Both are extremely Swiss." },
+  { c: "ch", q: "After a Schwingen wrestling bout, the winner…", a: ["Brushes the sawdust off the loser's back", "Drinks a litre of milk", "Rings a cowbell", "Kisses the loser"], f: "The prize at the big festival is often a live bull." },
+  { c: "ch", q: "At the Landsgemeinde in Glarus, people…", a: ["Vote outdoors by raising their hands", "Race cows through town", "Elect a cheese queen", "Burn a snowman"], f: "Direct democracy, in the town square, in the rain." },
+  { c: "ch", q: "On 6 December, Samichlaus brings a dark-robed helper called…", a: ["Schmutzli", "Krampus", "Zwarte Piet", "Böögg"], f: "Schmutzli carries the sack, the twigs, and the threat." },
+  { c: "ch", q: "What's a “Chüngel”?", a: ["Rabbit", "Cousin", "Pig", "Cheese wheel"], f: "Pet or dinner, depending on the canton." },
+  { c: "ch", q: "Calling someone a “Schofseckel” means they're…", a: ["A jerk", "A shepherd", "A wool jumper", "A lamb stew"], f: "Don't say it to a farmer. Or near his sheep." },
+  { c: "ch", q: "“Gopfriedstutz!” is…", a: ["A polite way to almost swear", "A Swiss pastry", "A mountain pass", "A ski lift"], f: "Your Grosi's favourite curse word." },
+  { c: "ch", q: "“Spinnsch?” means…", a: ["Are you crazy?", "Are you dizzy?", "Are you sick?", "Are you done?"], f: "The answer is always no. The answer is usually wrong." },
+  { c: "ch", q: "How often do the Swiss usually vote on national issues?", a: ["Four times a year", "Once every four years", "Once a year", "Every month"], f: "Topics have included cow horns, gold reserves and banning minarets." }
 ];
 const QUIZ_EACH = 10; // questions per country per game (20 a game)
 function quizOrder(game) {
@@ -885,7 +857,7 @@ function myAns(id) { const a = players[id] && players[id].ans; return a && a.g =
 function team(id) { return players[id] && players[id].flag === "au" ? "au" : "ch"; }
 function startQuiz() {
   if (onlineIds().length < 2) return toast("You need at least 2 players");
-  setState(n => { n.game = (n.game || 0) + 1; n.mode = "quiz"; n.phase = "qq"; n.qn = 0; n.qtotal = QUIZ_EACH * 2; n.tscore = { ch: 0, au: 0 }; n.qhist = []; });
+  setState(n => { n.game = (n.game || 0) + 1; n.mode = "quiz"; n.phase = "qq"; n.qn = 0; n.qtotal = QUIZ_EACH * 2; n.tscore = { ch: 0, au: 0 }; n.qhist = []; n.tsize = { ch: onlineIds().filter(id => team(id) === "ch").length, au: onlineIds().filter(id => team(id) === "au").length }; });
 }
 function answer(a) { pubPlayer({ ans: { g: S.game, q: S.qn, a } }); patch(); checkAnswers(); }
 function checkAnswers() {
@@ -1298,9 +1270,12 @@ function pendHtml() {
     <button class="big" id="againPrec">Play again</button>
     <button class="ghost" id="lobbyBtn">Back to the lobby</button>`;
 }
+// With uneven teams (say 4 Swiss vs 2 Aussies) scores are shown as the share of answers each team got right.
+function uneven() { const z = S.tsize; return !!(z && z.ch && z.au && z.ch !== z.au); }
+function tRate(k) { const z = S.tsize, done = Math.max(1, (S.qhist || []).length); return z && z[k] ? S.tscore[k] / (z[k] * done) : 0; }
+function tShow(k) { return uneven() ? Math.round(tRate(k) * 100) + "%" : (S.tscore || {})[k] || 0; }
 function teamBar() {
-  const t = S.tscore || { ch: 0, au: 0 };
-  return `<div class="teambar"><span class="tm ch">${FLAG_CH} <b>${t.ch}</b></span><span class="label">Question ${S.qn + 1} of ${S.qtotal}</span><span class="tm au"><b>${t.au}</b> ${FLAG_AU}</span></div>`;
+  return `<div class="teambar"><span class="tm ch">${FLAG_CH} <b>${tShow("ch")}</b></span><span class="label">Question ${S.qn + 1} of ${S.qtotal}</span><span class="tm au"><b>${tShow("au")}</b> ${FLAG_AU}</span></div>`;
 }
 function qTag(q) { return `<span class="qtag ${q.c}">${q.c === "au" ? FLAG_AU + " Aussie question" : FLAG_CH + " Swiss question"}</span>`; }
 function qqHtml() {
@@ -1322,7 +1297,7 @@ function qrHtml() {
     <button class="big" id="nextQBtn">${S.qn + 1 >= S.qtotal ? "Final score" : "Next question"}</button>`;
 }
 function qendHtml() {
-  const t = S.tscore, win = t.ch === t.au ? null : t.ch > t.au ? "ch" : "au";
+  const t = uneven() ? { ch: tRate("ch"), au: tRate("au") } : S.tscore, win = t.ch === t.au ? null : t.ch > t.au ? "ch" : "au";
   const title = win === "ch" ? "Switzerland wins!" : win === "au" ? "Australia wins!" : "It's a draw";
   const sub = win === "ch" ? "Precise, neutral and smug about it. Huere guet." : win === "au" ? "Fair dinkum legends. Shoeys all round." : "Perfectly neutral. Very Swiss of you all.";
   const best = {}; S.qhist.forEach(h => h.right.forEach(id => best[id] = (best[id] || 0) + 1));
@@ -1330,7 +1305,8 @@ function qendHtml() {
   return `<div class="stack" style="text-align:center;gap:8px;padding-top:10px">
       <div style="font-size:64px;line-height:1">${win === "au" ? FLAG_AU : win === "ch" ? FLAG_CH : FLAG_CH + " " + FLAG_AU}</div>
       <h1 style="margin:0">${title}</h1><p class="muted">${sub}</p></div>
-    <div class="teambar big"><span class="tm ch">${FLAG_CH} <b>${t.ch}</b></span><span class="label">final</span><span class="tm au"><b>${t.au}</b> ${FLAG_AU}</span></div>
+    <div class="teambar big"><span class="tm ch">${FLAG_CH} <b>${tShow("ch")}</b></span><span class="label">${uneven() ? "right" : "final"}</span><span class="tm au"><b>${tShow("au")}</b> ${FLAG_AU}</span></div>
+    ${uneven() ? `<p class="muted small" style="text-align:center">Uneven teams (${S.tsize.ch} Swiss, ${S.tsize.au} Aussie${S.tsize.au === 1 ? "" : "s"}), so it's the share of answers each team got right.</p>` : ""}
     ${mvp ? `<div class="note">Smartest drunk: <b>${esc(pname(mvp))}</b> with ${best[mvp]} right.</div>` : ""}
     <button class="big" id="againQuiz">Rematch</button>
     <button class="ghost" id="lobbyBtn">Back to the lobby</button>`;

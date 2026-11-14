@@ -48,6 +48,9 @@ header { display: flex; align-items: center; justify-content: space-between; gap
 .brand .x::before { width: 12px; height: 4px; }
 .brand .x::after { width: 4px; height: 12px; }
 .roomchip { font: 600 13px/1 var(--mono); letter-spacing: .12em; background: var(--bg3); border: 1px solid var(--line); padding: 7px 10px; border-radius: 999px; display: flex; align-items: center; gap: 8px; }
+.hright { display: flex; align-items: center; gap: 8px; }
+.homebtn { font: 700 14px/1 var(--body, inherit); padding: 8px 12px; border-radius: 999px; background: var(--bg3); border: 1px solid var(--line); color: inherit; min-height: 0; width: auto; white-space: nowrap; }
+.homebtn.arm { background: var(--red); border-color: var(--red); color: #fff; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
 .dot.on { background: var(--green); box-shadow: 0 0 0 3px rgba(43, 179, 106, .25); }
 .dot.off { background: var(--red); }
@@ -212,7 +215,7 @@ button.link { background: none; color: var(--muted); padding: 6px; font-weight: 
 <div class="wrap">
   <header>
     <div class="brand"><span class="x" aria-hidden="true"></span>How Swiss Is It?</div>
-    <div class="roomchip" id="roomchip" hidden><span class="dot" id="dot"></span><span id="roomcode"></span></div>
+    <div class="hright"><button type="button" class="homebtn" id="homeBtn" hidden>🏠 Lobby</button><div class="roomchip" id="roomchip" hidden><span class="dot" id="dot"></span><span id="roomcode"></span></div></div>
   </header>
   <main id="app" class="stack"></main>
 </div>
@@ -385,6 +388,14 @@ function nextRound() {
 }
 function takeOver() { const r = S.round; setState(n => { if (n.phase !== "guess" || n.round !== r) return false; n.over = { r, id: myId }; n.skips = (n.skips || 0) + 1; n.dial = 50; }); }
 function toLobby() { setState(n => { n.phase = "lobby"; }); }
+// The 🏠 Lobby button in the header ends the current game for everyone. It needs two taps so nobody quits by accident.
+let homeTimer = 0;
+function disarmHome() { clearTimeout(homeTimer); homeTimer = 0; const b = $("#homeBtn"); if (b) { b.classList.remove("arm"); b.textContent = "🏠 Lobby"; } }
+function homeTap() {
+  const b = $("#homeBtn");
+  if (!homeTimer) { b.classList.add("arm"); b.textContent = "Tap again"; homeTimer = setTimeout(disarmHome, 3000); return; }
+  disarmHome(); toLobby(); toast("Back to the lobby. Pick another game.");
+}
 
 // ---------- Swiss Precision: play numbers in order, no talking ----------
 function precDeal(st) {
@@ -979,12 +990,14 @@ function playersHtml(giverId) {
 function scoreHtml() { return `<div class="score"><span class="label">Round ${S.round + 1} of ${S.rounds}</span><span class="label">Score <b>${S.score}</b></span></div>`; }
 
 let lastKey = "";
+document.getElementById("homeBtn").onclick = homeTap;
 function render() {
   const chip = $("#roomchip"); chip.hidden = !joined; $("#roomcode").textContent = room || "";
   patchDot();
   const app = $("#app");
   if (!joined) { const k = "home:" + (room || ""); if (k !== lastKey) { lastKey = k; app.innerHTML = homeHtml(); bindHome(); } return; }
   const phase = S && ["guess", "reveal", "end", "qq", "qr", "qend", "pp", "pl", "pend", "mv", "mr", "mend", "np", "nx", "nv", "nend", "sq", "sr", "send"].includes(S.phase) ? S.phase : "lobby";
+  const hb = $("#homeBtn"); hb.hidden = phase === "lobby"; if (hb.hidden) disarmHome();
   const amGiver = phase === "guess" && giver(S) === myId;
   const key = [phase, S && S.game, S && S.round, S && S.skips, S && S.qn, S && S.mn, S && S.sn, S && S.level, S && S.played && S.played.length, amGiver, phase === "guess" ? giver(S) : "", phase === "mv" ? onlineIds().join() : ""].join("|");
   if (key !== lastKey) {

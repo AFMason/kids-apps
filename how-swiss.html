@@ -120,6 +120,8 @@ button.link { background: none; color: var(--muted); padding: 6px; font-weight: 
 .gamebtn.precbtn { background: var(--red); color: #fff; }
 .gamebtn.mostbtn { background: var(--green); color: #fff; }
 .gamebtn.neutralbtn { background: #2d4a7a; color: #fff; }
+.gamebtn.kidsbtn { background: linear-gradient(135deg, #7ec8f2, #b48cf0); color: #1a1240; }
+.kidq { font-size: 30px; line-height: 1.2; }
 .gamebtn.secretsbtn { background: linear-gradient(135deg, #b8174a, #e0301e 60%, #f2812a); color: #fff; }
 .banner.event { background: #4a2a5e; color: #fff; }
 .yn { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -464,24 +466,45 @@ const MOST_SPICY = [
   "have a secret crush on a celebrity chef", "send a nude to a group chat by mistake", "have hooked up in a hot tub", "get handsy on a dance floor",
   "have a drawer they don't want their mum to open", "have hooked up with an ex's friend", "get a cheeky tattoo somewhere hidden", "be wearing no undies right now"
 ];
+const MOST_KIDS = [
+  "🦖 turn into a dinosaur at breakfast", "🧦 lose one sock every day", "🍝 get spaghetti on their nose", "😴 fall asleep in the car",
+  "🐸 kiss a frog to see if it's a prince", "🍦 eat ice cream for dinner", "🦘 hop like a kangaroo all the way to school", "🤧 sneeze the loudest",
+  "🐶 be best friends with a dog", "🧀 eat a whole mountain of cheese", "🚀 fly a rocket to the moon", "🎤 sing in the bath",
+  "🐨 cuddle a koala", "🤪 make the silliest face", "🏔️ climb the highest mountain", "🍫 sneak a piece of chocolate",
+  "🦄 ride a unicorn", "🐧 waddle like a penguin", "🌈 find the end of a rainbow", "🦈 swim with a friendly shark",
+  "🤣 laugh so hard milk comes out their nose", "🧸 still have their teddy in bed", "💨 do a big trumpet fart", "🐒 climb a tree like a monkey",
+  "🏰 build the biggest sandcastle", "👑 be a king or a queen", "🐄 talk to a Swiss cow", "🍪 eat all the cookies",
+  "🕺 dance like nobody's watching", "🎈 float away holding balloons", "🐊 be brave with a crocodile", "🧙 do real magic",
+  "🍕 put pineapple on pizza", "🛁 splash the whole bathroom", "🐌 be the slowest getting dressed", "⚽ score a goal",
+  "🦸 save the world", "🐝 get chased by a bee", "🤫 tell a secret by accident", "🎨 paint on the walls",
+  "🏃 run the fastest", "🙃 do a handstand", "🦉 stay up the latest", "🥕 feed carrots to a horse",
+  "🐟 forget what they were saying", "🧁 lick the cake bowl", "🛷 go fastest down a snowy hill", "🦷 lose a tooth eating an apple",
+  "🐻 give the best bear hugs", "😂 tell the funniest joke"
+];
+const MOST_KIDS_N = 10;
 const MOST_N = 15;
-function mostDeck(spicy) { return spicy ? MOST_SPICY : MOST; }
+function mostDeck(spicy, kids) { return kids ? MOST_KIDS : spicy ? MOST_SPICY : MOST; }
 function mostOrder(game, spicy) { const deck = mostDeck(spicy), ids = deck.map((_, i) => i), r = rng(`${room}:most${spicy ? "s" : ""}`); for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; } const off = ((game - 1) * MOST_N) % ids.length; return [...ids.slice(off), ...ids].slice(0, MOST_N); }
 function curMost() { return S.mlist ? S.mlist[S.mn] : mostDeck(S.spicy)[mostOrder(S.mgame || S.game, S.spicy)[S.mn]]; }
 function myVote(id) { const v = players[id] && players[id].vote; return v && v.g === S.game && v.n === S.mn ? v.id : null; }
 // The room remembers every prompt it has shown (mseen), so new games skip them until a deck runs out.
-function startMost(spicy) {
+function startMost(spicy, kids) {
   if (onlineIds().length < 2) return toast("You need at least 2 players");
+  if (kids) spicy = false;
+  const N = kids ? MOST_KIDS_N : MOST_N;
   setState(n => {
-    const deck = mostDeck(spicy), seen = new Set(n.mseen || []);
+    const deck = mostDeck(spicy, kids), seen = new Set(n.mseen || []);
     let avail = deck.filter(x => !seen.has(x));
-    if (avail.length < MOST_N) { n.mseen = (n.mseen || []).filter(x => !deck.includes(x)); avail = deck.slice(); toast("You've seen every prompt. Starting the deck again."); }
+    if (avail.length < N) { n.mseen = (n.mseen || []).filter(x => !deck.includes(x)); avail = deck.slice(); toast("You've seen every prompt. Starting the deck again."); }
     n.game = (n.game || 0) + 1;
     const r = rng(`${room}:${n.game}:mostpick`);
     for (let i = avail.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [avail[i], avail[j]] = [avail[j], avail[i]]; }
-    n.mlist = avail.slice(0, MOST_N);
-    n.mode = "most"; n.phase = "mv"; n.mn = 0; n.mtotal = n.mlist.length; n.mhist = []; n.spicy = !!spicy;
+    n.mlist = avail.slice(0, N);
+    n.mode = "most"; n.phase = "mv"; n.mn = 0; n.mtotal = n.mlist.length; n.mhist = []; n.spicy = !!spicy; n.kids = !!kids;
   });
+}
+function sayIt(text) {
+  try { const u = new SpeechSynthesisUtterance(text.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, "").replace(/\s+/g, " ").trim()); u.rate = 0.9; u.pitch = 1.15; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { toast("This phone can't read aloud"); }
 }
 function vote(id) { pubPlayer({ vote: { g: S.game, n: S.mn, id } }); patch(); checkAnswers(); }
 function revealMost() {
@@ -1041,6 +1064,7 @@ function lobbyHtml() {
       <button class="gamebtn startBtn mostbtn" id="startMost"><b>Most Likely To</b><span>A cheeky question pops up. Everyone secretly votes for who it fits best.</span></button>
       <button class="gamebtn startBtn spicybtn" id="startSpicy"><b>🌶️ Spicy</b><span>Same game, filthier questions. Adults only.</span></button>
     </div>
+    <button class="gamebtn startBtn kidsbtn" id="startKids"><b>🧸 Kids' Most Likely To</b><span>Silly, sweet questions for little ones. 10 quick rounds, with a button that reads each one out loud.</span></button>
     <button class="gamebtn startBtn precbtn" id="startPrec"><b>Swiss Precision</b><span>No talking. Everyone plays their numbers lowest to highest, together. Trust your gut.</span></button>
     <button class="gamebtn startBtn quizbtn" id="startQuiz"><b>${FLAG_CH} Swiss vs Aussie ${FLAG_AU}</b><span>Rude, weird quiz. Everyone answers on their own phone. Your team is your flag.</span></button>
     ${prev ? `<p class="muted small">Last dial game: <b>${S.score}</b> points.</p>` : ""}`;
@@ -1200,10 +1224,10 @@ function nendHtml() {
     <button class="big" id="againNeutral">Play again</button>
     <button class="ghost" id="lobbyBtn">Back to the lobby</button>`;
 }
-function mostTop() { return `<div class="score"><span class="label">${S.spicy ? "🌶️ Spicy · " : ""}${S.mn + 1} of ${S.mtotal}</span></div>`; }
+function mostTop() { return `<div class="score"><span class="label">${S.kids ? "🧸 Kids · " : S.spicy ? "🌶️ Spicy · " : ""}${S.mn + 1} of ${S.mtotal}</span></div>`; }
 function mvHtml() {
   return `${mostTop()}
-    <div class="qcard"><span class="qtag">Who's most likely to…</span><h2>${esc(curMost())}?</h2></div>
+    <div class="qcard"><span class="qtag">Who's most likely to…</span><h2${S.kids ? ' class="kidq"' : ""}>${esc(curMost())}?</h2>${S.kids ? '<button class="ghost" id="sayBtn">🔊 Read it to me</button>' : ""}</div>
     <div class="opts">${onlineIds().map(id => `<button class="opt vopt" data-id="${esc(id)}"><span class="f">${pflag(id)}</span> ${esc(pname(id))}${id === myId ? ' <span class="you">you</span>' : ""}</button>`).join("")}</div>
     <p class="muted small" id="waitNote" style="text-align:center"></p>
     <button class="link" id="revealNow">Show the votes now</button>`;
@@ -1214,8 +1238,8 @@ function mrHtml() {
   const top = ids.filter(id => (h.votes[id] || 0) === max);
   return `${mostTop()}
     <div class="qcard"><span class="qtag">Most likely to ${esc(curMost())}</span>
-      <h1 style="margin:0">${top.map(id => `${pflag(id)} ${esc(pname(id))}`).join(" & ")}</h1>
-      <p class="muted">${top.length > 1 ? "A tie. You're both guilty." : "Explain yourself."}</p></div>
+      <h1 style="margin:0" id="winName">${top.map(id => `${pflag(id)} ${esc(pname(id))}`).join(" & ")}</h1>
+      <p class="muted">${S.kids ? (top.length > 1 ? "It's a tie! All of you!" : "Ta-da! 🎉") : top.length > 1 ? "A tie. You're both guilty." : "Explain yourself."}</p>${S.kids ? '<button class="ghost" id="sayBtn">🔊 Read it to me</button>' : ""}</div>
     <div class="bars">${ids.map(id => { const c = h.votes[id] || 0; return `<div class="bar"><span class="bn">${pflag(id)} ${esc(pname(id))}</span><span class="bt"><span style="width:${c / max * 100}%"></span></span><b>${c}</b></div>`; }).join("")}</div>
     <button class="big" id="nextMostBtn">${S.mn + 1 >= S.mtotal ? "Final results" : "Next"}</button>`;
 }
@@ -1225,6 +1249,13 @@ function mendHtml() {
   const ids = Object.keys(players).sort((a, b) => (tot[b] || 0) - (tot[a] || 0));
   const worst = ids[0];
   const natLine = nat.ch === nat.au ? "Both nations equally guilty." : nat.au > nat.ch ? `The Aussies got ${nat.au} votes to ${nat.ch}. Most chaotic nation: Australia.` : `The Swiss got ${nat.ch} votes to ${nat.au}. Turns out the Swiss are the wild ones.`;
+  if (S.kids) return `<div class="stack" style="text-align:center;gap:8px;padding-top:10px"><span class="label">Silliest of all</span>
+      <div style="font-size:64px;line-height:1">🏆</div>
+      <h1 style="margin:0">${worst ? `${pflag(worst)} ${esc(pname(worst))}` : "Everyone"}</h1><p class="muted">${worst ? `${tot[worst] || 0} votes! What a superstar.` : ""}</p></div>
+    <div class="note">Great game, everyone. Time for teeth, pyjamas and bed! 🌙</div>
+    <div class="bars">${ids.map(id => `<div class="bar"><span class="bn">${pflag(id)} ${esc(pname(id))}</span><span class="bt"><span style="width:${(tot[id] || 0) / Math.max(1, tot[worst] || 1) * 100}%"></span></span><b>${tot[id] || 0}</b></div>`).join("")}</div>
+    <button class="big" id="againMost">Play again</button>
+    <button class="ghost" id="lobbyBtn">Back to the lobby</button>`;
   return `<div class="stack" style="text-align:center;gap:8px;padding-top:10px"><span class="label">Biggest menace</span>
       <div style="font-size:64px;line-height:1">${worst ? pflag(worst) : ""}</div>
       <h1 style="margin:0">${worst ? esc(pname(worst)) : "Nobody"}</h1><p class="muted">${worst ? `${tot[worst] || 0} votes and ${crowns[worst] || 0} crowns. Everyone thinks the worst of you.` : ""}</p></div>
@@ -1316,6 +1347,7 @@ function bindPhase(phase, amGiver) {
     $("#startSecrets").onclick = startSecrets;
     $("#startMost").onclick = () => startMost(false);
     $("#startSpicy").onclick = () => startMost(true);
+    $("#startKids").onclick = () => startMost(false, true);
   }
   if (phase === "pp" && $("#playBtn")) $("#playBtn").onclick = precPlay;
   if (phase === "pl") $("#precNextBtn").onclick = precNext;
@@ -1345,8 +1377,9 @@ function bindPhase(phase, amGiver) {
   if (phase === "nv") document.querySelectorAll(".vopt").forEach(b => b.onclick = () => castNVote(b.dataset.id));
   if (phase === "nend") { $("#againNeutral").onclick = startNeutral; $("#lobbyBtn").onclick = toLobby; }
   if (phase === "mv") document.querySelectorAll(".vopt").forEach(b => b.onclick = () => vote(b.dataset.id));
+  if ((phase === "mv" || phase === "mr") && $("#sayBtn")) $("#sayBtn").onclick = () => sayIt(phase === "mv" ? `Who is most likely to ${curMost()}?` : `${$("#winName").textContent}! Most likely to ${curMost()}!`);
   if (phase === "mr") $("#nextMostBtn").onclick = nextMost;
-  if (phase === "mend") { $("#againMost").onclick = () => startMost(S.spicy); $("#lobbyBtn").onclick = toLobby; }
+  if (phase === "mend") { $("#againMost").onclick = () => startMost(S.spicy, S.kids); $("#lobbyBtn").onclick = toLobby; }
   if (phase === "qr") $("#nextQBtn").onclick = nextQ;
   if (phase === "qend") { $("#againQuiz").onclick = startQuiz; $("#lobbyBtn").onclick = toLobby; }
   if (phase === "guess") {
